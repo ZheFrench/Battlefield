@@ -1,7 +1,7 @@
 Package: Battlefield
 Type: Package
 Title: Swiss-army toolkit for selecting niche fronts and invasive margins.
-Version: 0.0.99
+Version: 0.99.01
 Authors@R: c(
     person("Jean-Philippe","Villemin",email="jpvillemin@gmail.com",role="aut",comment = c(ORCID = "0000-0002-1838-5880")))
 Description: Battlefield is a Swiss-army toolkit to define and extract spatial 
