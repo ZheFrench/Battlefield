@@ -5,7 +5,7 @@ Version: 0.0.99
 Authors@R: c(
     person("Jean-Philippe","Villemin",email="jpvillemin@gmail.com",role="aut",comment = c(ORCID = "0000-0002-1838-5880")))
 Description: Battlefield is a Swiss-army toolkit to define and extract spatial 
-"front" regions—niche borders, invasive margins, and cluster interfaces—from
+front regions—niche borders, invasive margins, and cluster interfaces—from
 spatial transcriptomics or clustered tissue maps. It provides margin-aware
 spot selection to build consistent comparison groups 
 (front vs core, front vs background, interface vs non-interface)
