@@ -2,19 +2,12 @@
 # Battlefield <img  width="120" height="139" src="man/figures/logo.png" align="right" />
   
 
-<!-- badges: start -->
-![Bioconductor Time](https://bioconductor.org/shields/years-in-bioc/Battlefield.svg)
-![Bioconductor Downloads](https://bioconductor.org/shields/downloads/release/Battlefield.svg)
-<!-- badges: end -->
-
-
 ## Overview
 
 **Battlefield**  is a Swiss-army toolkit to define and extract spatial 
-"front" regions—niche borders, invasive margins, and cluster interfaces—from
-spatial transcriptomics or clustered tissue maps. It provides margin-aware
-spot selection to build consistent comparison groups 
-(front vs core, front vs background, interface vs non-interface)
+"front" regions—niche borders, invasive margins, and cluster interfaces—from spatial transcriptomics or clustered tissue maps.  
+
+It provides margin-aware spot selection to build consistent comparison groups (front vs core, front vs background, interface vs non-interface)
 upstream of downstream analyses such as differential gene expression 
 and cell–cell communication (ligand–receptor) inference.
 
@@ -26,7 +19,7 @@ using BulkSignalR, available from Bioconductor
 A number of visualization and data summary functions are proposed to
 help navigating the predicted interactions.
 
-<img   src="man/figures/workflow.png" align="center" width="85%" height="85%" />
+<!--#<img   src="man/figures/workflow.png" align="center" width="85%" height="85%" />-->
   
 
 ## Installation
@@ -52,7 +45,7 @@ devtools::install_github("ZheFrench/Battlefield",build_vignettes = TRUE)
 For a version history/change logs, see the [NEWS file](https://github.com/ZheFrench/Battlefield/blob/master/NEWS).
 
 
-**BulkSignalR** has been successfully installed on Mac OS X, Linux, and Windows using R version 4.5.
+**Battlefield** has been successfully installed on Mac OS X, Linux, and Windows using R version 4.5.
 
 
 The code in this repository is published with the [CeCILL](https://github.com/ZheFrench/Battlefield/blob/master/LICENSE.md) License.

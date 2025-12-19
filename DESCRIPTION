@@ -19,51 +19,20 @@ LazyData: FALSE
 Depends: R (>= 4.4)
 biocViews: Network, Software, Transcriptomics,  Spatial
 Imports:
-    BiocFileCache,
-    httr,
-    DBI,
-    RSQLite,
-    cli,
-    curl,
-    dplyr,
-    rlang,
-    jsonlite,
-    matrixStats,
-    methods,
-    doParallel,
-    glmnet,
-    ggalluvial,
-    ggplot2,
-    gridExtra,
-    grid,
-    Rtsne,
-    ggrepel,
-    foreach,
-    multtest,
-    igraph,
-    orthogene,
-    stabledist,
-    circlize (>= 0.4.14),
-    ComplexHeatmap (>= 2.0.0),
     stats,
-    scales,
     RANN,
     SpatialExperiment,
+    SpatialExperimentIO,
     SummarizedExperiment,
     tools
 Suggests: 
     knitr,
     markdown,
     rmarkdown,
+    OSTA.data,
     STexampleData,
     testthat (>= 3.0.0),
     codetools,
-    Matrix,
-    lattice,
-    cluster,
-    survival,
-    MASS,
-    nlme
 Config/testthat/edition: 3
 RoxygenNote: 7.3.2
 VignetteBuilder: knitr
