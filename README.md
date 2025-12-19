@@ -1,7 +1,7 @@
 # Battlefield <img  width="160" height="160" src="man/figures/logo.png" align="right" />
 	
-
-<p>
+<br/>
+<br/>
 
 ## Overview
 
