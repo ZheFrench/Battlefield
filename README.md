@@ -1,6 +1,8 @@
 # Battlefield <img  width="160" height="160" src="man/figures/logo.png" align="right" />
-  
-  
+	
+
+<p>
+
 ## Overview
 
 **Battlefield**  is a Swiss-army toolkit to define and extract spatial 
