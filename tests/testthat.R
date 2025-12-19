@@ -1,3 +1,3 @@
 library(testthat)
-library(BulkSignalR)
-test_check("BulkSignalR")
+library(BattleField)
+test_check("BattleField")

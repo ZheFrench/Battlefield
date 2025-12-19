@@ -1,31 +1,30 @@
 
-# BulkSignalR <img  width="120" height="139" src="man/figures/logo.png" align="right" />
+# Battlefield <img  width="120" height="139" src="man/figures/logo.png" align="right" />
   
 
 <!-- badges: start -->
-![Bioconductor Time](https://bioconductor.org/shields/years-in-bioc/BulkSignalR.svg)
-![Bioconductor Downloads](https://bioconductor.org/shields/downloads/release/BulkSignalR.svg)
+![Bioconductor Time](https://bioconductor.org/shields/years-in-bioc/Battlefield.svg)
+![Bioconductor Downloads](https://bioconductor.org/shields/downloads/release/Battlefield.svg)
 <!-- badges: end -->
 
 
 ## Overview
 
-**BulkSignalR** is used to infer ligand-receptor (L-R) interactions from bulk
-expression (transcriptomics/proteomics) data, or spatial
-transcriptomics.  
+**Battlefield**  is a Swiss-army toolkit to define and extract spatial 
+"front" regions—niche borders, invasive margins, and cluster interfaces—from
+spatial transcriptomics or clustered tissue maps. It provides margin-aware
+spot selection to build consistent comparison groups 
+(front vs core, front vs background, interface vs non-interface)
+upstream of downstream analyses such as differential gene expression 
+and cell–cell communication (ligand–receptor) inference.
 
-Potential L-R interactions are taken from the
-LR*db* database, which was previously included in our other package 
-**SingleCellSignalR**, available from Bioconductor 
-[here](https://www.bioconductor.org/packages/release/bioc/html/SingleCellSignalR.html).  
-
-Inferences rely on a statistical model linking potential
-L-R interactions with biological pathways from Reactome or biological
-processes from GO.  
+For example, it can be integrated upstream to 
+support insightful ligand–receptor analyses, 
+using BulkSignalR, available from Bioconductor 
+[here](https://www.bioconductor.org/packages/release/bioc/html/BulkSignalR.html).  
 
 A number of visualization and data summary functions are proposed to
 help navigating the predicted interactions.
-
 
 <img   src="man/figures/workflow.png" align="center" width="85%" height="85%" />
   
@@ -34,29 +33,29 @@ help navigating the predicted interactions.
 
 ``` R
 
-# BulkSignalR directly from Bioconductor.
+# Battlefield directly from Bioconductor.
 if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
-BiocManager::install("BulkSignalR")
+BiocManager::install("Battlefield")
 
 # or Installation goes via GitHub:
 # install.packages("devtools")
-devtools::install_github("ZheFrench/BulkSignalR",build_vignettes = TRUE)
+devtools::install_github("ZheFrench/Battlefield",build_vignettes = TRUE)
 
 # To read the vignette
-# browseVignettes("BulkSignalR")
+# browseVignettes("Battlefield")
 
 ```
 
 ## Notes
 
-For a version history/change logs, see the [NEWS file](https://github.com/ZheFrench/BulksignalR/blob/master/NEWS).
+For a version history/change logs, see the [NEWS file](https://github.com/ZheFrench/Battlefield/blob/master/NEWS).
 
 
 **BulkSignalR** has been successfully installed on Mac OS X, Linux, and Windows using R version 4.5.
 
 
-The code in this repository is published with the [CeCILL](https://github.com/ZheFrench/BulksignalR/blob/master/LICENSE.md) License.
+The code in this repository is published with the [CeCILL](https://github.com/ZheFrench/Battlefield/blob/master/LICENSE.md) License.
 
 
 <!-- badges: start -->

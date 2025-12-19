@@ -1,8 +1,8 @@
 
 
-test_that("BSRDataModel", {
-  data(sdc, package = "BulkSignalR")
-  bsrdm <- BSRDataModel(sdc)
-  expect_s4_class(bsrdm,"BSRDataModel")
+test_that("DataModel", {
+  data(array, package = "BattleField")
+  model <- DataModel(array)
+  expect_s4_class(model,"BattleField")
   
 })
