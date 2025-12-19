@@ -1,5 +1,4 @@
-# Battlefield
-<img  width="160" height="160" src="man/figures/logo.png" style="vertical-align:middle" />
+# Battlefield <img  width="160" height="160" src="man/figures/logo.png" align="right" />
   
 ## Overview
 
