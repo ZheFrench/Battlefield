@@ -1,0 +1,198 @@
+---
+title: "Battlefield : </br> A Swiss-army to define and extract spatial spots
+ for different tasks."
+author:
+  - name: Jean-Philippe Villemin
+    affiliation:
+    - Institut de Recherche en Cancérologie de Montpellier,
+     Inserm, Montpellier, France 
+    email: jean-philippe.villemin@inserm.fr
+date: "`r format(Sys.Date(), '%m/%d/%Y')`"
+abstract: > 
+  <p> Battlefield  is a Swiss-army toolkit originally developed 
+  to define and extract spatial spots from specific tissue regions—such 
+  as front regions, niche borders, invasive margins, 
+  and cluster interfaces—using spatial transcriptomics data or clustered tissue maps.
+
+    It has since been extended to support trajectory selection and layer inspection,
+    and now provides a collection of low-level utilities for spatial transcriptomics analysis. 
+    These utilities are primarily intended to be reused within higher-level analytical packages.
+
+    Battlefield enables margin/trajectory/layer-aware spot selection, 
+    allowing users to construct consistent comparison groups (e.g. front vs core or ordered spots along a trajectory).  
+
+    It is designed to work with sequencing-based platforms
+    such as Visium (standard and Visium HD).<br/><br/>
+    Battlefield package version: `r packageVersion("Battlefield")`
+output: 
+  rmarkdown::html_vignette:
+      self_contained: true
+      toc: true
+      toc_depth: 4
+      highlight: pygments
+      fig_height: 3
+      fig_width: 3
+      fig_caption: no
+      code_folding: show
+package: Battlefield
+vignette: >
+  %\VignetteIndexEntry{Battlefield-Main}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::knit_hooks$set(optipng = knitr::hook_optipng)
+```
+
+```{r load-libs, message = FALSE,  warning = FALSE, results = FALSE}
+library(Battlefield)
+library(SpatialExperiment)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(pheatmap)
+library(pals)
+library(grid)
+
+```
+
+
+# What is it for? 
+
+`Battlefield` Battlefield is a Swiss-army toolkit originally developed 
+to define and extract spatial spots
+from specific tissue regions—such as front regions, niche borders, 
+invasive margins and cluster interfaces—using spatial transcriptomics data 
+or clustered tissue maps.
+It has since been extended to support trajectory selection and layer inspection, 
+and now provides a collection of low-level utilities 
+for spatial transcriptomics analysis.
+These utilities are primarily intended to be reused within
+higher-level analytical packages.
+It is designed to work with sequencing-based platforms
+such as Visium at several resolutions and Visium HD(binned).
+
+# Let's illustrate its main functionalities
+
+There are a three mains functionalities in Battlefield to define and extract
+spots from specific tissue regions.
+- Margins
+- Layers
+- Trajectories
+
+
+## Margins Example  
+## Layers Example  
+## Trajectories Example  
+
+Here 
+```{r loading,eval=TRUE,fig.dim = c(7,3)}
+data("visium_simulated_spe")
+head("visium_simulated_spe")
+set.seed(12)
+
+head(colData(visium_simulated_spe))
+
+df <- data.frame(
+  spot_id = colnames(visium_simulated_spe),
+  x = spatialCoords(visium_simulated_spe)[, 1],
+  y = spatialCoords(visium_simulated_spe)[, 2],
+  cluster = colData(visium_simulated_spe)$cluster
+)
+
+expr <- as.numeric(assay(visium_simulated_spe, "counts")["FAKE_GENE", ])
+test <- cbind(as.data.frame(colData(visium_simulated_spe)), df[, c("x", "y"), drop = FALSE])
+test$expr <- expr
+
+
+start_cluster <- "3"
+end_cluster   <- "4"
+top_n <- 8
+
+centroids <- compute_centroids(df)
+
+A <- centroids[centroids$cluster == start_cluster, c("x","y")]
+B <- centroids[centroids$cluster == end_cluster,   c("x","y")]
+
+
+(res <- spots_near_segment(df, A, B, top_n = top_n, max_dist = NULL))
+
+ggplot(test, aes(x, y)) +
+  geom_point(aes(color = expr),size = 1.6, alpha = 0.85) +
+  scale_color_gradient(
+  low = "blue",
+  high = "red"
+  ) +
+  geom_path(
+  data = res$selected,
+  aes(x = x, y = y),
+  color = "green", linewidth = 1.1,
+  arrow = grid::arrow(type = "closed", length = grid::unit(3, "mm"))
+  ) +
+  geom_point(data = res$selected, aes(x, y), 
+  inherit.aes = FALSE, size = 2.2, color="green") +
+  coord_equal() +
+  theme_minimal()
+
+
+(out <- build_parallel_lines(df, A, B, top_n = top_n, n_extra = 2, side = "both"))
+
+ggplot(test, aes(x, y)) +
+   geom_point(aes(color = expr),size = 1.6, alpha = 0.85) +
+   scale_color_gradient(
+   low = "blue",
+   high = "red"
+   ) +
+   geom_path(data=out$lines, aes(x=x, y=y, group=line_id), 
+   inherit.aes = FALSE, color="green",linewidth=1,
+   arrow = grid::arrow(type = "closed", length = grid::unit(3, "mm"))) +
+   geom_point(data = out$lines, aes(x, y), 
+   inherit.aes = FALSE, size = 2.2, color="green") +
+   coord_equal() +
+   theme_minimal() 
+
+
+meta <- out$lines |>
+  transmute(
+    spot_id = as.character(spot_id),
+    trajectory = as.character(line_id),
+    progress = as.numeric(t)
+  ) |>
+  group_by(trajectory) |>
+  arrange(progress, .by_group = TRUE) |>
+  mutate(
+    index = seq_len(n())   # <- index 1..length ordered according to t
+  ) |>
+  ungroup()
+
+gene <- c("FAKE_GENE") 
+expr <- assay(visium_simulated_spe, "counts")[gene, meta$spot_id]
+meta$expr <- expr
+
+mat <- meta |>
+  select(trajectory, index, expr) |>
+  tidyr::pivot_wider(names_from = index, values_from = expr) |>
+  as.data.frame()
+
+rownames(mat) <- mat$trajectory
+mat$trajectory <- NULL
+
+pheatmap(
+  mat,
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  border_color = "white",
+  main = gene,angle_col=0,
+  col=pals::coolwarm(), scale="row",
+  cellwidth=10, cellheight=10 , na_col = "grey90"
+)
+```  
+
+
+    
+# Session Information
+
+```{r session-info}
+sessionInfo()
+```

@@ -1,38 +1,47 @@
 Package: Battlefield
 Type: Package
-Title: Swiss-army toolkit for selecting niche fronts and invasive margins.
+Title: Swiss-army toolkit for selecting niche fronts and invasive margins  
+  in spatial transcriptomics data 
 Version: 0.99.01
 Authors@R: c(
-    person("Jean-Philippe","Villemin",email="jpvillemin@gmail.com",role="aut",comment = c(ORCID = "0000-0002-1838-5880")))
-Description: Battlefield is a Swiss-army toolkit to define and extract spatial 
-front regions—niche borders, invasive margins, and cluster interfaces—from
-spatial transcriptomics or clustered tissue maps. It provides margin-aware
-spot selection to build consistent comparison groups 
-(front vs core, front vs background, interface vs non-interface)
-upstream of downstream analyses such as differential gene expression 
-and cell–cell communication (ligand–receptor) inference.
+    person("Jean-Philippe","Villemin",email="jpvillemin@gmail.com",role=c("aut", "cre"),comment = c(ORCID = "0000-0002-1838-5880")))
+Description: Battlefield is a Swiss-army toolkit originally developed to define and extract spatial spots
+ from specific tissue regions—such as front regions, niche borders, invasive margins, 
+ and cluster interfaces—using spatial transcriptomics data or clustered tissue maps.
+ It has since been extended to support trajectory selection and layer inspection, 
+ and now provides a collection of low-level utilities for spatial transcriptomics analysis.
+ These utilities are primarily intended to be reused within higher-level analytical packages.
+ It is designed to work with sequencing-based platforms
+ such as Visium at several resolutions and Visium HD(binned).
 URL: https://github.com/ZheFrench/BattleField
 BugReports: https://github.com/ZheFrench/BattleField/issues
 License: CeCILL | file LICENSE
 Encoding: UTF-8
 LazyData: FALSE
-Depends: R (>= 4.4)
-biocViews: Network, Software, Transcriptomics,  Spatial
+Depends: R (>= 4.6)
+biocViews: Sequencing, Software, Transcriptomics,  Spatial
 Imports:
     stats,
     RANN,
-    SpatialExperiment,
-    SpatialExperimentIO,
-    SummarizedExperiment,
-    tools
+    dplyr
 Suggests: 
     knitr,
     markdown,
     rmarkdown,
+    SpatialExperiment,
+    SpatialExperimentIO,
+    VisiumIO,
+    ggplot2,
+    pheatmap,
+    pals,
+    SummarizedExperiment,
     OSTA.data,
+    tidyr,
     STexampleData,
     testthat (>= 3.0.0),
     codetools,
+    grid,
+    tools
 Config/testthat/edition: 3
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 VignetteBuilder: knitr
