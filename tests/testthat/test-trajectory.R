@@ -201,7 +201,7 @@ testthat::test_that("build_one_line returns spots ordered by t", {
   testthat::expect_true(all(diff(sel$t) >= 0))
 })
 
-testthat::test_that("build_parallel_lines returns expected structure and line_ids", {
+testthat::test_that("build_similar_trajectories returns expected structure and line_ids", {
   set.seed(42)
 
   df <- data.frame(
@@ -213,7 +213,7 @@ testthat::test_that("build_parallel_lines returns expected structure and line_id
   A <- data.frame(x = 1, y = 2)
   B <- data.frame(x = 10, y = 2)
 
-  out <- build_parallel_lines(df, A, B, top_n = 5, n_extra = 1, side = "both")
+  out <- build_similar_trajectories(df, A, B, top_n = 5, n_extra = 1, side = "both")
 
   testthat::expect_true(is.list(out))
   testthat::expect_true(all(c("lines", "spacing", "lane_width") %in% names(out)))

@@ -621,13 +621,13 @@ build_one_line <- function(df_rest, A, B, top_n = 19, max_dist = NULL) {
 #' A <- data.frame(x = 1, y = 2)
 #' B <- data.frame(x = 10, y = 2)
 #'
-#' out <- build_parallel_lines(df, A, B, top_n = 5, n_extra = 1, side = "both")
+#' out <- build_similar_trajectories(df, A, B, top_n = 5, n_extra = 1, side = "both")
 #' out$lane_width
 #' unique(out$lines$line_id)
 #'
 #' @export
 #' @importFrom dplyr mutate arrange bind_rows
-build_parallel_lines <- function(df, A, B,
+build_similar_trajectories <- function(df, A, B,
                                  top_n = 19,
                                  n_extra = 2,
                                  side = c("left","right","both"),
@@ -689,7 +689,7 @@ build_parallel_lines <- function(df, A, B,
 #' *and* whose end cluster is in `allowed_end_clusters` are kept.
 #'
 #' @param out A list containing at least an element `lines`, typically the output
-#'   of `build_parallel_lines()`. `out$lines` must include columns `line_id`,
+#'   of `build_similar_trajectories()`. `out$lines` must include columns `line_id`,
 #'   `cluster`, and `t`.
 #' @param allowed_start_clusters Vector of allowed cluster labels for the start
 #'   endpoint.
