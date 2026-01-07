@@ -74,6 +74,11 @@ directed_cluster_interface_pairs <- function(cluster_labels,
 #' @param cluster Cluster label for the source cluster (A). Spots in this cluster
 #'   are tested for adjacency to `interface`.
 #' @param interface Cluster label for the target cluster (B).
+#' @param mode Character. One of "inner", "outer", or "both".
+#'   - "inner": returns border spots from cluster → interface (default).
+#'   - "outer": returns border spots from interface → cluster (swaps cluster/interface).
+#'   - "both": returns border spots from both directions, row-bound together.
+#'   Default is "inner".
 #' @param k Integer. Number of nearest neighbors to consider (excluding self).
 #'   Internally uses `k + 1` to include self then removes it. Default is 7.
 #' @param max_dist Optional numeric. Maximum Euclidean distance for a neighbor to be
@@ -93,6 +98,12 @@ directed_cluster_interface_pairs <- function(cluster_labels,
 #'   cluster different from `cluster` and `interface`.
 #' }
 #'
+#' **Note on mode column**: The `mode` column in the returned data.frame will always contain
+#' either "inner" or "outer", even if the `mode` parameter is set to "both". When `mode="both"`,
+#' the function internally calls the selection algorithm twice (once for cluster→interface and
+#' once for interface→cluster), then row-binds the results, so each row is labeled with its
+#' actual direction.
+#'
 #' The returned data.frame contains only spots from `cluster` that touch `interface`,
 #' with columns:
 #' \describe{
@@ -101,10 +112,12 @@ directed_cluster_interface_pairs <- function(cluster_labels,
 #'   \item{y}{Y coordinate.}
 #'   \item{cluster}{Cluster label (same as `cluster`).}
 #'   \item{interface}{The value of `interface`.}
-#'   \item{directed_pair}{Interface label combining cluster and `interface`, e.g. `"A-B"`.
+#'   \item{directed_pair}{Interface label combining cluster and `interface`, e.g. `"A-B"`.}
+#'   \item{undirected_pair}{Undirected pair label (both directions), e.g. `"A-B / B-A"`.}
 #'   \item{is_border}{Always `TRUE` for returned rows (kept for clarity).}
 #'   \item{is_border_multiple}{`TRUE` if the spot also touches other clusters.}
 #'   \item{other_adjacent_borders}{Comma-separated list of other clusters touched, or `NA`.}
+#'   \item{mode}{The mode used for selection: "inner", "outer", or "both".}
 #' }
 #'
 #' @return A data.frame subset of `df` containing border spots from `cluster` to
@@ -123,69 +136,104 @@ directed_cluster_interface_pairs <- function(cluster_labels,
 #' head(res)
 #'
 #' @importFrom RANN nn2
+#' @importFrom dplyr bind_rows
 #' @export
 select_border_spots <- function(df,
                                 cluster,
                                 interface,
+                                mode = "inner",
                                 k = 7,
                                 max_dist = NULL,
                                 coord_cols = c("x", "y"),
                                 cluster_col = "cluster") {
   stopifnot(all(coord_cols %in% colnames(df)))
   stopifnot(cluster_col %in% colnames(df))
+  stopifnot(mode %in% c("inner", "outer", "both"))
 
-  coords <- as.matrix(df[, coord_cols])
-  cl <- df[[cluster_col]]
+  # Helper function to do the actual border selection
+  .select_border_single <- function(c_val, i_val) {
+    coords <- as.matrix(df[, coord_cols])
+    cl <- df[[cluster_col]]
 
-  idx_from <- which(cl == cluster)
-  if (length(idx_from) == 0) {
-    return(df[0, , drop = FALSE])
+    idx_from <- which(cl == c_val)
+    if (length(idx_from) == 0) {
+      return(df[0, , drop = FALSE])
+    }
+
+    nn <- RANN::nn2(data = coords, query = coords[idx_from, , drop = FALSE], k = k + 1)
+
+    nn_idx  <- nn$nn.idx[, -1, drop = FALSE]     # remove self
+    nn_dist <- nn$nn.dists[, -1, drop = FALSE]
+
+    neigh_cl <- matrix(cl[nn_idx], nrow = nrow(nn_idx))
+
+    # Optional distance filter
+    if (!is.null(max_dist)) {
+      neigh_cl[nn_dist > max_dist] <- NA
+    }
+
+    # Does a spot in A touch B?
+    touches_to <- apply(neigh_cl == i_val, 1, any, na.rm = TRUE)
+
+    # Does it touch any other cluster (not A, not B)?
+    touches_other <- apply(!(neigh_cl %in% c(c_val, i_val)) & !is.na(neigh_cl),
+                           1, any)
+
+    # Which other clusters are touched?
+    other_clusters <- apply(neigh_cl, 1, function(v) {
+      v <- v[!is.na(v)]
+      v <- unique(v[!(v %in% c(c_val, i_val))])
+      if (length(v) == 0) NA_character_ else paste(sort(v), collapse = ",")
+    })
+
+    # Keep all A->B border points
+    out <- df[idx_from[touches_to], , drop = FALSE]
+
+    # Pre-compute undirected_pair to avoid min/max issues with character vectors
+    c_char <- as.character(c_val)
+    i_char <- as.character(i_val)
+    sorted_pair <- sort(c(c_char, i_char))
+    undirected_pair_val <- paste0(sorted_pair[1], "-", sorted_pair[2], " / ",
+                                  sorted_pair[2], "-", sorted_pair[1])
+
+    # Add annotations and reorder columns
+    out <- out |>
+      dplyr::mutate(
+        interface = i_val,
+        directed_pair = paste0(c_val, "-", i_val),
+        undirected_pair = undirected_pair_val,
+        is_border = TRUE,
+        is_border_multiple = touches_other[touches_to],
+        other_adjacent_borders = other_clusters[touches_to],
+        mode = ""
+      ) |>
+      dplyr::select(
+        spot_id, x, y, directed_pair, undirected_pair, cluster, interface,
+        is_border, is_border_multiple, other_adjacent_borders, mode
+      )
+
+    out
   }
 
-  nn <- RANN::nn2(data = coords, query = coords[idx_from, , drop = FALSE], k = k + 1)
-
-  nn_idx  <- nn$nn.idx[, -1, drop = FALSE]     # remove self
-  nn_dist <- nn$nn.dists[, -1, drop = FALSE]
-
-  neigh_cl <- matrix(cl[nn_idx], nrow = nrow(nn_idx))
-
-  # Optional distance filter
-  if (!is.null(max_dist)) {
-    neigh_cl[nn_dist > max_dist] <- NA
+  # Handle different modes
+  if (mode == "inner") {
+    # Classic: cluster -> interface
+    res <- .select_border_single(cluster, interface)
+    if (nrow(res) > 0) res$mode <- "inner"
+    res
+  } else if (mode == "outer") {
+    # Swap: interface -> cluster
+    res <- .select_border_single(interface, cluster)
+    if (nrow(res) > 0) res$mode <- "outer"
+    res
+  } else {
+    # Both: combine inner and outer
+    inner_res <- .select_border_single(cluster, interface)
+    if (nrow(inner_res) > 0) inner_res$mode <- "inner"
+    outer_res <- .select_border_single(interface, cluster)
+    if (nrow(outer_res) > 0) outer_res$mode <- "outer"
+    dplyr::bind_rows(inner_res, outer_res)
   }
-
-  # Does a spot in A touch B?
-  touches_to <- apply(neigh_cl == interface, 1, any, na.rm = TRUE)
-
-  # Does it touch any other cluster (not A, not B)?
-  touches_other <- apply(!(neigh_cl %in% c(cluster, interface)) & !is.na(neigh_cl),
-                         1, any)
-
-  # Which other clusters are touched?
-  other_clusters <- apply(neigh_cl, 1, function(v) {
-    v <- v[!is.na(v)]
-    v <- unique(v[!(v %in% c(cluster, interface))])
-    if (length(v) == 0) NA_character_ else paste(sort(v), collapse = ",")
-  })
-
-  # Keep all A->B border points
-  out <- df[idx_from[touches_to], , drop = FALSE]
-
-  # Add annotations and reorder columns
-  out <- out |>
-    dplyr::mutate(
-      interface = interface,
-      directed_pair = paste0(cluster, "-", interface),
-      is_border = TRUE,
-      is_border_multiple = touches_other[touches_to],
-      other_adjacent_borders = other_clusters[touches_to]
-    ) |>
-    dplyr::select(
-      spot_id, x, y, directed_pair, cluster, interface,
-      is_border, is_border_multiple, other_adjacent_borders
-    )
-
-  out
 }
 
 #' Build border spots for all oriented cluster pairs
@@ -202,6 +250,8 @@ select_border_spots <- function(df,
 #'   computing borders. Default is 6.
 #' @param max_dist Optional numeric. Maximum Euclidean distance for neighbors to be
 #'   considered. If `NULL`, no distance filtering is applied.
+#' @param mode Character. One of "inner", "outer", or "both". Controls which border
+#'   direction(s) to select for each pair. Default is "both".
 #' @param pairs Optional data.frame of oriented cluster pairs, typically produced by
 #'   [directed_cluster_interface_pairs()]. Must contain `cluster` and `interface`
 #'   columns. If `NULL`, it is computed from `df[[cluster_col]]`.
@@ -213,6 +263,11 @@ select_border_spots <- function(df,
 #' @return A data.frame produced by row-binding the result of border selection for
 #' each oriented pair. Typically contains the original columns of `df` plus interface
 #' annotation columns from the border selector.
+#'
+#' **Note on mode column**: The `mode` column in the returned data.frame will always contain
+#' either "inner" or "outer", never "both". Even when the `mode` parameter is set to "both",
+#' each border spot row is labeled with its actual direction (cluster→interface is "inner",
+#' interface→cluster is "outer").
 #'
 #' @examples
 #' # Example with synthetic data
@@ -229,6 +284,7 @@ select_border_spots <- function(df,
 build_all_borders <- function(df,
                               k = 6,
                               max_dist = NULL,
+                              mode = "both",
                               pairs = NULL,
                               coord_cols = c("x", "y"),
                               cluster_col = "cluster") {
@@ -249,6 +305,7 @@ build_all_borders <- function(df,
       df,
       cluster = a,
       interface = b,
+      mode = mode,
       k = k,
       max_dist = max_dist,
       coord_cols = coord_cols,
@@ -258,22 +315,6 @@ build_all_borders <- function(df,
   })
 
   out <- dplyr::bind_rows(res)
-  
-  # Create undirected pair label showing both directions (e.g., "3-4 / 4-3")
-  out <- out |>
-    dplyr::rowwise() |>
-    dplyr::mutate(
-      undirected_pair = paste0(
-        min(as.character(cluster), as.character(interface)),
-        "-",
-        max(as.character(cluster), as.character(interface)),
-        " / ",
-        max(as.character(cluster), as.character(interface)),
-        "-",
-        min(as.character(cluster), as.character(interface))
-      )
-    ) |>
-    dplyr::ungroup() |> as.data.frame()
   
   out
 }
@@ -289,8 +330,8 @@ build_all_borders <- function(df,
 #'
 #' @param df A data.frame containing at least coordinate columns and a cluster label column.
 #' @param border_df A data.frame of border spots from [build_all_borders()].
-#' @param region Character. One of "inner", "outer", or "both". See [select_inner_spots()] for details.
-#'   Default is "inner".
+#' @param mode Character. One of "inner", "outer", or "both". Controls which mode values
+#'   from border_df to use when counting border spots. Default is "both".
 #' @param pairs Optional data.frame of oriented cluster pairs, typically produced by
 #'   [directed_cluster_interface_pairs()]. Must contain `cluster` and `interface`
 #'   columns. If `NULL`, it is computed from `df[[cluster_col]]`.
@@ -301,7 +342,11 @@ build_all_borders <- function(df,
 #'
 #' @return A data.frame produced by row-binding the result of inner spot selection for
 #' each oriented pair. Typically contains the original columns of `df` plus annotation
-#' columns (is_inner, interface, region) from the inner spot selector.
+#' columns (is_inner, interface, mode) from the inner spot selector.
+#'
+#' **Note on mode column**: The `mode` column in the returned data.frame reflects which
+#' border modes were used for each inner spot selection: "inner", "outer", or "both".
+#' This differs from `build_all_borders()` which only returns "inner" or "outer".
 #'
 #' @examples
 #' # Example with synthetic data
@@ -312,14 +357,14 @@ build_all_borders <- function(df,
 #'   cluster = sample(c("A","B","C"), 200, replace = TRUE)
 #' )
 #' all_borders <- build_all_borders(df_ex, k = 6)
-#' all_inners <- build_all_inners(df_ex, all_borders, region = "inner")
+#' all_inners <- build_all_inners(df_ex, all_borders, mode = "both")
 #' head(all_inners)
 #'
 #' @importFrom dplyr bind_rows
 #' @export
 build_all_inners <- function(df,
                              border_df,
-                             region = "inner",
+                             mode = "both",
                              pairs = NULL,
                              coord_cols = c("x", "y"),
                              cluster_col = "cluster") {
@@ -361,7 +406,7 @@ build_all_inners <- function(df,
       border_df = border_df,
       cluster = a,
       interface = b,
-      region = region,
+      mode = mode,
       coord_cols = coord_cols,
       cluster_col = cluster_col
     )
@@ -374,13 +419,14 @@ build_all_inners <- function(df,
 #' Select inner (non-interface) spots for a directed pair
 #'
 #' This function selects inner (non-interface) spots from a cluster that match
-#' the count of border spots for a specific directed pair. The `region` parameter
-#' controls which direction(s) of the interface to consider when counting borders.
+#' the count of border spots for a specific directed pair. The `mode` value is 
+#' read from the `border_df` dataframe for this cluster/interface pair. If multiple 
+#' mode values exist in border_df for the pair, a warning is printed and the first value is used.
 #'
 #' For example with `cluster="1"` and `interface="2"`:
-#' - If `region="inner"`: counts only border spots from 1→2
-#' - If `region="outer"`: counts only border spots from 2→1
-#' - If `region="both"`: counts border spots from both 1→2 AND 2→1
+#' - If mode in df is "inner": counts only border spots from 1→2
+#' - If mode in df is "outer": counts only border spots from 2→1
+#' - If mode in df is "both": counts border spots from both 1→2 AND 2→1
 #'
 #' This returns N random inner spots from the cluster, where N equals the border count.
 #'
@@ -389,11 +435,9 @@ build_all_inners <- function(df,
 #'   columns `spot_id`, `cluster`, `interface`, `directed_pair`, etc.
 #' @param cluster Character. Label of the cluster from which to select inner spots.
 #' @param interface Character. Label of the target cluster for the directed pair.
-#' @param region Character. One of "inner", "outer", or "both".
-#'   - "inner": counts border spots only from cluster → interface
-#'   - "outer": counts border spots only from interface → cluster
-#'   - "both": counts border spots from both directions
-#'   Default is "inner".
+#' @param mode Character. One of "inner", "outer", or "both". Controls which mode values
+#'   from border_df to use when counting border spots. When mode="both", both "inner" and
+#'   "outer" mode rows from border_df are used. Default is "both".
 #' @param coord_cols Character vector of length 2 giving the coordinate column names.
 #'   Default is `c("x","y")`.
 #' @param cluster_col Character. Name of the column containing cluster labels.
@@ -402,7 +446,7 @@ build_all_inners <- function(df,
 #' @details
 #' Steps:
 #' \enumerate{
-#'   \item Counts directed border spots based on `region` parameter.
+#'   \item Counts directed border spots based on `mode` parameter.
 #'   \item Gets all spots in `cluster` that are not at any border.
 #'   \item Randomly samples the same number of inner spots as the border count.
 #'   \item Returns these sampled inner spots with `inner_cluster` annotation.
@@ -416,12 +460,11 @@ build_all_inners <- function(df,
 #'
 #' @examples
 #' # Assuming df and big_border_df from build_all_borders(df, k=4)
+#' # where big_border_df contains a mode column indicating the selection mode
 #' # Inner direction (1→2):
-#' # inners_inner <- select_inner_spots(df, big_border_df, "1", "2", region="inner")
-#' # Outer direction (2→1):
-#' # inners_outer <- select_inner_spots(df, big_border_df, "1", "2", region="outer")
+#' # inners_inner <- select_inner_spots(df, big_border_df, "1", "2")
 #' # Both directions (1→2 AND 2→1):
-#' # inners_both <- select_inner_spots(df, big_border_df, "1", "2", region="both")
+#' # inners_both <- select_inner_spots(df, big_border_df, "1", "2")
 #'
 #' @importFrom dplyr filter mutate slice_sample pull
 #' @export
@@ -429,7 +472,7 @@ select_inner_spots <- function(df,
                                border_df,
                                cluster,
                                interface,
-                               region = "inner",
+                               mode = "both",
                                coord_cols = c("x", "y"),
                                cluster_col = "cluster") {
 
@@ -439,7 +482,8 @@ select_inner_spots <- function(df,
   stopifnot("spot_id" %in% colnames(border_df))
   stopifnot("cluster" %in% colnames(border_df))
   stopifnot("interface" %in% colnames(border_df))
-  stopifnot(region %in% c("inner", "outer", "both"))
+  stopifnot("mode" %in% colnames(border_df))
+  stopifnot(mode %in% c("inner", "outer", "both"))
 
   # Check if the cluster and interface pair exists in border_df
   pair_exists <- any(
@@ -453,19 +497,39 @@ select_inner_spots <- function(df,
     return(NULL)
   }
 
-  # Count border spots based on region parameter
-  if (region == "inner") {
+  # Filter border_df based on mode parameter
+  if (mode == "inner") {
+    border_df_filtered <- border_df[border_df$mode == "inner", ]
+  } else if (mode == "outer") {
+    border_df_filtered <- border_df[border_df$mode == "outer", ]
+  } else {
+    # Both: keep both inner and outer
+    border_df_filtered <- border_df[border_df$mode %in% c("inner", "outer"), ]
+  }
+  
+  # Extract mode value from border_df for reference (should be consistent now)
+  pair_border_df <- border_df_filtered[(border_df_filtered$cluster == cluster & border_df_filtered$interface == interface) |
+                               (border_df_filtered$cluster == interface & border_df_filtered$interface == cluster), ]
+  
+  if (nrow(pair_border_df) == 0) {
+    warn <- paste0("No border spots found for pair (", cluster, ", ", interface, ") with mode='", mode, "'. Returning NULL.")
+    warning(warn)
+    return(NULL)
+  }
+
+  # Count border spots based on mode parameter
+  if (mode == "inner") {
     # Inner: cluster -> interface only
-    idx_count <- (border_df$cluster == cluster & border_df$interface == interface)
+    idx_count <- (border_df_filtered$cluster == cluster & border_df_filtered$interface == interface)
     border_count <- sum(idx_count)
-  } else if (region == "outer") {
+  } else if (mode == "outer") {
     # Outer: interface -> cluster only (reverse direction)
-    idx_count <- (border_df$cluster == interface & border_df$interface == cluster)
+    idx_count <- (border_df_filtered$cluster == interface & border_df_filtered$interface == cluster)
     border_count <- sum(idx_count)
   } else {
     # Both: cluster -> interface AND interface -> cluster
-    idx_inner <- (border_df$cluster == cluster & border_df$interface == interface)
-    idx_outer <- (border_df$cluster == interface & border_df$interface == cluster)
+    idx_inner <- (border_df_filtered$cluster == cluster & border_df_filtered$interface == interface)
+    idx_outer <- (border_df_filtered$cluster == interface & border_df_filtered$interface == cluster)
     border_count <- sum(idx_inner) + sum(idx_outer)
   }
 
@@ -480,11 +544,12 @@ select_inner_spots <- function(df,
   idx_inner <- !(all_from$spot_id %in% border_spot_ids)
   inner_candidates <- all_from[idx_inner, ]
 
-  n_inner <- nrow(inner_candidates)
+  n_inner <- nrow(inner_candidates) 
 
   # If not enough inner spots, return all with warning
   if (n_inner < border_count) {
-    warn <- paste0("Not enough inner spots. Requested: ", border_count,
+    warn <- paste0("Not enough inner spots for pair (cluster=", cluster, ", interface=", interface, 
+                   ", mode=", mode, "). Requested: ", border_count,
                    ", Available: ", n_inner, ". Returning all available.")
     warning(warn)
     sample_n <- n_inner
@@ -502,8 +567,12 @@ select_inner_spots <- function(df,
 
   out$interface <- interface
   out$is_inner <- TRUE
-
-  out$region <- region
+  out$mode <- mode
+  
+  # Reorder columns to put mode at the end
+  out <- out |>
+    dplyr::select(-mode, mode)
+  
   out
 }
 

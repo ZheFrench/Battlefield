@@ -56,7 +56,23 @@ library(pals)
 library(grid)
 library(patchwork)
 ```
+# Introduction  
 
+  `Battlefield` is a **Swiss-army toolkit designed to define
+  and extract spatial spots from specific regions
+  in spatial transcriptomics data.**
+  </br></br>
+  It provides low-level, modular utilities to delineate
+  spatial regions of interest,  
+  including **interfaces between clusters**, **intra-cluster layers**, and  
+  **inter-cluster trajectories**.
+  </br></br>
+  These utilities are intended to be reused and composed within higher-level  
+  analytical workflows and packages.
+  </br></br>
+  `Battlefield` supports sequencing-based spatial transcriptomics platforms such as  
+  **10x Genomics Visium**, across multiple resolutions, including  
+  Visium HD (binned).</br></br>
 
 # What is it for?  
 
@@ -73,14 +89,28 @@ the study of spatial organization under different biological contexts:
 * **Inter-cluster trajectories**  — model spatial transitions 
    across multiple clusters.
 
+# Starting point
+
+We start from a SpatialExperiment object that contains (i) 
+spatial coordinates for each spot and (ii) a precomputed clustering
+stored in colData().
+Battlefield operates on a simple spot-level table, 
+so we first export a data.frame with four columns:
+* spot_id: spot/barcode identifier (colnames(spe))
+* x, y: spatial coordinates (spatialCoords(spe))
+* cluster: cluster label provided by the user (a column in colData(spe))
+Because the cluster annotation can have different names
+depending on the workflow (e.g., cluster, 
+seurat_clusters, BayesSpace, etc.), the user can specify
+which colData() column should be used
 
 ## Interfaces between clusters
 
 Battlefield allows you to identify and extract **spatial interfaces** between clusters 
 (also known as `invasive margins`, or `niche boundaries`). Here we demonstrate how to:
 
-1. Detect interfaces between two specific clusters (inside/outside)
-2. Identify multi-interface spots (junction points)
+1. Detect interfaces between two specific clusters (inside/outside region)
+2. Identify multi-interface spots (belonging to several interfaces)
 3. Select all interfaces at once
 3. Detect associated inner control spots
 
