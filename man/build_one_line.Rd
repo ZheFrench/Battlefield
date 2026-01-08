@@ -24,16 +24,16 @@ segment `<= max_dist` are kept.}
 }
 \value{
 A data frame of selected spots (subset of `df_rest`) ordered along the
-segment (in increasing `t`). The output includes the extra columns added by
-`spots_near_segment()` (typically `dist_to_seg` and `t`).
+segment (in increasing `pos_on_seg`). The output includes the extra columns added by
+`build_one_trajectory()` (typically `dist_to_seg` and `pos_on_seg`).
 }
 \description{
 Selects spots near the segment defined by endpoints `A` and `B` using
-`spots_near_segment()`, then orders the selected spots by their projection
-parameter `t` (from `A` to `B`). The result is returned as a data frame.
+`build_one_trajectory()`, then orders the selected spots by their projection
+parameter (from `A` to `B`). The result is returned as a data frame.
 }
 \details{
-This function is a thin wrapper around `spots_near_segment()` that returns
+This function is a thin wrapper around `build_one_trajectory()` that returns
 only the ordered `selected` data frame (and not the segment metadata).
 
 It uses the base R pipe `|>` and `dplyr::arrange()`.

@@ -16,7 +16,7 @@
 #' \describe{
 #'   \item{cluster}{Source cluster label (character).}
 #'   \item{interface}{Target cluster label (character).}
-#'   \item{directed_pair}{Directed pair label, e.g. `"A-B"`.
+#'   \item{directed_pair}{Directed pair label, e.g. "A-B".}
 #' }
 #' If fewer than 2 unique (non-NA) clusters are present, returns an empty data.frame
 #' with the same columns.
@@ -319,11 +319,11 @@ build_all_borders <- function(df,
   out
 }
 
-#' Build inner spots for all oriented cluster pairs
+#' Build core spots for all oriented cluster pairs
 #'
 #' This function iterates over all **ordered** cluster pairs (A -> B) and returns
-#' a single data.frame containing the inner (control) spots for each pair, as computed
-#' by [select_inner_spots()].
+#' a single data.frame containing the core (control) spots for each pair, as computed
+#' by [select_core_spots()].
 #'
 #' If `pairs` is not provided, it is generated from the cluster labels using
 #' [directed_cluster_interface_pairs()].
@@ -340,12 +340,12 @@ build_all_borders <- function(df,
 #' @param cluster_col Character. Name of the column containing cluster labels.
 #'   Default is `"cluster"`.
 #'
-#' @return A data.frame produced by row-binding the result of inner spot selection for
+#' @return A data.frame produced by row-binding the result of core spot selection for
 #' each oriented pair. Typically contains the original columns of `df` plus annotation
-#' columns (is_inner, interface, mode) from the inner spot selector.
+#' columns (is_core, interface, mode) from the core spot selector.
 #'
 #' **Note on mode column**: The `mode` column in the returned data.frame reflects which
-#' border modes were used for each inner spot selection: "inner", "outer", or "both".
+#' border modes were used for each core spot selection: "inner", "outer", or "both".
 #' This differs from `build_all_borders()` which only returns "inner" or "outer".
 #'
 #' @examples
@@ -357,12 +357,12 @@ build_all_borders <- function(df,
 #'   cluster = sample(c("A","B","C"), 200, replace = TRUE)
 #' )
 #' all_borders <- build_all_borders(df_ex, k = 6)
-#' all_inners <- build_all_inners(df_ex, all_borders, mode = "both")
-#' head(all_inners)
+#' all_cores <- build_all_cores(df_ex, all_borders, mode = "both")
+#' head(all_cores)
 #'
 #' @importFrom dplyr bind_rows
 #' @export
-build_all_inners <- function(df,
+build_all_cores <- function(df,
                              border_df,
                              mode = "both",
                              pairs = NULL,
@@ -401,7 +401,7 @@ build_all_inners <- function(df,
     a <- pairs$cluster[i]
     b <- pairs$interface[i]
 
-    select_inner_spots(
+    select_core_spots(
       df,
       border_df = border_df,
       cluster = a,
@@ -416,9 +416,9 @@ build_all_inners <- function(df,
   dplyr::bind_rows(res)
 }
 
-#' Select inner (non-interface) spots for a directed pair
+#' Select core (non-interface) spots for a directed pair
 #'
-#' This function selects inner (non-interface) spots from a cluster that match
+#' This function selects core (non-interface) spots from a cluster that match
 #' the count of border spots for a specific directed pair. The `mode` value is 
 #' read from the `border_df` dataframe for this cluster/interface pair. If multiple 
 #' mode values exist in border_df for the pair, a warning is printed and the first value is used.
@@ -448,27 +448,27 @@ build_all_inners <- function(df,
 #' \enumerate{
 #'   \item Counts directed border spots based on `mode` parameter.
 #'   \item Gets all spots in `cluster` that are not at any border.
-#'   \item Randomly samples the same number of inner spots as the border count.
-#'   \item Returns these sampled inner spots with `inner_cluster` annotation.
+#'   \item Randomly samples the same number of core spots as the border count.
+#'   \item Returns these sampled core spots with `interface` annotation.
 #' }
 #'
-#' If not enough inner spots exist to match the border count, all available inner
+#' If not enough core spots exist to match the border count, all available core
 #' spots are returned with a warning.
 #'
-#' @return A data.frame of sampled inner spots from `cluster`, with all columns from `df`
+#' @return A data.frame of sampled core spots from `cluster`, with all columns from `df`
 #'   plus `interface` annotation.
 #'
 #' @examples
 #' # Assuming df and big_border_df from build_all_borders(df, k=4)
 #' # where big_border_df contains a mode column indicating the selection mode
 #' # Inner direction (1→2):
-#' # inners_inner <- select_inner_spots(df, big_border_df, "1", "2")
+#' # cores_inner <- select_core_spots(df, big_border_df, "1", "2")
 #' # Both directions (1→2 AND 2→1):
-#' # inners_both <- select_inner_spots(df, big_border_df, "1", "2")
+#' # cores_both <- select_core_spots(df, big_border_df, "1", "2")
 #'
 #' @importFrom dplyr filter mutate slice_sample pull
 #' @export
-select_inner_spots <- function(df,
+select_core_spots <- function(df,
                                border_df,
                                cluster,
                                interface,
@@ -540,33 +540,33 @@ select_inner_spots <- function(df,
   # Get all border spot IDs
   border_spot_ids <- unique(border_df$spot_id)
 
-  # Keep only inner spots (not in border)
-  idx_inner <- !(all_from$spot_id %in% border_spot_ids)
-  inner_candidates <- all_from[idx_inner, ]
+  # Keep only core spots (not in border)
+  idx_core <- !(all_from$spot_id %in% border_spot_ids)
+  core_candidates <- all_from[idx_core, ]
 
-  n_inner <- nrow(inner_candidates) 
+  n_core <- nrow(core_candidates)
 
-  # If not enough inner spots, return all with warning
-  if (n_inner < border_count) {
-    warn <- paste0("Not enough inner spots for pair (cluster=", cluster, ", interface=", interface, 
+  # If not enough core spots, return all with message
+  if (n_core < border_count) {
+    msg <- paste0("Not enough core spots for pair (cluster=", cluster, ", interface=", interface,
                    ", mode=", mode, "). Requested: ", border_count,
-                   ", Available: ", n_inner, ". Returning all available.")
-    warning(warn)
-    sample_n <- n_inner
+                   ", Available: ", n_core, ". Returning all available.")
+    message(msg)
+    sample_n <- n_core
   } else {
     sample_n <- border_count
   }
 
   # Sample and return
   if (sample_n > 0) {
-    idx_sample <- sample(seq_len(nrow(inner_candidates)), size = sample_n, replace = FALSE)
-    out <- inner_candidates[idx_sample, ]
+    idx_sample <- sample(seq_len(nrow(core_candidates)), size = sample_n, replace = FALSE)
+    out <- core_candidates[idx_sample, ]
   } else {
-    out <- inner_candidates[0, ]
+    out <- core_candidates[0, ]
   }
 
   out$interface <- interface
-  out$is_inner <- TRUE
+  out$is_core <- TRUE
   out$mode <- mode
   
   # Reorder columns to put mode at the end

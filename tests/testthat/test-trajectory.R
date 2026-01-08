@@ -69,7 +69,7 @@ testthat::test_that("point_segment_distance_vec handles degenerate segment (A==B
   testthat::expect_equal(d, c(sqrt((0 - 1)^2 + (4 - 2)^2), sqrt((3 - 1)^2 + (0 - 2)^2)))
 })
 
-testthat::test_that("spots_near_segment returns selected + segment_df and orders by t", {
+testthat::test_that("build_one_trajectory returns dataframe ordered by pos_on_seg", {
   df <- data.frame(
     x = 0:4,
     y = c(0, 1, 1, 2, 4),
@@ -78,31 +78,25 @@ testthat::test_that("spots_near_segment returns selected + segment_df and orders
   p0 <- data.frame(x = 0, y = 0)
   p1 <- data.frame(x = 4, y = 0)
 
-  res <- spots_near_segment(df, p0, p1, top_n = 3)
+  res <- build_one_trajectory(df, p0, p1, top_n = 3)
 
-  testthat::expect_true(is.list(res))
-  testthat::expect_true(all(c("selected", "segment_df") %in% names(res)))
+  testthat::expect_true(is.data.frame(res))
+  testthat::expect_true(all(c("dist_to_seg", "pos_on_seg") %in% names(res)))
 
-  sel <- res$selected
-  testthat::expect_true(all(c("dist_to_seg", "t") %in% names(sel)))
-
-  # ordered by t
-  testthat::expect_true(all(diff(sel$t) >= 0))
+  # ordered by pos_on_seg
+  testthat::expect_true(all(diff(res$pos_on_seg) >= 0))
 
   # top_n = 3
-  testthat::expect_lte(nrow(sel), 3)
-
-  # segment_df endpoints correct
-  testthat::expect_equal(res$segment_df, data.frame(x = c(0, 4), y = c(0, 0)))
+  testthat::expect_lte(nrow(res), 3)
 })
 
-testthat::test_that("spots_near_segment errors on zero-length segment", {
+testthat::test_that("build_one_trajectory errors on zero-length segment", {
   df <- data.frame(x = 1:3, y = 1:3)
   p0 <- data.frame(x = 0, y = 0)
   p1 <- data.frame(x = 0, y = 0)
 
   testthat::expect_error(
-    spots_near_segment(df, p0, p1),
+    build_one_trajectory(df, p0, p1),
     "zero-length segment|coincide|Invalid segment"
   )
 })
@@ -201,7 +195,7 @@ testthat::test_that("build_one_line returns spots ordered by t", {
   testthat::expect_true(all(diff(sel$t) >= 0))
 })
 
-testthat::test_that("build_similar_trajectories returns expected structure and line_ids", {
+testthat::test_that("build_similar_trajectories returns expected structure and trajectory_ids", {
   set.seed(42)
 
   df <- data.frame(
@@ -215,29 +209,25 @@ testthat::test_that("build_similar_trajectories returns expected structure and l
 
   out <- build_similar_trajectories(df, A, B, top_n = 5, n_extra = 1, side = "both")
 
-  testthat::expect_true(is.list(out))
-  testthat::expect_true(all(c("lines", "spacing", "lane_width") %in% names(out)))
-  testthat::expect_true(is.data.frame(out$lines))
-  testthat::expect_true(all(c("line_id", "offset") %in% names(out$lines)))
+  testthat::expect_true(is.data.frame(out))
+  testthat::expect_true(all(c("trajectory_id", "offset") %in% names(out)))
 
-  ids <- unique(out$lines$line_id)
-  # should contain center and up to one left/right line
-  testthat::expect_true("center" %in% ids)
+  ids <- unique(out$trajectory_id)
+  # should contain main and up to one left/right line
+  testthat::expect_true("main" %in% ids)
   testthat::expect_true(any(grepl("^left_1$", ids)) || any(grepl("^right_1$", ids)) || length(ids) >= 1)
 })
 
-testthat::test_that("filter_out_by_endpoint_clusters keeps only matching line_ids", {
-  out <- list(
-    lines = data.frame(
-      line_id = c("L1","L1","L2","L2"),
-      t       = c(0.0, 1.0, 0.0, 1.0),
-      cluster = c("A", "B", "A", "C"),
-      x = 1:4, y = 1:4
-    )
+testthat::test_that("filter_out_by_endpoint_clusters keeps only matching trajectory_ids", {
+  out <- data.frame(
+    trajectory_id = c("L1","L1","L2","L2"),
+    pos_on_seg = c(0.0, 1.0, 0.0, 1.0),
+    cluster = c("A", "B", "A", "C"),
+    x = 1:4, y = 1:4
   )
 
   res <- filter_out_by_endpoint_clusters(out, allowed_start_clusters = "A", allowed_end_clusters = "B")
 
-  testthat::expect_true(all(res$lines$line_id %in% "L1"))
-  testthat::expect_false(any(res$lines$line_id %in% "L2"))
+  testthat::expect_true(all(res$trajectory_id %in% "L1"))
+  testthat::expect_false(any(res$trajectory_id %in% "L2"))
 })

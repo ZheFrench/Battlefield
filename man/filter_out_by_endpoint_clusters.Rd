@@ -11,9 +11,8 @@ filter_out_by_endpoint_clusters(
 )
 }
 \arguments{
-\item{out}{A list containing at least an element `lines`, typically the output
-of `build_parallel_lines()`. `out$lines` must include columns `line_id`,
-`cluster`, and `t`.}
+\item{out}{A data frame containing selected spots with columns `trajectory_id`,
+`cluster`, and `pos_on_seg`, typically the output of `build_similar_trajectories()`.}
 
 \item{allowed_start_clusters}{Vector of allowed cluster labels for the start
 endpoint.}
@@ -22,23 +21,23 @@ endpoint.}
 endpoint.}
 }
 \value{
-The same object as `out`, with `out$lines` filtered to keep only the
+The same data frame as `out`, filtered to keep only the
 lines matching the allowed endpoint cluster constraints.
 }
 \description{
-Filters `out$lines` by checking the cluster labels at each line's endpoints.
-For every `line_id`, the start endpoint is defined as the spot with the
-smallest projection parameter `t`, and the end endpoint as the spot with the
-largest `t`. Only lines whose start cluster is in `allowed_start_clusters`
+Filters trajectory data by checking the cluster labels at each trajectory's endpoints.
+For every `trajectory_id`, the start endpoint is defined as the spot with the
+smallest projection parameter `pos_on_seg`, and the end endpoint as the spot with the
+largest `pos_on_seg`. Only trajectories whose start cluster is in `allowed_start_clusters`
 *and* whose end cluster is in `allowed_end_clusters` are kept.
 }
 \details{
-The endpoint clusters are computed per `line_id`:
+The endpoint clusters are computed per `trajectory_id`:
 \itemize{
-  \item `start_cluster = cluster[which.min(t)]`
-  \item `end_cluster   = cluster[which.max(t)]`
+  \item `start_cluster = cluster[which.min(pos_on_seg)]`
+  \item `end_cluster   = cluster[which.max(pos_on_seg)]`
 }
-If multiple spots share the same minimum/maximum `t`, the first is taken (as
+If multiple spots share the same minimum/maximum `pos_on_seg`, the first is taken (as
 per `which.min()` / `which.max()`).
 
 This function uses `dplyr` (`group_by`, `summarise`, `filter`, `pull`) and the
@@ -46,16 +45,14 @@ base R pipe `|>`.
 }
 \examples{
 # Minimal example
-out <- list(
-  lines = data.frame(
-    line_id  = c("L1","L1","L2","L2"),
-    t        = c(0.0, 1.0, 0.0, 1.0),
-    cluster  = c("A", "B", "A", "C"),
-    x = 1:4, y = 1:4
-  )
+out <- data.frame(
+  trajectory_id = c("L1","L1","L2","L2"),
+  pos_on_seg = c(0.0, 1.0, 0.0, 1.0),
+  cluster  = c("A", "B", "A", "C"),
+  x = 1:4, y = 1:4
 )
 
-# Keep only lines starting in A and ending in B
-filter_out_by_endpoint_clusters(out, allowed_start_clusters = "A", allowed_end_clusters = "B")$lines
+# Keep only trajectories starting in A and ending in B
+filter_out_by_endpoint_clusters(out, allowed_start_clusters = "A", allowed_end_clusters = "B")
 
 }

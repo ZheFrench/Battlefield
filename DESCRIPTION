@@ -23,7 +23,8 @@ biocViews: Sequencing, Software, Transcriptomics,  Spatial
 Imports:
     stats,
     RANN,
-    dplyr
+    dplyr,
+    SpatialExperiment
 Suggests: 
     knitr,
     markdown,

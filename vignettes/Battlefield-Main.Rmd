@@ -255,7 +255,7 @@ all_borders_visium <- build_all_borders(df_visium, k = 6, pairs = pairs_visium)
 
 # Select inner spots for cluster A
 set.seed(42)
-inner_A <- select_inner_spots(df_visium, all_borders_visium, 
+inner_A <- select_core_spots(df_visium, all_borders_visium, 
                                cluster = cluster_A, interface = cluster_B, 
                                region = "both")
 
@@ -323,7 +323,7 @@ A <- centroids[centroids$cluster == start_cluster, c("x","y")]
 B <- centroids[centroids$cluster == end_cluster,   c("x","y")]
 
 
-(res <- spots_near_segment(df, A, B, top_n = top_n, max_dist = NULL))
+(res <- build_one_trajectory(df, A, B, top_n = top_n, max_dist = NULL))
 
 ggplot(test, aes(x, y)) +
   geom_point(aes(color = expr),size = 1.6, alpha = 0.85) +
@@ -332,12 +332,12 @@ ggplot(test, aes(x, y)) +
   high = "red"
   ) +
   geom_path(
-  data = res$selected,
+  data = res,
   aes(x = x, y = y),
   color = "green", linewidth = 1.1
   ) +
   geom_path(
-  data = res$selected,
+  data = res,
   aes(x = x, y = y),
   color = "black", linewidth = 1.1,
   arrow = grid::arrow(type = "closed",
@@ -357,7 +357,7 @@ ggplot(test, aes(x, y)) +
    low = "blue",
    high = "red"
    ) +
-   geom_path(data=out$lines, aes(x=x, y=y, group=line_id), 
+   geom_path(data=out, aes(x=x, y=y, group=trajectory_id), 
    inherit.aes = FALSE, color="green",linewidth=1,
    arrow = grid::arrow(type = "closed", length = grid::unit(3, "mm"))) +
    geom_point(data = out$lines, aes(x, y), 
@@ -369,7 +369,7 @@ ggplot(test, aes(x, y)) +
 meta <- out$lines |>
   transmute(
     spot_id = as.character(spot_id),
-    trajectory = as.character(line_id),
+    trajectory = as.character(trajectory_id),
     progress = as.numeric(t)
   ) |>
   group_by(trajectory) |>
