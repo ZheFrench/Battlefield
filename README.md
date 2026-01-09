@@ -5,9 +5,11 @@
 
 ## Overview
 
-**Battlefield**  is a Swiss-army toolkit originally developed to define and extract spatial spots from specific tissue regions—such as front regions, niche borders, invasive margins, and cluster interfaces—using spatial transcriptomics data or clustered tissue maps.
+**Battlefield**  is a Swiss-army toolkit originally developed to define and extract spatial spots from specific tissue regions—such as front regions, niche borders, invasive margins, and cluster interfaces—using spatial transcriptomics data or clustered tissue maps.  
 
-It has since been extended to support trajectory selection and layer inspection, and now provides a collection of low-level utilities for spatial transcriptomics analysis. These utilities are primarily intended to be reused within higher-level analytical packages.
+<img   src="man/figures/workflow.png" align="center" width="100%" height="100%" />
+
+It has since been extended to support trajectory selection and layer inspection, and now provides a collection of low-level utilities for spatial transcriptomics analysis. These utilities are primarily intended to be reused within higher-level analytical packages.  
 
 Battlefield enables margin/trajectory/layer-aware spot selecIt is designed to work with sequencing-based platforms
 such as Visium (classic 6.5 µm or 11 µm resolutions, and Visium HD).tion, allowing users to construct consistent comparison groups (e.g. front vs core or ordered spots along a trajectory).  
@@ -24,7 +26,6 @@ A number of visualization and data summary functions are proposed to
 help defining spatial regions of interest on the top of previously defined 
 clusters.
 
-<img   src="man/figures/workflow.png" align="center" width="85%" height="85%" />
   
 
 ## Installation
