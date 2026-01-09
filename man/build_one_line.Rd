@@ -23,8 +23,10 @@ If `NULL`, no top-N truncation is applied.}
 segment `<= max_dist` are kept.}
 }
 \value{
-A data frame of selected spots (subset of `df_rest`) ordered along the
-segment (in increasing `pos_on_seg`). The output includes the extra columns added by
+A data frame of selected spots (subset of `df_rest`) ordered along
+the
+segment (in increasing `pos_on_seg`). The output includes the extra columns
+added by
 `build_one_trajectory()` (typically `dist_to_seg` and `pos_on_seg`).
 }
 \description{

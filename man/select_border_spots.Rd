@@ -16,27 +16,32 @@ select_border_spots(
 )
 }
 \arguments{
-\item{df}{A data.frame containing at least the coordinate columns and a cluster label column.}
+\item{df}{A data.frame containing at least the coordinate columns and a
+cluster label column.}
 
-\item{cluster}{Cluster label for the source cluster (A). Spots in this cluster
-are tested for adjacency to `interface`.}
+\item{cluster}{Cluster label for the source cluster (A). Spots in this
+cluster
+  are tested for adjacency to `interface`.}
 
 \item{interface}{Cluster label for the target cluster (B).}
 
 \item{mode}{Character. One of "inner", "outer", or "both".
-- "inner": returns border spots from cluster → interface (default).
-- "outer": returns border spots from interface → cluster (swaps cluster/interface).
-- "both": returns border spots from both directions, row-bound together.
-Default is "inner".}
+  - "inner": returns border spots from cluster → interface (default).
+- "outer": returns border spots from interface → cluster (swaps
+cluster/interface).
+  - "both": returns border spots from both directions, row-bound together.
+  Default is "inner".}
 
 \item{k}{Integer. Number of nearest neighbors to consider (excluding self).
 Internally uses `k + 1` to include self then removes it. Default is 7.}
 
-\item{max_dist}{Optional numeric. Maximum Euclidean distance for a neighbor to be
-considered (distance cutoff). If `NULL`, no distance filtering is applied.}
+\item{max_dist}{Optional numeric. Maximum Euclidean distance for a neighbor
+to be
+  considered (distance cutoff). If `NULL`, no distance filtering is applied.}
 
-\item{coord_cols}{Character vector of length 2 giving the coordinate column names.
-Default is `c("x","y")`.}
+\item{coord_cols}{Character vector of length 2 giving the coordinate column
+names.
+  Default is `c("x","y")`.}
 
 \item{cluster_col}{Character. Name of the column containing cluster labels.
 Default is `"cluster"`.}
@@ -49,10 +54,12 @@ is_border, is_border_multiple, other_adjacent_borders.
 \description{
 This function identifies **directed interface spots**: spots belonging to
 `cluster` (A) that have at least one neighbor in `interface` (B) within
-a k-nearest-neighbors neighborhood (optionally constrained by a distance cutoff).
+a k-nearest-neighbors neighborhood (optionally constrained by a distance
+cutoff).
 }
 \details{
-In addition, it flags spots that also touch **other clusters** (i.e., junction
+In addition, it flags spots that also touch **other clusters** (i.e.,
+junction
 / multi-interface spots) and reports which other clusters are touched.
 
 
@@ -60,18 +67,25 @@ Steps:
 \enumerate{
   \item Builds a kNN neighborhood for each spot in `cluster`.
   \item Optionally removes neighbors farther than `max_dist`.
-  \item Marks a spot as a border spot if it has at least one neighbor in `interface`.
-  \item Flags a spot as multi-interface if it also has a neighbor belonging to a
+\item Marks a spot as a border spot if it has at least one neighbor in
+`interface`.
+\item Flags a spot as multi-interface if it also has a neighbor belonging to
+a
   cluster different from `cluster` and `interface`.
 }
 
-**Note on mode column**: The `mode` column in the returned data.frame will always contain
-either "inner" or "outer", even if the `mode` parameter is set to "both". When `mode="both"`,
-the function internally calls the selection algorithm twice (once for cluster→interface and
-once for interface→cluster), then row-binds the results, so each row is labeled with its
+**Note on mode column**: The `mode` column in the returned data.frame will
+always contain
+either "inner" or "outer", even if the `mode` parameter is set to "both".
+When `mode="both"`,
+the function internally calls the selection algorithm twice (once for
+cluster→interface and
+once for interface→cluster), then row-binds the results, so each row is
+labeled with its
 actual direction.
 
-The returned data.frame contains only spots from `cluster` that touch `interface`,
+The returned data.frame contains only spots from `cluster` that touch
+`interface`,
 with columns:
 \describe{
   \item{spot_id}{Spot identifier.}
@@ -79,11 +93,14 @@ with columns:
   \item{y}{Y coordinate.}
   \item{cluster}{Cluster label (same as `cluster`).}
   \item{interface}{The value of `interface`.}
-  \item{directed_pair}{Interface label combining cluster and `interface`, e.g. `"A-B"`.}
-  \item{undirected_pair}{Undirected pair label (both directions), e.g. `"A-B / B-A"`.}
+\item{directed_pair}{Interface label combining cluster and `interface`, e.g.
+`"A-B"`.}
+\item{undirected_pair}{Undirected pair label (both directions), e.g. `"A-B /
+B-A"`.}
   \item{is_border}{Always `TRUE` for returned rows (kept for clarity).}
   \item{is_border_multiple}{`TRUE` if the spot also touches other clusters.}
-  \item{other_adjacent_borders}{Comma-separated list of other clusters touched, or `NA`.}
+\item{other_adjacent_borders}{Comma-separated list of other clusters touched,
+or `NA`.}
   \item{mode}{The mode used for selection: "inner", "outer", or "both".}
 }
 }

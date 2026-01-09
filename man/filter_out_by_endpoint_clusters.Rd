@@ -11,8 +11,10 @@ filter_out_by_endpoint_clusters(
 )
 }
 \arguments{
-\item{out}{A data frame containing selected spots with columns `trajectory_id`,
-`cluster`, and `pos_on_seg`, typically the output of `build_similar_trajectories()`.}
+\item{out}{A data frame containing selected spots with columns
+`trajectory_id`,
+`cluster`, and `pos_on_seg`, typically the output of
+`build_similar_trajectories()`.}
 
 \item{allowed_start_clusters}{Vector of allowed cluster labels for the start
 endpoint.}
@@ -25,10 +27,12 @@ The same data frame as `out`, filtered to keep only the
 lines matching the allowed endpoint cluster constraints.
 }
 \description{
-Filters trajectory data by checking the cluster labels at each trajectory's endpoints.
+Filters trajectory data by checking the cluster labels at each trajectory's
+endpoints.
 For every `trajectory_id`, the start endpoint is defined as the spot with the
-smallest projection parameter `pos_on_seg`, and the end endpoint as the spot with the
-largest `pos_on_seg`. Only trajectories whose start cluster is in `allowed_start_clusters`
+smallest projection parameter `pos_on_seg`, and the end endpoint as the spot
+with the largest `pos_on_seg`. Only trajectories whose start cluster is in
+`allowed_start_clusters`
 *and* whose end cluster is in `allowed_end_clusters` are kept.
 }
 \details{
@@ -37,11 +41,11 @@ The endpoint clusters are computed per `trajectory_id`:
   \item `start_cluster = cluster[which.min(pos_on_seg)]`
   \item `end_cluster   = cluster[which.max(pos_on_seg)]`
 }
-If multiple spots share the same minimum/maximum `pos_on_seg`, the first is taken (as
-per `which.min()` / `which.max()`).
+If multiple spots share the same minimum/maximum `pos_on_seg`, the first is
+taken (as per `which.min()` / `which.max()`).
 
-This function uses `dplyr` (`group_by`, `summarise`, `filter`, `pull`) and the
-base R pipe `|>`.
+This function uses `dplyr` (`group_by`, `summarise`, `filter`, `pull`) and
+the  base R pipe `|>`.
 }
 \examples{
 # Minimal example
@@ -53,6 +57,7 @@ out <- data.frame(
 )
 
 # Keep only trajectories starting in A and ending in B
-filter_out_by_endpoint_clusters(out, allowed_start_clusters = "A", allowed_end_clusters = "B")
+filter_out_by_endpoint_clusters(out, allowed_start_clusters = "A",
+allowed_end_clusters = "B")
 
 }

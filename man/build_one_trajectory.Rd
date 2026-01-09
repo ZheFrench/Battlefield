@@ -26,7 +26,8 @@ segment `<= max_dist` are kept.}
 A data frame containing the selected spots, with two extra columns:
 \describe{
   \item{dist_to_seg}{Euclidean distance from the spot to the segment.}
-  \item{pos_on_seg}{Clamped projection parameter in `[0, 1]` indicating position
+\item{pos_on_seg}{Clamped projection parameter in `[0, 1]` indicating
+position
     along the segment (0 at `p0`, 1 at `p1`).}
 }
 The rows are ordered by `pos_on_seg` (i.e., from `p0` to `p1`).
@@ -34,8 +35,10 @@ The rows are ordered by `pos_on_seg` (i.e., from `p0` to `p1`).
 \description{
 Computes the distance from each spot in `df` to the segment `[p0, p1]`,
 optionally filters by a maximum distance, keeps the `top_n` closest spots,
-and finally orders the retained spots by their projection position `pos_on_seg`
-along the segment (from `p0` to `p1`). This is the foundation function for building
+and finally orders the retained spots by their projection position
+`pos_on_seg`
+along the segment (from `p0` to `p1`). This is the foundation function for
+building
 trajectory lines across spatial spots.
 }
 \details{

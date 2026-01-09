@@ -7,7 +7,8 @@
 add_layers_to_spe(spe, layer = NULL, erase = FALSE)
 }
 \arguments{
-\item{spe}{A SpatialExperiment object from which the layer dataframes were derived.}
+\item{spe}{A SpatialExperiment object from which the layer dataframes were
+derived.}
 
 \item{layer}{A data.frame of layer classifications. Can be output from either
 [create_cluster_layers()] or [create_all_layers()].

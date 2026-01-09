@@ -13,29 +13,32 @@ multiple rows, only the first row is used.}
 \item{p1}{A `data.frame` with at least columns `x` and `y`. If it contains
 multiple rows, only the first row is used.}
 
-\item{snap}{Logical; if `TRUE` (default), `p0` and `p1` coordinates are rounded
+\item{snap}{Logical; if `TRUE` (default), `p0` and `p1` coordinates are
+rounded
 to the nearest integer before running the algorithm. If `FALSE`, coordinates
-are truncated via `as.integer()`.}
+  are truncated via `as.integer()`.}
 }
 \value{
-A `data.frame` with columns `x` and `y` giving the integer grid points
-visited by the line, including both endpoints, in traversal order from `p0`
+A `data.frame` with columns `x` and `y` giving the integer grid
+points visited by the line, including both endpoints, in traversal order from `p0`
 to `p1`.
 }
 \description{
-Generates integer grid coordinates along the line segment connecting two points
+Generates integer grid coordinates along the line segment connecting two
+points
 using Bresenham's line algorithm.
 }
 \details{
 The function:
 \itemize{
-  \item Validates inputs are data frames with `x`/`y` columns and at least one row.
-  \item Converts endpoints to integer coordinates (optionally rounding first).
+\item Validates inputs are data frames with `x`/`y` columns and at least one
+row.
+\item Converts endpoints to integer coordinates (optionally rounding first).
   \item Applies the classic Bresenham algorithm to enumerate grid points.
 }
 
-This is useful for tracing discrete paths on an integer lattice (e.g., pixels,
-tile grids, spatial transcriptomics spot grids).
+This is useful for tracing discrete paths on an integer lattice (e.g.,
+pixels, tile grids, spatial transcriptomics spot grids).
 }
 \examples{
 p0 <- data.frame(x = 1.2, y = 2.7)

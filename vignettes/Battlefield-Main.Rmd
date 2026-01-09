@@ -3,8 +3,8 @@ title: "Battlefield"
 author:
   - name: Jean-Philippe Villemin
     affiliation:
-    - Institut de Recherche en Cancérologie de Montpellier,
-     Inserm, Montpellier, France 
+      - Institut de Recherche en Cancérologie de Montpellier,
+        Inserm, Montpellier, France 
     email: jean-philippe.villemin@inserm.fr
 date: "`r format(Sys.Date(), '%m/%d/%Y')`"
 abstract: > 
@@ -26,14 +26,14 @@ abstract: >
   Battlefield package version: `r packageVersion("Battlefield")`
 output: 
   rmarkdown::html_vignette:
-      self_contained: true
-      toc: true
-      toc_depth: 4
-      highlight: pygments
-      fig_height: 3
-      fig_width: 3
-      fig_caption: no
-      code_folding: show
+    self_contained: true
+    toc: true
+    toc_depth: 4
+    highlight: pygments
+    fig_height: 3
+    fig_width: 3
+    fig_caption: no
+    code_folding: show
 package: Battlefield
 vignette: >
   %\VignetteIndexEntry{Battlefield-Main}
@@ -58,21 +58,21 @@ library(patchwork)
 ```
 # Introduction  
 
-  `Battlefield` is a **Swiss-army toolkit designed to define
-  and extract spatial spots from specific regions
-  in spatial transcriptomics data.**
-  </br></br>
-  It provides low-level, modular utilities to delineate
-  spatial regions of interest,  
-  including **interfaces between clusters**, **intra-cluster layers**, and  
-  **inter-cluster trajectories**.
-  </br></br>
-  These utilities are intended to be reused and composed within higher-level  
-  analytical workflows and packages.
-  </br></br>
-  `Battlefield` supports sequencing-based spatial transcriptomics platforms such as  
-  **10x Genomics Visium**, across multiple resolutions, including  
-  Visium HD (binned).</br></br>
+`Battlefield` is a **Swiss-army toolkit designed to define
+and extract spatial spots from specific regions
+in spatial transcriptomics data.**
+</br></br>
+It provides low-level, modular utilities to delineate
+spatial regions of interest,  
+including **interfaces between clusters**, **intra-cluster layers**, and  
+**inter-cluster trajectories**.
+</br></br>
+These utilities are intended to be reused and composed within higher-level  
+analytical workflows and packages.
+</br></br>
+`Battlefield` supports sequencing-based spatial transcriptomics platforms such as  
+**10x Genomics Visium**, across multiple resolutions, including  
+Visium HD (binned).</br></br>
 
 # What is it for?  
 
@@ -81,13 +81,13 @@ spatial transcriptomics spots from specific tissue regions, enabling
 the study of spatial organization under different biological contexts:
 
 * **Interfaces between clusters** — identify and analyze boundary 
-  regions where distinct tissue or cell populations interact.
-  
+regions where distinct tissue or cell populations interact.
+
 * **Intra-cluster layers** — characterize spatial layers
-  or gradients within a single cluster.
+or gradients within a single cluster.
 
 * **Inter-cluster trajectories**  — model spatial transitions 
-   across multiple clusters.
+across multiple clusters.
 
 # Starting point
 
@@ -102,21 +102,20 @@ so we first export a data.frame with four columns:
 Because the cluster annotation can have different names
 depending on the workflow (e.g., cluster, 
 seurat_clusters, BayesSpace, etc.), the user can specify
-which colData() column should be used
+which colData() column should be used.
 
 ## Interfaces between clusters
 
 Battlefield allows you to identify and extract **spatial interfaces** between clusters 
 (also known as `invasive margins`, or `niche boundaries`). Here we demonstrate how to:
 
-1. Detect interfaces between two specific clusters (inside/outside region)
+1. Detect interfaces between two specific clusters (inside/outside/both)
 2. Identify multi-interface spots (belonging to several interfaces)
 3. Select all interfaces at once
 3. Detect associated inner control spots
 
-We first load a simulated Visium dataset (square binned) on and then we process 
-another Visium Standard dataset (hexagonal grid) at
-lower resolution to illustrate the method.
+We  load a simulated Visium dataset (hexagonal grid) to illustrate 
+the different functionalities.
 
 ### Simulated Standard Visium -hexagonal grid
 ### Simulated VisiumHD -square grid
@@ -127,10 +126,10 @@ lower resolution to illustrate the method.
 data("visiumHD_16um_simulated_spe")
 
 df <- data.frame(
-  spot_id = colnames(visiumHD_16um_simulated_spe),
-  x = spatialCoords(visiumHD_16um_simulated_spe)[, 1],
-  y = spatialCoords(visiumHD_16um_simulated_spe)[, 2],
-  cluster = colData(visiumHD_16um_simulated_spe)$cluster
+spot_id = colnames(visiumHD_16um_simulated_spe),
+x = spatialCoords(visiumHD_16um_simulated_spe)[, 1],
+y = spatialCoords(visiumHD_16um_simulated_spe)[, 2],
+cluster = colData(visiumHD_16um_simulated_spe)$cluster
 )
 ```
 ```{r interfaces2}
@@ -150,42 +149,42 @@ border_in <- select_border_spots(df, cluster = 5, interface = 4, k = 4)
 knitr::kable(head(border_in))
 
 df_in <- df |>
-  mutate(is_border = spot_id %in% border_in$spot_id) |>
-  left_join(border_in |> select(spot_id, is_border_multiple),
+mutate(is_border = spot_id %in% border_in$spot_id) |>
+left_join(border_in |> select(spot_id, is_border_multiple),
             by = "spot_id") |>
-  mutate(is_border_multiple = coalesce(is_border_multiple, FALSE))
+mutate(is_border_multiple = coalesce(is_border_multiple, FALSE))
 
 # Plot interface 5 → 4
 p_in <- ggplot(df_in, aes(x, y, color = cluster)) +
-  geom_point(size = 1) +
-  geom_point(data = subset(df_in, is_border & !is_border_multiple),
-             color = "black", size = 2) +
-  geom_point(data = subset(df_in, is_border & is_border_multiple),
-             color = "red", size = 2) +
-  coord_equal() +
-  theme_minimal() +
-  labs(title = "Cluster: 5 → 4")
+geom_point(size = 1) +
+geom_point(data = subset(df_in, is_border & !is_border_multiple),
+            color = "black", size = 2) +
+geom_point(data = subset(df_in, is_border & is_border_multiple),
+            color = "red", size = 2) +
+coord_equal() +
+theme_minimal() +
+labs(title = "Cluster: 5 → 4")
 
 # Select reverse interface: cluster 4 → 5
 border_out <- select_border_spots(df, cluster = 4, interface = 5, k = 4)
 
 df_out <- df |>
-  mutate(is_border = spot_id %in% border_out$spot_id) |>
-  left_join(border_out |> select(spot_id, is_border_multiple),
+mutate(is_border = spot_id %in% border_out$spot_id) |>
+left_join(border_out |> select(spot_id, is_border_multiple),
             by = "spot_id") |>
-  mutate(is_border_multiple = coalesce(is_border_multiple, FALSE))
+mutate(is_border_multiple = coalesce(is_border_multiple, FALSE))
 
 
 # Plot interface 4 → 5
 p_out <- ggplot(df_out, aes(x, y, color = cluster)) +
-  geom_point(size = 1) +
-  geom_point(data = subset(df_out, is_border & !is_border_multiple),
-             color = "black", size = 2) +
-  geom_point(data = subset(df_out, is_border & is_border_multiple),
-             color = "red", size = 2) +
-  coord_equal() +
-  theme_minimal() +
-  labs(title = "Interface: 4 → 5")
+geom_point(size = 1) +
+geom_point(data = subset(df_out, is_border & !is_border_multiple),
+            color = "black", size = 2) +
+geom_point(data = subset(df_out, is_border & is_border_multiple),
+            color = "red", size = 2) +
+coord_equal() +
+theme_minimal() +
+labs(title = "Interface: 4 → 5")
 
 # Combine both interfaces side by side
 p_in | p_out
@@ -199,23 +198,23 @@ big_border_df <- build_all_borders(df, k = 4, pairs = pairs)
 
 # Create undirected pair visualization
 df_all <- df |>
-  left_join(big_border_df |> select(spot_id, undirected_pair, is_border_multiple),
+left_join(big_border_df |> select(spot_id, undirected_pair, is_border_multiple),
             by = "spot_id") |>
-  mutate(is_border = !is.na(undirected_pair),
-         is_border_multiple = coalesce(is_border_multiple, FALSE))
+mutate(is_border = !is.na(undirected_pair),
+        is_border_multiple = coalesce(is_border_multiple, FALSE))
 
 # Plot all interfaces colored by undirected pair
 ggplot(df_all, aes(x, y)) +
-  geom_point(data = subset(df_all, !is_border),
-             color = "gray", size = 1) +
-  geom_point(data = subset(df_all, is_border & is_border_multiple),
-             aes(color = undirected_pair), size = 2, alpha = 0.4) +
-  geom_point(data = subset(df_all, is_border & !is_border_multiple),
-             aes(color = undirected_pair), size = 2) +
-  coord_equal() +
-  theme_minimal() +
-  labs(title = "All cluster interfaces (undirected pairs)",
-       subtitle = "Light color: multi-interface spots | Full color: pure interface")
+geom_point(data = subset(df_all, !is_border),
+            color = "gray", size = 1) +
+geom_point(data = subset(df_all, is_border & is_border_multiple),
+            aes(color = undirected_pair), size = 2, alpha = 0.4) +
+geom_point(data = subset(df_all, is_border & !is_border_multiple),
+            aes(color = undirected_pair), size = 2) +
+coord_equal() +
+theme_minimal() +
+labs(title = "All cluster interfaces (undirected pairs)",
+    subtitle = "Light color: multi-interface spots | Full color: pure interface")
 ```
 
 ### Standard Visium Simulated
@@ -225,10 +224,10 @@ ggplot(df_all, aes(x, y)) +
 data("visium_simulated_spe")
 
 df_visium <- data.frame(
-  spot_id = colnames(visium_simulated_spe),
-  x = spatialCoords(visium_simulated_spe)[, 1],
-  y = spatialCoords(visium_simulated_spe)[, 2],
-  cluster = colData(visium_simulated_spe)$cluster
+spot_id = colnames(visium_simulated_spe),
+x = spatialCoords(visium_simulated_spe)[, 1],
+y = spatialCoords(visium_simulated_spe)[, 2],
+cluster = colData(visium_simulated_spe)$cluster
 )
 
 # Get all pairs and detect grid
@@ -241,13 +240,13 @@ cluster_B <- 4
 
 # Select border spots for both directions
 border_A_to_B <- subset(
-  build_all_borders(df_visium, k = 6, pairs = pairs_visium),
-  cluster == cluster_A & interface == cluster_B
+build_all_borders(df_visium, k = 6, pairs = pairs_visium),
+cluster == cluster_A & interface == cluster_B
 )
 
 border_B_to_A <- subset(
-  build_all_borders(df_visium, k = 6, pairs = pairs_visium),
-  cluster == cluster_B & interface == cluster_A
+build_all_borders(df_visium, k = 6, pairs = pairs_visium),
+cluster == cluster_B & interface == cluster_A
 )
 
 # Build all borders to identify inner spots
@@ -256,38 +255,38 @@ all_borders_visium <- build_all_borders(df_visium, k = 6, pairs = pairs_visium)
 # Select inner spots for cluster A
 set.seed(42)
 inner_A <- select_core_spots(df_visium, all_borders_visium, 
-                               cluster = cluster_A, interface = cluster_B, 
-                               region = "both")
+                            cluster = cluster_A, interface = cluster_B, 
+                            mode = "both")
 
 # Create visualization dataframe with spot classification
 df_final <- df_visium |>
-  mutate(spot_type = "background") |>
-  mutate(spot_type = ifelse(spot_id %in% border_A_to_B$spot_id, 
+mutate(spot_type = "background") |>
+mutate(spot_type = ifelse(spot_id %in% border_A_to_B$spot_id, 
                             "border_A_to_B", spot_type)) |>
-  mutate(spot_type = ifelse(spot_id %in% border_B_to_A$spot_id, 
+mutate(spot_type = ifelse(spot_id %in% border_B_to_A$spot_id, 
                             "border_B_to_A", spot_type)) |>
-  mutate(spot_type = ifelse(spot_id %in% inner_A$spot_id, 
+mutate(spot_type = ifelse(spot_id %in% inner_A$spot_id, 
                             "inner_A", spot_type)) |>
-  as.data.frame()
+as.data.frame()
 
 # Plot: clusters with borders and inner control spots
 ggplot(df_final, aes(x, y, color = cluster)) +
-  geom_point(data = subset(df_final, spot_type == "background"), 
-             size = 1.5, alpha = 0.6) +
-  geom_point(data = subset(df_final, spot_type == "border_A_to_B"), 
-             color = "red", size = 3.5, shape = 4, stroke = 1.5) +
-  geom_point(data = subset(df_final, spot_type == "border_B_to_A"),
-             color = "orange", size = 3.5, shape = 4, stroke = 1.5) +
-  geom_point(data = subset(df_final, spot_type == "inner_A"), 
-             aes(color = NULL), 
-             color = "darkgreen", size = 3.5, shape = 1, stroke = 1.5) +
-  coord_equal() +
-  theme_minimal(base_size = 12) +
-  labs(
+geom_point(data = subset(df_final, spot_type == "background"), 
+            size = 1.5, alpha = 0.6) +
+geom_point(data = subset(df_final, spot_type == "border_A_to_B"), 
+            color = "red", size = 3.5, shape = 4, stroke = 1.5) +
+geom_point(data = subset(df_final, spot_type == "border_B_to_A"),
+            color = "orange", size = 3.5, shape = 4, stroke = 1.5) +
+geom_point(data = subset(df_final, spot_type == "inner_A"), 
+            aes(color = NULL), 
+            color = "darkgreen", size = 3.5, shape = 1, stroke = 1.5) +
+coord_equal() +
+theme_minimal(base_size = 12) +
+labs(
     title = paste0("Interface analysis: Cluster ", cluster_A, " ↔ ", cluster_B),
     subtitle = paste0("Red X: ", cluster_A, "→", cluster_B, " | Orange X: ", cluster_B, "→", cluster_A, " | Green O: Inner control spots"),
     x = "x", y = "y", color = "Cluster"
-  )
+)
 ```
 
 ## Intra-cluster layers
@@ -302,10 +301,10 @@ set.seed(12)
 head(colData(visium_simulated_spe))
 
 df <- data.frame(
-  spot_id = colnames(visium_simulated_spe),
-  x = spatialCoords(visium_simulated_spe)[, 1],
-  y = spatialCoords(visium_simulated_spe)[, 2],
-  cluster = colData(visium_simulated_spe)$cluster
+spot_id = colnames(visium_simulated_spe),
+x = spatialCoords(visium_simulated_spe)[, 1],
+y = spatialCoords(visium_simulated_spe)[, 2],
+cluster = colData(visium_simulated_spe)$cluster
 )
 
 expr <- as.numeric(assay(visium_simulated_spe, "counts")["FAKE_GENE", ])
@@ -326,84 +325,84 @@ B <- centroids[centroids$cluster == end_cluster,   c("x","y")]
 (res <- build_one_trajectory(df, A, B, top_n = top_n, max_dist = NULL))
 
 ggplot(test, aes(x, y)) +
-  geom_point(aes(color = expr),size = 1.6, alpha = 0.85) +
-  scale_color_gradient(
-  low = "blue",
-  high = "red"
-  ) +
-  geom_path(
-  data = res,
-  aes(x = x, y = y),
-  color = "green", linewidth = 1.1
-  ) +
-  geom_path(
-  data = res,
-  aes(x = x, y = y),
-  color = "black", linewidth = 1.1,
-  arrow = grid::arrow(type = "closed",
-  length = grid::unit(5, "mm"))
-  ) +
-  geom_point(data = res$selected, aes(x, y), 
-  inherit.aes = FALSE, size = 2.2, color="green") +
-  coord_equal() +
-  theme_minimal()
+geom_point(aes(color = expr),size = 1.6, alpha = 0.85) +
+scale_color_gradient(
+low = "blue",
+high = "red"
+) +
+geom_path(
+data = res,
+aes(x = x, y = y),
+color = "green", linewidth = 1.1
+) +
+geom_path(
+data = res,
+aes(x = x, y = y),
+color = "black", linewidth = 1.1,
+arrow = grid::arrow(type = "closed",
+length = grid::unit(5, "mm"))
+) +
+geom_point(data = res$selected, aes(x, y), 
+inherit.aes = FALSE, size = 2.2, color="green") +
+coord_equal() +
+theme_minimal()
 
 
 (out <- build_similar_trajectories(df, A, B, top_n = top_n, n_extra = 2, side = "both"))
 
 ggplot(test, aes(x, y)) +
-   geom_point(aes(color = expr),size = 1.6, alpha = 0.85) +
-   scale_color_gradient(
-   low = "blue",
-   high = "red"
-   ) +
-   geom_path(data=out, aes(x=x, y=y, group=trajectory_id), 
-   inherit.aes = FALSE, color="green",linewidth=1,
-   arrow = grid::arrow(type = "closed", length = grid::unit(3, "mm"))) +
-   geom_point(data = out$lines, aes(x, y), 
-   inherit.aes = FALSE, size = 2.2, color="green") +
-   coord_equal() +
-   theme_minimal() 
+geom_point(aes(color = expr),size = 1.6, alpha = 0.85) +
+scale_color_gradient(
+low = "blue",
+high = "red"
+) +
+geom_path(data=out, aes(x=x, y=y, group=trajectory_id), 
+inherit.aes = FALSE, color="green",linewidth=1,
+arrow = grid::arrow(type = "closed", length = grid::unit(3, "mm"))) +
+geom_point(data = out$lines, aes(x, y), 
+inherit.aes = FALSE, size = 2.2, color="green") +
+coord_equal() +
+theme_minimal() 
 
 
-meta <- out$lines |>
-  transmute(
+meta <- out|>
+transmute(
     spot_id = as.character(spot_id),
     trajectory = as.character(trajectory_id),
-    progress = as.numeric(t)
-  ) |>
-  group_by(trajectory) |>
-  arrange(progress, .by_group = TRUE) |>
-  mutate(
+    progress = as.numeric(pos_on_seg)
+) |>
+group_by(trajectory) |>
+arrange(progress, .by_group = TRUE) |>
+mutate(
     index = seq_len(n())   # <- index 1..length ordered according to t
-  ) |>
-  ungroup()
+) |>
+ungroup()
 
 gene <- c("FAKE_GENE") 
 expr <- assay(visium_simulated_spe, "counts")[gene, meta$spot_id]
 meta$expr <- expr
 
 mat <- meta |>
-  select(trajectory, index, expr) |>
-  tidyr::pivot_wider(names_from = index, values_from = expr) |>
-  as.data.frame()
+select(trajectory, index, expr) |>
+tidyr::pivot_wider(names_from = index, values_from = expr) |>
+as.data.frame()
 
 rownames(mat) <- mat$trajectory
 mat$trajectory <- NULL
 
 pheatmap(
-  mat,
-  cluster_rows = FALSE,
-  cluster_cols = FALSE,
-  border_color = "white",
-  main = gene,angle_col=0,
-  col=pals::coolwarm(), scale="row",
-  cellwidth=25, cellheight=25 , na_col = "grey90"
+mat,
+cluster_rows = FALSE,
+cluster_cols = FALSE,
+border_color = "white",
+main = gene,angle_col=0,
+col=pals::coolwarm(), scale="row",
+cellwidth=25, cellheight=25 , na_col = "grey90"
 )
 ```  
 
 
-    
+
 # Session Information
 
 ```{r session-info}

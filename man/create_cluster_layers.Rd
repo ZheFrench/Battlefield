@@ -15,24 +15,30 @@ create_cluster_layers(
 )
 }
 \arguments{
-\item{df}{A data.frame containing at least the coordinate columns and a cluster label column.}
+\item{df}{A data.frame containing at least the coordinate columns and a
+cluster label column.}
 
 \item{target_cluster}{Cluster label for which to create layers.}
 
-\item{k}{Integer. Number of nearest neighbors to consider (excluding self) when
-identifying border spots. Default is 6.}
+\item{k}{Integer. Number of nearest neighbors to consider (excluding self)
+when
+  identifying border spots. Default is 6.}
 
 \item{max_dist}{Optional numeric. Maximum Euclidean distance for neighbors.
 If `NULL`, no distance filtering is applied.}
 
-\item{intermediate_quantile}{Numeric between 0 and 1. The quantile of distances to border
-used to define the intermediate layer threshold. Default is 0.5 (median). Spots with
+\item{intermediate_quantile}{Numeric between 0 and 1. The quantile of
+distances to border
+used to define the intermediate layer threshold. Default is 0.5 (median).
+#' Spots with
 distance to border <= this quantile threshold are classified as intermediate.
-Use lower values (e.g., 0.33) for narrower intermediate layers, higher values (e.g., 0.75)
-for wider intermediate layers.}
+Use lower values (e.g., 0.33) for narrower intermediate layers, higher values
+(e.g., 0.75)
+  for wider intermediate layers.}
 
-\item{coord_cols}{Character vector of length 2 giving the coordinate column names.
-Default is `c("x","y")`.}
+\item{coord_cols}{Character vector of length 2 giving the coordinate column
+names.
+  Default is `c("x","y")`.}
 
 \item{cluster_col}{Character. Name of the column containing cluster labels.
 Default is `"cluster"`.}
@@ -51,12 +57,15 @@ defined by proximity to the border.
 }
 \details{
 Layer definitions:
-- **Border**: Spots in the target cluster that touch at least one spot from a different cluster (kNN-based).
-- **Intermediate**: Non-border spots whose distance to the nearest border spot is within
+- **Border**: Spots in the target cluster that touch at least one spot from a
+different cluster (kNN-based).
+- **Intermediate**: Non-border spots whose distance to the nearest border
+spot is within
   the `intermediate_quantile` threshold of all non-border spots.
 - **Core**: All remaining non-border spots that are far from the border.
 
-The `intermediate_quantile` parameter controls the depth of the intermediate layer:
+The `intermediate_quantile` parameter controls the depth of the intermediate
+layer:
 - 0.33: Narrow intermediate layer (only very close to border)
 - 0.50: Moderate intermediate layer (median distance threshold)
 - 0.75: Wide intermediate layer (most non-border spots included)
@@ -75,7 +84,8 @@ layers <- create_cluster_layers(df, target_cluster = 1, k = 6)
 table(layers$layer)
 
 # Narrow intermediate layer
-layers_narrow <- create_cluster_layers(df, target_cluster = 1, k = 6, intermediate_quantile = 0.33)
+layers_narrow <- create_cluster_layers(df, target_cluster = 1, k = 6,
+intermediate_quantile = 0.33)
 table(layers_narrow$layer)
 
 }

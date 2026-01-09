@@ -25,8 +25,9 @@ central segment. If it contains multiple rows, only the first row is used.}
 \item{B}{A data frame with columns `x` and `y` defining endpoint B of the
 central segment. If it contains multiple rows, only the first row is used.}
 
-\item{top_n}{Integer; number of closest spots to keep per line (default `19`).
-If `NULL`, no top-N truncation is applied in the underlying selection.}
+\item{top_n}{Integer; number of closest spots to keep per line (default
+`19`).
+  If `NULL`, no top-N truncation is applied in the underlying selection.}
 
 \item{n_extra}{Integer; number of additional lines to build on each requested
 side (default `2`). For example, `n_extra = 2` with `side = "both"` yields
@@ -77,7 +78,8 @@ df <- data.frame(
 A <- data.frame(x = 1, y = 2)
 B <- data.frame(x = 10, y = 2)
 
-out <- build_similar_trajectories(df, A, B, top_n = 5, n_extra = 1, side = "both")
+out <- build_similar_trajectories(df, A, B, top_n = 5, n_extra = 1, side =
+"both")
 head(out)
 unique(out$trajectory_id)
 

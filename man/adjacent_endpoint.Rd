@@ -34,7 +34,8 @@ spot closest to the computed perpendicular target point.
 Given an endpoint (typically the start or end of a previously selected path),
 this function computes a target point located one perpendicular step away
 from the endpoint, on the "left" or "right" side relative to the directed
-segment \eqn{A \rightarrow B}. It then returns the closest spot to that target
+segment \eqn{A \rightarrow B}. It then returns the closest spot to that
+target
 among the remaining candidates `df_rest`.
 }
 \details{

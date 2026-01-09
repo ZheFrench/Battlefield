@@ -3,8 +3,9 @@
 #' Computes the centroid of each cluster by taking the mean of the `x` and `y`
 #' coordinates for each `cluster` level.
 #'
-#' @param df A `data.frame` containing at least the columns `cluster`, `x`, and `y`.
-#'   `cluster` can be any type accepted by `aggregate()` grouping (e.g., integer,
+#' @param df A `data.frame` containing at least the columns `cluster`, `x`, and
+#' `y`.
+#' `cluster` can be any type accepted by `aggregate()` grouping (e.g., integer,
 #'   factor, character). `x` and `y` must be numeric.
 #'
 #' @return A `data.frame` with one row per cluster and columns:
@@ -35,31 +36,34 @@ compute_centroids <- function(df) {
 
 #' Rasterize a line between two points using Bresenham's algorithm
 #'
-#' Generates integer grid coordinates along the line segment connecting two points
+#' Generates integer grid coordinates along the line segment connecting two
+#' points
 #' using Bresenham's line algorithm.
 #'
 #' @param p0 A `data.frame` with at least columns `x` and `y`. If it contains
 #'   multiple rows, only the first row is used.
 #' @param p1 A `data.frame` with at least columns `x` and `y`. If it contains
 #'   multiple rows, only the first row is used.
-#' @param snap Logical; if `TRUE` (default), `p0` and `p1` coordinates are rounded
-#'   to the nearest integer before running the algorithm. If `FALSE`, coordinates
+#' @param snap Logical; if `TRUE` (default), `p0` and `p1` coordinates are
+#' rounded
+#' to the nearest integer before running the algorithm. If `FALSE`, coordinates
 #'   are truncated via `as.integer()`.
 #'
-#' @return A `data.frame` with columns `x` and `y` giving the integer grid points
-#' visited by the line, including both endpoints, in traversal order from `p0`
+#' @return A `data.frame` with columns `x` and `y` giving the integer grid
+#' points visited by the line, including both endpoints, in traversal order from `p0`
 #' to `p1`.
 #'
 #' @details
 #' The function:
 #' \itemize{
-#'   \item Validates inputs are data frames with `x`/`y` columns and at least one row.
-#'   \item Converts endpoints to integer coordinates (optionally rounding first).
+#' \item Validates inputs are data frames with `x`/`y` columns and at least one
+#' row.
+#' \item Converts endpoints to integer coordinates (optionally rounding first).
 #'   \item Applies the classic Bresenham algorithm to enumerate grid points.
 #' }
 #'
-#' This is useful for tracing discrete paths on an integer lattice (e.g., pixels,
-#' tile grids, spatial transcriptomics spot grids).
+#' This is useful for tracing discrete paths on an integer lattice (e.g.,
+#' pixels, tile grids, spatial transcriptomics spot grids).
 #'
 #' @examples
 #' p0 <- data.frame(x = 1.2, y = 2.7)
@@ -73,29 +77,29 @@ compute_centroids <- function(df) {
 #'
 #' @export
 bresenham_line <- function(p0, p1, snap = TRUE) {
-  stopifnot(is.data.frame(p0), is.data.frame(p1))
-  stopifnot(all(c("x","y") %in% names(p0)), all(c("x","y") %in% names(p1)))
-  stopifnot(nrow(p0) >= 1, nrow(p1) >= 1)
+stopifnot(is.data.frame(p0), is.data.frame(p1))
+stopifnot(all(c("x","y") %in% names(p0)), all(c("x","y") %in% names(p1)))
+stopifnot(nrow(p0) >= 1, nrow(p1) >= 1)
 
-  x0 <- p0$x[1]; y0 <- p0$y[1]
-  x1 <- p1$x[1]; y1 <- p1$y[1]
+x0 <- p0$x[1]; y0 <- p0$y[1]
+x1 <- p1$x[1]; y1 <- p1$y[1]
 
-  if (snap) {
+if (snap) {
     x0 <- round(x0); y0 <- round(y0)
     x1 <- round(x1); y1 <- round(y1)
-  }
+}
 
-  x0 <- as.integer(x0); y0 <- as.integer(y0)
-  x1 <- as.integer(x1); y1 <- as.integer(y1)
+x0 <- as.integer(x0); y0 <- as.integer(y0)
+x1 <- as.integer(x1); y1 <- as.integer(y1)
 
-  dx <- abs(x1 - x0); dy <- abs(y1 - y0)
-  sx <- if (x0 < x1) 1L else -1L
-  sy <- if (y0 < y1) 1L else -1L
-  err <- dx - dy
+dx <- abs(x1 - x0); dy <- abs(y1 - y0)
+sx <- if (x0 < x1) 1L else -1L
+sy <- if (y0 < y1) 1L else -1L
+err <- dx - dy
 
-  outX <- integer(0); outY <- integer(0)
+outX <- integer(0); outY <- integer(0)
 
-  repeat {
+repeat {
     outX <- c(outX, x0)
     outY <- c(outY, y0)
     if (x0 == x1 && y0 == y1) break
@@ -103,9 +107,9 @@ bresenham_line <- function(p0, p1, snap = TRUE) {
     e2 <- 2L * err
     if (e2 > -dy) { err <- err - dy; x0 <- x0 + sx }
     if (e2 <  dx) { err <- err + dx; y0 <- y0 + sy }
-  }
+}
 
-  data.frame(x = outX, y = outY)
+data.frame(x = outX, y = outY)
 }
 
 #' Point-to-segment distance (vectorized)
@@ -123,8 +127,10 @@ bresenham_line <- function(p0, p1, snap = TRUE) {
 #'   `max(length(px), length(py))` (after R's usual vector recycling rules).
 #'
 #' @details
-#' Let `v = B - A` and `pos_on_seg = ((P - A) · v) / ||v||^2`. The closest point on the
-#' infinite line is `A + pos_on_seg v`; clamping `pos_on_seg` to `[0, 1]` yields the closest point
+#' Let `v = B - A` and `pos_on_seg = ((P - A) · v) / ||v||^2`. The closest point
+#' on the
+#' infinite line is `A + pos_on_seg v`; clamping `pos_on_seg` to `[0, 1]` yields
+#' the closest point
 #' on the segment.
 #'
 #' If `A` and `B` are identical (`||v||^2 == 0`), the function returns the
@@ -140,33 +146,36 @@ bresenham_line <- function(p0, p1, snap = TRUE) {
 #' point_segment_distance_vec(px, py, ax = 0, ay = 0, bx = 3, by = 0)
 #'
 #' # Degenerate segment (A == B)
-#' point_segment_distance_vec(px = c(0, 1), py = c(0, 1), ax = 0, ay = 0, bx = 0, by = 0)
+#' point_segment_distance_vec(px = c(0, 1), py = c(0, 1), ax = 0, ay = 0, bx =
+#' 0, by = 0)
 #'
 #' @export
 point_segment_distance_vec <- function(px, py, ax, ay, bx, by) {
-  vx <- bx - ax
-  vy <- by - ay
-  denom <- vx*vx + vy*vy
+vx <- bx - ax
+vy <- by - ay
+denom <- vx*vx + vy*vy
 
-  if (denom == 0) {
+if (denom == 0) {
     return(sqrt((px - ax)^2 + (py - ay)^2))
-  }
+}
 
-  pos_on_seg <- ((px - ax) * vx + (py - ay) * vy) / denom
-  pos_on_seg <- pmax(0, pmin(1, pos_on_seg))
+pos_on_seg <- ((px - ax) * vx + (py - ay) * vy) / denom
+pos_on_seg <- pmax(0, pmin(1, pos_on_seg))
 
-  projx <- ax + pos_on_seg * vx
-  projy <- ay + pos_on_seg * vy
+projx <- ax + pos_on_seg * vx
+projy <- ay + pos_on_seg * vy
 
-  sqrt((px - projx)^2 + (py - projy)^2)
+sqrt((px - projx)^2 + (py - projy)^2)
 }
 
 #' Select spots near a segment and order them along the segment
 #'
 #' Computes the distance from each spot in `df` to the segment `[p0, p1]`,
 #' optionally filters by a maximum distance, keeps the `top_n` closest spots,
-#' and finally orders the retained spots by their projection position `pos_on_seg`
-#' along the segment (from `p0` to `p1`). This is the foundation function for building
+#' and finally orders the retained spots by their projection position
+#' `pos_on_seg`
+#' along the segment (from `p0` to `p1`). This is the foundation function for
+#' building
 #' trajectory lines across spatial spots.
 #'
 #' @param df A data frame of spots containing at least columns `x` and `y`.
@@ -183,7 +192,8 @@ point_segment_distance_vec <- function(px, py, ax, ay, bx, by) {
 #' @return A data frame containing the selected spots, with two extra columns:
 #' \describe{
 #'   \item{dist_to_seg}{Euclidean distance from the spot to the segment.}
-#'   \item{pos_on_seg}{Clamped projection parameter in `[0, 1]` indicating position
+#' \item{pos_on_seg}{Clamped projection parameter in `[0, 1]` indicating
+#' position
 #'     along the segment (0 at `p0`, 1 at `p1`).}
 #' }
 #' The rows are ordered by `pos_on_seg` (i.e., from `p0` to `p1`).
@@ -212,33 +222,31 @@ point_segment_distance_vec <- function(px, py, ax, ay, bx, by) {
 #' @importFrom dplyr mutate filter arrange slice_head
 #' @export
 build_one_trajectory <- function(df, p0, p1, top_n = 100, max_dist = NULL) {
-  dist_to_seg <- NULL
-  stopifnot(all(c("x","y") %in% names(df)))
-  stopifnot(all(c("x","y") %in% names(p0)), all(c("x","y") %in% names(p1)))
+dist_to_seg <- NULL
+stopifnot(all(c("x","y") %in% names(df)))
+stopifnot(all(c("x","y") %in% names(p0)), all(c("x","y") %in% names(p1)))
 
-  ax <- p0$x[1]; ay <- p0$y[1]
-  bx <- p1$x[1]; by <- p1$y[1]
+ax <- p0$x[1]; ay <- p0$y[1]
+bx <- p1$x[1]; by <- p1$y[1]
 
-  # distances
-  d <- point_segment_distance_vec(df$x, df$y, ax, ay, bx, by)
+# distances
+d <- point_segment_distance_vec(df$x, df$y, ax, ay, bx, by)
 
-  # Projection parameter pos_on_seg along the segment, used for ordering.
-  vx <- bx - ax
-  vy <- by - ay
-  denom <- vx*vx + vy*vy
-  if (denom == 0) stop("Invalid segment: p0 and p1 coincide (zero-length segment).")
+# Projection parameter pos_on_seg along the segment, used for ordering.
+vx <- bx - ax
+vy <- by - ay
+denom <- vx*vx + vy*vy
+if (denom == 0) stop("Invalid segment: p0 and p1 coincide (zero-length segment).")
+pos_on_seg <- ((df$x - ax) * vx + (df$y - ay) * vy) / denom
+pos_on_seg <- pmax(0, pmin(1, pos_on_seg))
 
-  pos_on_seg <- ((df$x - ax) * vx + (df$y - ay) * vy) / denom
-  pos_on_seg <- pmax(0, pmin(1, pos_on_seg))
+out <- df |> dplyr::mutate(dist_to_seg = d, pos_on_seg = pos_on_seg)
 
-  out <- df |> dplyr::mutate(dist_to_seg = d, pos_on_seg = pos_on_seg)
+if (!is.null(max_dist)) out <- out |> dplyr::filter(dist_to_seg <= max_dist)
+if (!is.null(top_n))   out <- out |> dplyr::arrange(dist_to_seg) |> dplyr::slice_head(n = top_n)
+out <- out |> dplyr::arrange(pos_on_seg)
 
-  if (!is.null(max_dist)) out <- out |> dplyr::filter(dist_to_seg <= max_dist)
-  if (!is.null(top_n))   out <- out |> dplyr::arrange(dist_to_seg) |> dplyr::slice_head(n = top_n)
-
-  out <- out |> dplyr::arrange(pos_on_seg)
-
-  out |> dplyr::mutate(trajectory_id = "main")
+out |> dplyr::mutate(trajectory_id = "main")
 }
 
 
@@ -258,7 +266,8 @@ build_one_trajectory <- function(df, p0, p1, top_n = 100, max_dist = NULL) {
 #'   whose rounded `(x, y)` matches any row in `used_df`.
 #'
 #' @details
-#' Matching is performed on rounded coordinates, not exact floating-point values.
+#' Matching is performed on rounded coordinates, not exact floating-point
+#' values.
 #' Internally, keys are computed as `paste0(round(x), "_", round(y))`.
 #'
 #' This function uses `dplyr::filter()` (and the `|>` pipe), so `dplyr` must be
@@ -277,9 +286,9 @@ build_one_trajectory <- function(df, p0, p1, top_n = 100, max_dist = NULL) {
 #' @importFrom dplyr mutate filter
 #' @export
 remove_used_points <- function(df, used_df) {
-  x <- y <- NULL 
-  used_keys <- .xy_key(used_df$x, used_df$y)
-  df |> dplyr::filter(!(.xy_key(x, y) %in% used_keys))
+x <- y <- NULL 
+used_keys <- .xy_key(used_df$x, used_df$y)
+df |> dplyr::filter(!(.xy_key(x, y) %in% used_keys))
 }
 
 #' Find the closest spot to a target point
@@ -308,8 +317,8 @@ remove_used_points <- function(df, used_df) {
 #'
 #' @export
 closest_spot <- function(df, tx, ty) {
-  d2 <- (df$x - tx)^2 + (df$y - ty)^2
-  df[which.min(d2), , drop = FALSE]
+d2 <- (df$x - tx)^2 + (df$y - ty)^2
+df[which.min(d2), , drop = FALSE]
 }
 
 #' Pick a point adjacent to a selected endpoint, on a given side of a segment
@@ -317,7 +326,8 @@ closest_spot <- function(df, tx, ty) {
 #' Given an endpoint (typically the start or end of a previously selected path),
 #' this function computes a target point located one perpendicular step away
 #' from the endpoint, on the "left" or "right" side relative to the directed
-#' segment \eqn{A \rightarrow B}. It then returns the closest spot to that target
+#' segment \eqn{A \rightarrow B}. It then returns the closest spot to that
+#' target
 #' among the remaining candidates `df_rest`.
 #'
 #' @param df_rest A data frame of candidate spots containing at least columns
@@ -359,26 +369,26 @@ closest_spot <- function(df, tx, ty) {
 #' adjacent_endpoint(df, endpoint, A, B, spacing = 1, side = "right")
 #'
 #' @export
-adjacent_endpoint <- function(df_rest, endpoint, A, B, spacing, side = c("left","right")) {
-  side <- match.arg(side)
+adjacent_endpoint <- function(df_rest, endpoint, A, B, spacing, side = c("left",
+"right")) {side <- match.arg(side)
 
-  # direction A->B
-  vx <- B$x[1] - A$x[1]
-  vy <- B$y[1] - A$y[1]
-  vnorm <- sqrt(vx*vx + vy*vy)
-  if (vnorm == 0) stop("A & B are identical.")
+# direction A->B
+vx <- B$x[1] - A$x[1]
+vy <- B$y[1] - A$y[1]
+vnorm <- sqrt(vx*vx + vy*vy)
+if (vnorm == 0) stop("A & B are identical.")
 
-  # normal left
-  nx <- -vy / vnorm
-  ny <-  vx / vnorm
+# normal left
+nx <- -vy / vnorm
+ny <-  vx / vnorm
 
-  sign <- if (side == "left") 1 else -1
+sign <- if (side == "left") 1 else -1
 
-  # cible = endpoint + 1 pas perpendiculaire
-  tx <- endpoint$x[1] + sign * spacing * nx
-  ty <- endpoint$y[1] + sign * spacing * ny
+# cible = endpoint + 1 pas perpendiculaire
+tx <- endpoint$x[1] + sign * spacing * nx
+ty <- endpoint$y[1] + sign * spacing * ny
 
-  closest_spot(df_rest, tx, ty)
+closest_spot(df_rest, tx, ty)
 }
 
 
@@ -418,19 +428,19 @@ adjacent_endpoint <- function(df_rest, endpoint, A, B, spacing, side = c("left",
 #' @importFrom stats median
 #' @export
 estimate_spot_spacing <- function(df, sample_n = 1000) {
-  stopifnot(all(c("x","y") %in% names(df)))
-  n <- nrow(df)
+stopifnot(all(c("x","y") %in% names(df)))
+n <- nrow(df)
 
-  if (n > sample_n) {
+if (n > sample_n) {
     idx <- sample.int(n, sample_n)
     xy <- as.matrix(df[idx, c("x","y")])
-  } else {
+} else {
     xy <- as.matrix(df[, c("x","y")])
-  }
+}
 
-  nn <- RANN::nn2(xy, xy, k = 2)
+nn <- RANN::nn2(xy, xy, k = 2)
 
-  return(stats::median(nn$nn.dists[, 2], na.rm = TRUE))
+return(stats::median(nn$nn.dists[, 2], na.rm = TRUE))
 
 }
 
@@ -461,11 +471,11 @@ estimate_spot_spacing <- function(df, sample_n = 1000) {
 #' unit_normal_left(A, B)
 #' @export
 unit_normal_left <- function(A, B) {
-  vx <- B$x[1] - A$x[1]
-  vy <- B$y[1] - A$y[1]
-  vnorm <- sqrt(vx*vx + vy*vy)
-  if (vnorm == 0) stop("A and B are identical")
-  c(nx = -vy / vnorm, ny = vx / vnorm)
+vx <- B$x[1] - A$x[1]
+vy <- B$y[1] - A$y[1]
+vnorm <- sqrt(vx*vx + vy*vy)
+if (vnorm == 0) stop("A and B are identical")
+c(nx = -vy / vnorm, ny = vx / vnorm)
 }
 
 
@@ -492,8 +502,8 @@ unit_normal_left <- function(A, B) {
 #' shift_point(P, nx = 0, ny = 1, offset = 3)
 #' @export
 shift_point <- function(P, nx, ny, offset) {
-  data.frame(x = P$x[1] + offset * nx,
-             y = P$y[1] + offset * ny)
+data.frame(x = P$x[1] + offset * nx,
+            y = P$y[1] + offset * ny)
 }
 
 
@@ -514,8 +524,10 @@ shift_point <- function(P, nx, ny, offset) {
 #' @param max_dist Numeric; if not `NULL`, only spots with distance to the
 #'   segment `<= max_dist` are kept.
 #'
-#' @return A data frame of selected spots (subset of `df_rest`) ordered along the
-#' segment (in increasing `pos_on_seg`). The output includes the extra columns added by
+#' @return A data frame of selected spots (subset of `df_rest`) ordered along
+#' the
+#' segment (in increasing `pos_on_seg`). The output includes the extra columns
+#' added by
 #' `build_one_trajectory()` (typically `dist_to_seg` and `pos_on_seg`).
 #'
 #' @details
@@ -538,17 +550,17 @@ shift_point <- function(P, nx, ny, offset) {
 #' @export
 build_one_line <- function(df_rest, A, B, top_n = 19, max_dist = NULL) {
 
-  res <- build_one_trajectory(df_rest, A, B, top_n = top_n, max_dist = max_dist)
-  res |> dplyr::arrange(pos_on_seg)
+res <- build_one_trajectory(df_rest, A, B, top_n = top_n, max_dist = max_dist)
+res |> dplyr::arrange(pos_on_seg)
 }
 
 #' @noRd
 .build_at_offset <- function(df_rest, A, B, nx, ny, offset, label,
-                             top_n = 19, max_dist = NULL) {
-  Ash <- shift_point(A, nx, ny, offset)
-  Bsh <- shift_point(B, nx, ny, offset)
+                            top_n = 19, max_dist = NULL) {
+Ash <- shift_point(A, nx, ny, offset)
+Bsh <- shift_point(B, nx, ny, offset)
 
-  build_one_line(df_rest, Ash, Bsh, top_n = top_n, max_dist = max_dist) |>
+build_one_line(df_rest, Ash, Bsh, top_n = top_n, max_dist = max_dist) |>
     dplyr::mutate(trajectory_id = label, offset = offset)
 }
 
@@ -565,7 +577,8 @@ build_one_line <- function(df_rest, A, B, top_n = 19, max_dist = NULL) {
 #'   central segment. If it contains multiple rows, only the first row is used.
 #' @param B A data frame with columns `x` and `y` defining endpoint B of the
 #'   central segment. If it contains multiple rows, only the first row is used.
-#' @param top_n Integer; number of closest spots to keep per line (default `19`).
+#' @param top_n Integer; number of closest spots to keep per line (default
+#' `19`).
 #'   If `NULL`, no top-N truncation is applied in the underlying selection.
 #' @param n_extra Integer; number of additional lines to build on each requested
 #'   side (default `2`). For example, `n_extra = 2` with `side = "both"` yields
@@ -606,71 +619,76 @@ build_one_line <- function(df_rest, A, B, top_n = 19, max_dist = NULL) {
 #' A <- data.frame(x = 1, y = 2)
 #' B <- data.frame(x = 10, y = 2)
 #'
-#' out <- build_similar_trajectories(df, A, B, top_n = 5, n_extra = 1, side = "both")
+#' out <- build_similar_trajectories(df, A, B, top_n = 5, n_extra = 1, side =
+#' "both")
 #' head(out)
 #' unique(out$trajectory_id)
 #'
 #' @export
 #' @importFrom dplyr mutate arrange bind_rows
 build_similar_trajectories <- function(df, A, B,
-                                 top_n = 19,
-                                 n_extra = 2,
-                                 side = c("left","right","both"),
-                                 lane_width_factor = 1.15,
-                                 max_dist = NULL) {
+                                top_n = 19,
+                                n_extra = 2,
+                                side = c("left","right","both"),
+                                lane_width_factor = 1.15,
+                                max_dist = NULL) {
 
-  side <- match.arg(side)
-  spacing <- estimate_spot_spacing(df)
-  w <- lane_width_factor * spacing
+side <- match.arg(side)
+spacing <- estimate_spot_spacing(df)
+w <- lane_width_factor * spacing
 
-  nvec <- unit_normal_left(A, B)
-  nx <- nvec["nx"]; ny <- nvec["ny"]
+nvec <- unit_normal_left(A, B)
+nx <- nvec["nx"]; ny <- nvec["ny"]
 
-  lines <- list()
+lines <- list()
 
-  # center line (main trajectory)
-  sel0 <- build_one_line(df, A, B, top_n = top_n, max_dist = max_dist) |>
+# center line (main trajectory)
+sel0 <- build_one_line(df, A, B, top_n = top_n, max_dist = max_dist) |>
     dplyr::mutate(trajectory_id = "main", offset = 0)
 
-  lines[[1]] <- sel0
-  df_rest <- remove_used_points(df, sel0)
+lines[[1]] <- sel0
+df_rest <- remove_used_points(df, sel0)
 
-  # build successively (and remove used points each time)
-  if (side %in% c("left","both")) {
+# build successively (and remove used points each time)
+if (side %in% c("left","both")) {
     for (k in seq_len(n_extra)) {
-      offset <-  k * w
-      selk <- .build_at_offset(df_rest, A, B, nx, ny, offset,
-                              label = paste0("left_", k),
-                              top_n = top_n, max_dist = max_dist)
-      lines[[length(lines) + 1]] <- selk
-      df_rest <- remove_used_points(df_rest, selk)
+    offset <-  k * w
+    selk <- .build_at_offset(df_rest, A, B, nx, ny, offset,
+                            label = paste0("left_", k),
+                            top_n = top_n, max_dist = max_dist)
+    lines[[length(lines) + 1]] <- selk
+    df_rest <- remove_used_points(df_rest, selk)
     }
-  }
+}
 
-  if (side %in% c("right","both")) {
+if (side %in% c("right","both")) {
     for (k in seq_len(n_extra)) {
-      offset <- -k * w
-      selk <- .build_at_offset(df_rest, A, B, nx, ny, offset,
-                              label = paste0("right_", k),
-                              top_n = top_n, max_dist = max_dist)
-      lines[[length(lines) + 1]] <- selk
-      df_rest <- remove_used_points(df_rest, selk)
+    offset <- -k * w
+    selk <- .build_at_offset(df_rest, A, B, nx, ny, offset,
+                            label = paste0("right_", k),
+                            top_n = top_n, max_dist = max_dist)
+    lines[[length(lines) + 1]] <- selk
+    df_rest <- remove_used_points(df_rest, selk)
     }
-  }
+}
 
-  dplyr::bind_rows(lines)
+dplyr::bind_rows(lines)
 }
 
 #' Filter lines by endpoint cluster membership
 #'
-#' Filters trajectory data by checking the cluster labels at each trajectory's endpoints.
+#' Filters trajectory data by checking the cluster labels at each trajectory's
+#' endpoints.
 #' For every `trajectory_id`, the start endpoint is defined as the spot with the
-#' smallest projection parameter `pos_on_seg`, and the end endpoint as the spot with the
-#' largest `pos_on_seg`. Only trajectories whose start cluster is in `allowed_start_clusters`
+#' smallest projection parameter `pos_on_seg`, and the end endpoint as the spot
+#' with the largest `pos_on_seg`. Only trajectories whose start cluster is in
+#' `allowed_start_clusters`
 #' *and* whose end cluster is in `allowed_end_clusters` are kept.
 #'
-#' @param out A data frame containing selected spots with columns `trajectory_id`,
-#'   `cluster`, and `pos_on_seg`, typically the output of `build_similar_trajectories()`.
+#' @param out A data frame containing selected spots with columns
+#' `trajectory_id`,
+#' `cluster`, and `pos_on_seg`, typically the output of
+#' `build_similar_trajectories()`.
 #' @param allowed_start_clusters Vector of allowed cluster labels for the start
 #'   endpoint.
 #' @param allowed_end_clusters Vector of allowed cluster labels for the end
@@ -685,11 +703,11 @@ build_similar_trajectories <- function(df, A, B,
 #'   \item `start_cluster = cluster[which.min(pos_on_seg)]`
 #'   \item `end_cluster   = cluster[which.max(pos_on_seg)]`
 #' }
-#' If multiple spots share the same minimum/maximum `pos_on_seg`, the first is taken (as
-#' per `which.min()` / `which.max()`).
+#' If multiple spots share the same minimum/maximum `pos_on_seg`, the first is
+#' taken (as per `which.min()` / `which.max()`).
 #'
-#' This function uses `dplyr` (`group_by`, `summarise`, `filter`, `pull`) and the
-#' base R pipe `|>`.
+#' This function uses `dplyr` (`group_by`, `summarise`, `filter`, `pull`) and
+#' the  base R pipe `|>`.
 #'
 #' @examples
 #' # Minimal example
@@ -701,34 +719,34 @@ build_similar_trajectories <- function(df, A, B,
 #' )
 #'
 #' # Keep only trajectories starting in A and ending in B
-#' filter_out_by_endpoint_clusters(out, allowed_start_clusters = "A", allowed_end_clusters = "B")
+#' filter_out_by_endpoint_clusters(out, allowed_start_clusters = "A",
+#' allowed_end_clusters = "B")
 #'
 #' @export
 #' @importFrom dplyr group_by summarise filter
 filter_out_by_endpoint_clusters <- function(out,
-                                           allowed_start_clusters,
-                                           allowed_end_clusters) {
-  trajectory_id <- cluster <- start_cluster <- end_cluster <- NULL                                       
-  stopifnot(is.data.frame(out))
-  stopifnot("trajectory_id" %in% names(out))
-  stopifnot("cluster" %in% names(out))
-  stopifnot("pos_on_seg" %in% names(out))  # provided by build_one_trajectory() and related helpers
-
-  ends <- out |>
+                                        allowed_start_clusters,
+                                        allowed_end_clusters) {
+trajectory_id <- cluster <- start_cluster <- end_cluster <- NULL                                       
+stopifnot(is.data.frame(out))
+stopifnot("trajectory_id" %in% names(out))
+stopifnot("cluster" %in% names(out))
+stopifnot("pos_on_seg" %in% names(out))  # provided by build_one_trajectory() and related helpers
+ends <- out |>
     dplyr::group_by(trajectory_id) |>
     dplyr::summarise(
-      start_cluster = cluster[which.min(pos_on_seg)],
-      end_cluster   = cluster[which.max(pos_on_seg)],
-      .groups = "drop"
+    start_cluster = cluster[which.min(pos_on_seg)],
+    end_cluster   = cluster[which.max(pos_on_seg)],
+    .groups = "drop"
     )
 
-  keep_ids <- ends |>
+keep_ids <- ends |>
     dplyr::filter(
-      start_cluster %in% allowed_start_clusters,
-      end_cluster   %in% allowed_end_clusters
+    start_cluster %in% allowed_start_clusters,
+    end_cluster   %in% allowed_end_clusters
     ) |>
     dplyr::pull(trajectory_id)
 
-  out |>
+out |>
     dplyr::filter(trajectory_id %in% keep_ids)
 }

@@ -24,7 +24,7 @@ A number of visualization and data summary functions are proposed to
 help defining spatial regions of interest on the top of previously defined 
 clusters.
 
-<!--#<img   src="man/figures/workflow.png" align="center" width="85%" height="85%" />-->
+<img   src="man/figures/workflow.png" align="center" width="85%" height="85%" />
   
 
 ## Installation

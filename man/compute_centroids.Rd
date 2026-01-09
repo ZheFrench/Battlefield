@@ -7,9 +7,10 @@
 compute_centroids(df)
 }
 \arguments{
-\item{df}{A `data.frame` containing at least the columns `cluster`, `x`, and `y`.
+\item{df}{A `data.frame` containing at least the columns `cluster`, `x`, and
+`y`.
 `cluster` can be any type accepted by `aggregate()` grouping (e.g., integer,
-factor, character). `x` and `y` must be numeric.}
+  factor, character). `x` and `y` must be numeric.}
 }
 \value{
 A `data.frame` with one row per cluster and columns:

@@ -21,7 +21,8 @@ Filters `df` to drop any rows whose rounded coordinate key (as produced by
 `.xy_key(x, y)`) appears in `used_df`.
 }
 \details{
-Matching is performed on rounded coordinates, not exact floating-point values.
+Matching is performed on rounded coordinates, not exact floating-point
+values.
 Internally, keys are computed as `paste0(round(x), "_", round(y))`.
 
 This function uses `dplyr::filter()` (and the `|>` pipe), so `dplyr` must be

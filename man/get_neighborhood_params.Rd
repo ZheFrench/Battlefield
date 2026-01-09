@@ -15,19 +15,24 @@ get_neighborhood_params(
 \arguments{
 \item{df}{A data.frame containing spatial coordinates.}
 
-\item{coords}{Character vector of length 2 giving the coordinate column names.
-Default is `c("x","y")`.}
+\item{coords}{Character vector of length 2 giving the coordinate column
+names.
+  Default is `c("x","y")`.}
 
-\item{square_connectivity}{Integer-like choice for square grids: `4` (Von Neumann)
-or `8` (Moore). Default is `c(4, 8)` which selects the first value (`4`).}
+\item{square_connectivity}{Integer-like choice for square grids: `4` (Von
+Neumann)
+  or `8` (Moore). Default is `c(4, 8)` which selects the first value (`4`).}
 
-\item{tolerance}{Numeric. Passed to [detect_grid_type()] to match characteristic
-ratios (sqrt(2) / sqrt(3)). Default is 0.1.}
+\item{tolerance}{Numeric. Passed to [detect_grid_type()] to match
+characteristic
+  ratios (sqrt(2) / sqrt(3)). Default is 0.1.}
 
-\item{verbose}{Logical. If `TRUE`, prints diagnostic messages. Default is `TRUE`.}
+\item{verbose}{Logical. If `TRUE`, prints diagnostic messages. Default is
+`TRUE`.}
 }
 \value{
-A named list with neighborhood parameters: `grid_type`, `connectivity`,
+A named list with neighborhood parameters: `grid_type`,
+`connectivity`,
 `radius`, `k`, and `comment`.
 }
 \description{
@@ -47,8 +52,10 @@ geometry, then chooses typical parameters:
 
 Returned values:
 \describe{
-  \item{grid_type}{Detected grid type: `"hexagonal"`, `"square"`, or `"unknown"`.}
-  \item{connectivity}{Nominal grid connectivity (6 for hex, 4 or 8 for square).}
+\item{grid_type}{Detected grid type: `"hexagonal"`, `"square"`, or
+`"unknown"`.}
+\item{connectivity}{Nominal grid connectivity (6 for hex, 4 or 8 for
+square).}
   \item{r}{Recommended distance threshold (radius) to define adjacency.}
   \item{k_max}{A suggested upper bound for kNN queries (used as a safe cap).}
   \item{comment}{Human-readable description of the choice.}
@@ -56,7 +63,8 @@ Returned values:
 
 Notes:
 \itemize{
-  \item `radius` is set to `1.01 * step` (or `1.01 * sqrt(2) * step` for 8-connectivity)
+\item `radius` is set to `1.01 * step` (or `1.01 * sqrt(2) * step` for
+#' 8-connectivity)
   to be slightly permissive under small numerical noise.
   \item `k` is deliberately larger than the nominal connectivity to make sure
   enough candidates are retrieved before applying distance-based filtering.

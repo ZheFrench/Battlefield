@@ -15,8 +15,9 @@ detect_grid_type(
 \arguments{
 \item{df}{A data.frame containing spatial coordinates.}
 
-\item{coords}{Character vector of length 2 giving the coordinate column names.
-Default is `c("x","y")`.}
+\item{coords}{Character vector of length 2 giving the coordinate column
+names.
+  Default is `c("x","y")`.}
 
 \item{k}{Integer. Number of neighbors to consider (internally uses `k + 1`
 to include the point itself, then removes it). Default is 12.}
@@ -24,14 +25,16 @@ to include the point itself, then removes it). Default is 12.}
 \item{tolerance}{Numeric. Tolerance for matching the characteristic ratio to
 \eqn{\sqrt{2}} or \eqn{\sqrt{3}}. Default is 0.1.}
 
-\item{verbose}{Logical. If `TRUE`, prints diagnostic messages. Default is `TRUE`.}
+\item{verbose}{Logical. If `TRUE`, prints diagnostic messages. Default is
+`TRUE`.}
 }
 \value{
 A list with:
 \describe{
   \item{grid_type}{One of `"square"`, `"hexagonal"`, or `"unknown"`.}
   \item{step}{Estimated grid step size (median nearest-neighbor distance).}
-  \item{median_ratio}{Median normalized distance ratio in the (1.2, 2.0) range.}
+\item{median_ratio}{Median normalized distance ratio in the (1.2, 2.0)
+range.}
 }
 }
 \description{
@@ -52,7 +55,8 @@ The method:
 }
 
 
-The grid step size is estimated as the median of the per-point nearest-neighbor
+The grid step size is estimated as the median of the per-point
+nearest-neighbor
 distance. The "median distance ratio" is computed from normalized neighbor
 distances restricted to the interval (1.2, 2.0), which tends to capture the
 second-shell distances on regular grids.
@@ -69,7 +73,8 @@ hex <- expand.grid(i = 0:(nx-1), j = 0:(ny-1))
 hex$x <- hex$i + 0.5 * (hex$j \%\% 2)
 hex$y <- (sqrt(3)/2) * hex$j
 hex <- hex[, c("x","y")]
-res_hex <- detect_grid_type(hex, coords = c("x","y"), k = 12, tolerance = 0.1)
+res_hex <- detect_grid_type(hex, coords = c("x","y"), k = 12, tolerance =
+0.1)
 res_hex$grid_type
 
 }

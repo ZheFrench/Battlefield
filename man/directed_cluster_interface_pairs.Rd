@@ -11,7 +11,8 @@ directed_cluster_interface_pairs(
 )
 }
 \arguments{
-\item{cluster_labels}{A vector of cluster labels (character, factor, numeric, etc.).
+\item{cluster_labels}{A vector of cluster labels (character, factor, numeric,
+etc.).
 `NA` values are ignored.}
 
 \item{interface_separator}{Character string used to join `cluster` and
@@ -28,7 +29,8 @@ A data.frame with columns:
   \item{interface}{Target cluster label (character).}
   \item{directed_pair}{Directed pair label, e.g. "A-B".}
 }
-If fewer than 2 unique (non-NA) clusters are present, returns an empty data.frame
+If fewer than 2 unique (non-NA) clusters are present, returns an empty
+data.frame
 with the same columns.
 }
 \description{

@@ -24,17 +24,20 @@ all unique clusters are used.}
 
 \item{max_dist}{Optional numeric. Maximum Euclidean distance for neighbors.}
 
-\item{intermediate_quantile}{Numeric between 0 and 1. The quantile of distances to border
-used to define the intermediate layer threshold. Default is 0.5 (median).}
+\item{intermediate_quantile}{Numeric between 0 and 1. The quantile of
+distances to border
+  used to define the intermediate layer threshold. Default is 0.5 (median).}
 
-\item{coord_cols}{Character vector of length 2 giving the coordinate column names.
-Default is `c("x","y")`.}
+\item{coord_cols}{Character vector of length 2 giving the coordinate column
+names.
+  Default is `c("x","y")`.}
 
 \item{cluster_col}{Character. Name of the column containing cluster labels.
 Default is `"cluster"`.}
 }
 \value{
-A data.frame combining all processed clusters with the `layer` column added.
+A data.frame combining all processed clusters with the `layer` column
+added.
 }
 \description{
 Batch create layer classifications for multiple clusters and optionally
