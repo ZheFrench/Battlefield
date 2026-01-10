@@ -13,12 +13,12 @@ Description: Battlefield is a Swiss-army toolkit originally developed to define 
  These utilities are primarily intended to be reused within higher-level analytical packages.
  It is designed to work with sequencing-based platforms
  such as Visium at several resolutions and Visium HD(binned).
-URL: https://github.com/ZheFrench/BattleField
+URL: https://github.com/ZheFrench/BattleField, https://zhefrench.github.io/Battlefield/
 BugReports: https://github.com/ZheFrench/BattleField/issues
 License: CeCILL | file LICENSE
 Encoding: UTF-8
 LazyData: FALSE
-Depends: R (>= 4.6)
+Depends: R (>= 4.5)
 biocViews: Sequencing, Software, Transcriptomics,  Spatial
 Imports:
     stats,

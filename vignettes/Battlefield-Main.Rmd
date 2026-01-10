@@ -92,6 +92,8 @@ across multiple clusters.
 * **Cluster neighbourhood**  — report the cluster composition 
 of a spatial neighborhood defined by k nearest spots, 
 constrained by a distance threshold.
+
+
 # Starting point
 
 We start from a SpatialExperiment object that contains (i) 
