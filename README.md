@@ -5,28 +5,49 @@
 
 ## Overview
 
-**Battlefield**  is a Swiss-army toolkit originally developed to define and extract spatial spots from specific tissue regions—such as front regions, niche borders, invasive margins, and cluster interfaces—using spatial transcriptomics data or clustered tissue maps.  
+ **Battlefield** is a Swiss-army toolkit designed to define
+and extract spatial spots from specific regions
+in spatial transcriptomics data.
+</br></br>
+It provides low-level, modular utilities to delineate
+spatial regions of interest,  
+including **interfaces between clusters**, **intra-cluster layers**, and  
+**inter-cluster trajectories**.
+</br></br>
+These utilities are intended to be reused and composed within higher-level  
+analytical workflows and packages.
+</br></br>
+`Battlefield` supports sequencing-based spatial transcriptomics platforms such as  
+**10x Genomics Visium**, across multiple resolutions, including  
+Visium HD (binned).
 
 <img   src="man/figures/workflow.png" align="center" width="100%" height="100%" />
 
-It has since been extended to support trajectory selection and layer inspection, and now provides a collection of low-level utilities for spatial transcriptomics analysis. These utilities are primarily intended to be reused within higher-level analytical packages.  
+ **Battlefield** provides four core functionalities to define and extract 
+spatial transcriptomics spots from specific tissue regions, enabling 
+the study of spatial organization under different biological contexts:
 
-Battlefield enables margin/trajectory/layer-aware spot selecIt is designed to work with sequencing-based platforms
-such as Visium (classic 6.5 µm or 11 µm resolutions, and Visium HD).tion, allowing users to construct consistent comparison groups (e.g. front vs core or ordered spots along a trajectory).  
+* **Interfaces between clusters** — identify and analyze boundary 
+regions where distinct tissue or cell populations interact.
 
-It is designed to work with sequencing-based platforms
-such as Visium (classic 6.5 µm or 11 µm resolutions, and Visium HD).
+* **Intra-cluster layers** — characterize spatial layers
+or gradients within a single cluster.
 
-For example, it can be integrated upstream to 
+* **Inter-cluster trajectories**  — model spatial transitions 
+across multiple clusters.
+
+* **Cluster neighbourhood**  — report the cluster composition 
+of a spatial neighborhood defined by k nearest spots, 
+constrained by a distance threshold.
+
+It can be integrated upstream to 
 support insightful ligand–receptor analyses, 
 using BulkSignalR, available from Bioconductor 
 [here](https://www.bioconductor.org/packages/release/bioc/html/BulkSignalR.html).  
 
-A number of visualization and data summary functions are proposed to
+Data summary functions are proposed to
 help defining spatial regions of interest on the top of previously defined 
 clusters.
-
-  
 
 ## Installation
 

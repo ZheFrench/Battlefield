@@ -76,7 +76,7 @@ Visium HD (binned).</br></br>
 
 # What is it for?  
 
-`Battlefield` provides three core functionalities to define and extract 
+`Battlefield` provides four core functionalities to define and extract 
 spatial transcriptomics spots from specific tissue regions, enabling 
 the study of spatial organization under different biological contexts:
 
@@ -89,6 +89,9 @@ or gradients within a single cluster.
 * **Inter-cluster trajectories**  — model spatial transitions 
 across multiple clusters.
 
+* **Cluster neighbourhood**  — report the cluster composition 
+of a spatial neighborhood defined by k nearest spots, 
+constrained by a distance threshold.
 # Starting point
 
 We start from a SpatialExperiment object that contains (i) 
