@@ -7,7 +7,7 @@
 
 **Battlefield**  is a Swiss-army toolkit originally developed to define and extract spatial spots from specific tissue regions—such as front regions, niche borders, invasive margins, and cluster interfaces—using spatial transcriptomics data or clustered tissue maps.  
 
-<img   src="man/figures/workflow.png" align="center" width="100%" height="100%" />
+<img display: block  src="man/figures/workflow.png" align="center" width="75%" height="75%" />
 
 It has since been extended to support trajectory selection and layer inspection, and now provides a collection of low-level utilities for spatial transcriptomics analysis. These utilities are primarily intended to be reused within higher-level analytical packages.  
 
