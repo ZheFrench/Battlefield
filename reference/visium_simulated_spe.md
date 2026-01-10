@@ -1,0 +1,71 @@
+# Simulated Visium SpatialExperiment dataset
+
+A simulated `SpatialExperiment` object mimicking a 10x Genomics Visium
+spatial transcriptomics layout. The dataset contains spot-level spatial
+coordinates and cluster annotations, and is intended for testing.
+
+## Usage
+
+``` r
+data(visium_simulated_spe)
+```
+
+## Format
+
+A
+[`SpatialExperiment`](https://rdrr.io/pkg/SpatialExperiment/man/SpatialExperiment.html)
+object with:
+
+- assays:
+
+  One dummy assay (required container structure)
+
+- colData:
+
+  Spot metadata including `barcode` and `cluster`
+
+- spatialCoords:
+
+  Numeric matrix ofx/y spot coordinates
+
+## Source
+
+Simulated internally for package development.
+
+## Details
+
+This dataset contain only gene expression values for one gene named
+FAKE_GENE. The dummy assay is included solely to satisfy the
+`SummarizedExperiment` container requirements.
+
+Spot coordinates follow a Visium-like hexagonal grid. Cluster labels are
+simulated and have no biological meaning.
+
+## See also
+
+- [`SpatialExperiment`](https://rdrr.io/pkg/SpatialExperiment/man/SpatialExperiment.html)
+
+- [`compute_centroids`](https://zhefrench.github.io/Battlefield/reference/compute_centroids.md)
+
+"visium_simulated_spe"
+
+## Examples
+
+``` r
+data(visium_simulated_spe)
+
+visium_simulated_spe
+#> class: SpatialExperiment 
+#> dim: 1 1000 
+#> metadata(0):
+#> assays(1): counts
+#> rownames(1): FAKE_GENE
+#> rowData names(0):
+#> colnames(1000): SPOT0001 SPOT0002 ... SPOT0999 SPOT1000
+#> colData names(3): barcode_id cluster sample_id
+#> reducedDimNames(0):
+#> mainExpName: NULL
+#> altExpNames(0):
+#> spatialCoords names(2) : pxl_col_in_fullres pxl_row_in_fullres
+#> imgData names(0):
+```

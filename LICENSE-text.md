@@ -1,0 +1,4 @@
+# License
+
+    CeCILL FREE SOFTWARE LICENSE AGREEMENT
+    Version 2.1 dated 2013-06-21
