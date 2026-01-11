@@ -189,7 +189,7 @@ square_connectivity <- as.integer(square_connectivity)
 det <- detect_grid_type(df,
                         coords = coords,
                         tolerance = tolerance,
-                        verbose = verbose)
+                        verbose = FALSE)
 
 step <- det$step
 grid <- det$grid_type

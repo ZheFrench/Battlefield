@@ -1,4 +1,5 @@
 url: https://zhefrench.github.io/Battlefield/
+destination: docs
 template:
   bootstrap: 5
 
