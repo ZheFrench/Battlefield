@@ -36,8 +36,8 @@ cluster/interface).
 Internally uses `k + 1` to include self then removes it. Default is 7.}
 
 \item{max_dist}{Optional numeric. Maximum Euclidean distance for a neighbor
-to be
-  considered (distance cutoff). If `NULL`, no distance filtering is applied.}
+to be considered (distance cutoff). If `NULL`, no distance filtering is
+applied.}
 
 \item{coord_cols}{Character vector of length 2 giving the coordinate column
 names.

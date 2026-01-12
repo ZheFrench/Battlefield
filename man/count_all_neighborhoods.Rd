@@ -6,9 +6,10 @@
 \usage{
 count_all_neighborhoods(
   df,
-  sources = NULL,
+  clusters = NULL,
   k = 100,
   max_dist = NULL,
+  inlaid_col = NULL,
   coords = c("x", "y"),
   cluster_col = "cluster"
 )
@@ -22,7 +23,7 @@ each spot
 - `spot_id`: unique identifier for each spot (optional, required for detailed
 analysis)}
 
-\item{sources}{Optional vector of cluster labels to process. If `NULL`,
+\item{clusters}{Optional vector of cluster labels to process. If `NULL`,
 all unique clusters in `df` are used.}
 
 \item{k}{Integer. Number of nearest neighbors to consider. Default is 100.
@@ -31,6 +32,11 @@ Larger values capture more distant neighbors.}
 \item{max_dist}{Numeric. Maximum distance from the target to consider.
 If `NULL` (default), all neighbors up to k are included without distance
 filtering.}
+
+\item{inlaid_col}{Character. Name of the column containing inlaid/annotation
+values to count in neighborhoods. If `NULL` (default), uses the
+  `cluster_col` value. This allows counting neighborhood composition by any
+  column (e.g., cell type, tissue type).}
 
 \item{coords}{Character vector of length 2 giving the coordinate column
 names.
@@ -43,11 +49,11 @@ assignments.
 \value{
 A data.frame with columns:
 \describe{
-  \item{source}{The source cluster being analyzed.}
-  \item{cluster}{The neighbor cluster type.}
+  \item{cluster}{The source cluster being analyzed.}
+  \item{neighborhood}{The neighbor cluster type or inlaid value.}
   \item{count}{Number of neighbor spots of this cluster type.}
 \item{proportion}{Proportion of this cluster among all neighbors of the
-source.}
+cluster.}
 }
 Rows are grouped by source cluster and sorted by count within each group
 (descending).

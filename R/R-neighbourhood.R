@@ -11,11 +11,11 @@
 #' - cluster column (name specified by `cluster_col`): cluster assignment for
 #' each spot
 #'   - `spot_id`: unique identifier for each spot
-#' @param source The cluster label for which to analyze the neighborhood. Either
-#' `source`
+#' @param cluster The cluster label for which to analyze the neighborhood. Either
+#' `cluster`
 #'   or `spot_id` must be provided, but not both.
 #' @param spot_id Character. The spot identifier to find neighbors for. Either
-#' `source`
+#' `cluster`
 #'   or `spot_id` must be provided, but not both.
 #' @param k Integer. Number of nearest neighbors to consider. Default is 100.
 #'   Larger values capture more distant neighbors. If k exceeds the number of 
@@ -23,6 +23,10 @@
 #' @param max_dist Numeric. Maximum distance from the target to consider.
 #' If `NULL` (default), all neighbors up to k are included without distance
 #' filtering.
+#' @param inlaid_col Character. Name of the column containing inlaid/annotation
+#' values to return in the `neighborhood` column. If `NULL` (default), uses the
+#'   `cluster_col` value. This allows counting neighborhood composition by any
+#'   column (e.g., cell type, tissue type).
 #' @param coords Character vector of length 2 giving the coordinate column
 #' names.
 #'   Default is `c("x", "y")`.
@@ -32,7 +36,7 @@
 #'
 #' @details
 #' The function can work in two modes:
-#' - **Cluster mode**: If `source` is provided, computes k-nearest neighbors for
+#' - **Cluster mode**: If `cluster` is provided, computes k-nearest neighbors for
 #' all spots
 #' in that cluster. Returns all neighbors found (excluding source cluster
 #' spots).
@@ -45,11 +49,11 @@
 #'   \item{spot_id}{Unique spot identifier.}
 #'   \item{x}{X coordinate.}
 #'   \item{y}{Y coordinate.}
-#'   \item{cluster}{Cluster label of the neighbor spot.}
-#'   \item{source}{The source cluster or spot_id being analyzed.}
-#'   \item{is_neighbourhood}{Logical, always TRUE for returned rows.}
+#'   \item{neighborhood}{Value from `inlaid_col` (or cluster if inlaid_col is NULL) of the neighbor spot.}
+#'   \item{cluster}{The source cluster or spot_id being analyzed.}
+#'   \item{is_neighborhood}{Logical, always TRUE for returned rows.}
 #' }
-#' Rows are sorted by cluster and spot_id.
+#' Rows are sorted by neighborhood and spot_id.
 #'
 #' @examples
 #' data("visium_simulated_spe", package = "Battlefield")
@@ -61,7 +65,7 @@
 #'   cluster = colData(spe)$cluster
 #' )
 #' # Get all neighbor spots for cluster 1
-#' neighbors_cluster <- get_neighborhood_spots(df, source = 1, k = 50)
+#' neighbors_cluster <- get_neighborhood_spots(df, cluster = 1, k = 50)
 #' head(neighbors_cluster)
 #'
 #' # Get neighbors for a specific point
@@ -73,10 +77,11 @@
 #' @importFrom dplyr arrange
 #' @export
 get_neighborhood_spots <- function(df,
-                                source = NULL,
+                                cluster = NULL,
                                 spot_id = NULL,
                                 k = 100,
                                 max_dist = NULL,
+                                inlaid_col = NULL,
                                 coords = c("x", "y"),
                                 cluster_col = "cluster") {
 
@@ -87,22 +92,29 @@ stopifnot(cluster_col %in% colnames(df))
 stopifnot("spot_id" %in% colnames(df))
 stopifnot(nrow(df) >= 1)
 
-# Check that exactly one of source or spot_id is provided
-if ((is.null(source) && is.null(spot_id)) || (!is.null(source) && !is.null(spot_id))) {    stop("Exactly one of 'source' or 'spot_id' must be provided,
+# If inlaid_col is not provided, use cluster_col
+if (is.null(inlaid_col)) {
+    inlaid_col <- cluster_col
+} else {
+    stopifnot(inlaid_col %in% colnames(df))
+}
+
+# Check that exactly one of cluster or spot_id is provided
+if ((is.null(cluster) && is.null(spot_id)) || (!is.null(cluster) && !is.null(spot_id))) {    stop("Exactly one of 'cluster' or 'spot_id' must be provided,
     not both or neither.")}
 
 # Get coordinates
 X <- as.matrix(df[, coords])
 
 # Determine query mode: cluster or point
-if (!is.null(source)) {
-    # Cluster mode: find neighbors for all spots in the source cluster
-    target_idx <- which(df[[cluster_col]] == source)
+if (!is.null(cluster)) {
+    # Cluster mode: find neighbors for all spots in the cluster
+    target_idx <- which(df[[cluster_col]] == cluster)
     if (length(target_idx) == 0) {
-    stop("No spots found for source cluster = ", source)
+    stop("No spots found for cluster = ", cluster)
     }
-    source_label <- source
-    exclude_cluster <- source
+    source_label <- cluster
+    exclude_cluster <- cluster
 } else {
     # Point mode: find neighbors for a specific spot
     target_idx <- which(df$spot_id == spot_id)
@@ -145,15 +157,15 @@ if (!is.null(exclude_cluster)) {
     neighbor_indices <- neighbor_indices[df[[cluster_col]][neighbor_indices] != exclude_cluster]}
 
 if (length(neighbor_indices) == 0) {
-    message("No neighbors found for source = ", source_label,
+    message("No neighbors found for cluster = ", source_label,
     " within specified parameters.")    
     return(data.frame(
     spot_id = character(),
     x = numeric(),
     y = numeric(),
     cluster = character(),
-    source = character(),
-    is_neighbourhood = logical()
+    neighborhood = character(),
+    is_neighborhood = logical()
     ))
 }
 
@@ -167,14 +179,14 @@ neighbor_indices <- unique(neighbor_indices)
 neighbor_indices <- head(neighbor_indices, k)
 
 # Build result dataframe
-result <- df[neighbor_indices, c("spot_id", coords, cluster_col), drop = FALSE]
-colnames(result)[colnames(result) == cluster_col] <- "cluster"
-result$source <- source_label
-result$is_neighbourhood <- TRUE
-result <- result[, c("spot_id", coords, "cluster", "source",
-"is_neighbourhood")]
-# Sort by cluster and spot_id
-result <- dplyr::arrange(result, cluster, spot_id)
+result <- df[neighbor_indices, c("spot_id", coords, inlaid_col), drop = FALSE]
+colnames(result)[colnames(result) == inlaid_col] <- "neighborhood"
+result$cluster <- source_label
+result$is_neighborhood <- TRUE
+result <- result[, c("spot_id", coords, "cluster", "neighborhood", 
+"is_neighborhood")]
+# Sort by neighborhood and spot_id
+result <- dplyr::arrange(result, neighborhood, spot_id)
 result <- as.data.frame(result)
 
 # Set rownames to spot_id for uniqueness
@@ -182,6 +194,7 @@ rownames(result) <- result$spot_id
 
 result
 }
+
 
 
 #' Count annotated spot types in the neighborhood of a cluster or point
@@ -199,17 +212,21 @@ result
 #' each spot
 #' - `spot_id`: unique identifier for each spot (optional, required for detailed
 #' analysis)
-#' @param source The cluster label for which to analyze the neighborhood. Either
-#' `source`
+#' @param cluster The cluster label for which to analyze the neighborhood. Either
+#' `cluster`
 #'   or `spot_id` must be provided, but not both.
 #' @param spot_id Character. The spot identifier to find neighbors for. Either
-#' `source`
+#' `cluster`
 #'   or `spot_id` must be provided, but not both.
 #' @param k Integer. Number of nearest neighbors to consider. Default is 100.
 #'   Larger values capture more distant neighbors.
 #' @param max_dist Numeric. Maximum distance from the target to consider.
 #' If `NULL` (default), all neighbors up to k are included without distance
 #' #' filtering.
+#' @param inlaid_col Character. Name of the column containing inlaid/annotation
+#' values to count in neighborhoods. If `NULL` (default), uses the
+#'   `cluster_col` value. This allows counting neighborhood composition by any
+#'   column (e.g., cell type, tissue type).
 #' @param coords Character vector of length 2 giving the coordinate column
 #' names.
 #'   Default is `c("x", "y")`.
@@ -219,7 +236,7 @@ result
 #'
 #' @details
 #' This function wraps [get_neighborhood_spots()] and summarizes the results by
-#' counting spots from each neighboring cluster. In cluster mode, the source
+#' counting spots from each neighboring cluster or inlaid type. In cluster mode, the source
 #' cluster
 #' itself is excluded from the counts. In point mode, all neighboring clusters
 #' are counted.
@@ -230,9 +247,9 @@ result
 #'
 #' @return A data.frame with columns:
 #' \describe{
-#'   \item{cluster}{Cluster label (from neighboring spots).}
-#'   \item{count}{Number of times this cluster appears in the neighborhood.}
-#'   \item{proportion}{Proportion of this cluster relative to all neighbors.}
+#'   \item{neighborhood}{Cluster label or inlaid value (from neighboring spots).}
+#'   \item{count}{Number of times this cluster/type appears in the neighborhood.}
+#'   \item{proportion}{Proportion of this cluster/type relative to all neighbors.}
 #' }
 #' Rows are sorted by count in descending order.
 #'
@@ -246,7 +263,7 @@ result
 #'   cluster = colData(spe)$cluster
 #' )
 #' # Count cluster types in neighborhood of cluster 1
-#' neighbor_counts <- count_neighborhood(df, source = 1, k = 50)
+#' neighbor_counts <- count_neighborhood(df, cluster = 1, k = 50)
 #' neighbor_counts
 #'
 #' # Count cluster types around a specific point
@@ -258,27 +275,33 @@ result
 #' @importFrom dplyr group_by summarise arrange desc
 #' @export
 count_neighborhood <- function(df,
-                            source = NULL,
+                            cluster = NULL,
                             spot_id = NULL,
                             k = 100,
                             max_dist = NULL,
+                            inlaid_col = NULL,
                             coords = c("x", "y"),
                             cluster_col = "cluster") {
 
 # Use get_neighborhood_spots to identify neighbors
-neighbors <- get_neighborhood_spots(df, source, spot_id, k, max_dist, coords,
+neighbors <- get_neighborhood_spots(df, cluster, spot_id, k, max_dist, inlaid_col, coords,
 cluster_col)
 if (nrow(neighbors) == 0) {
-    return(data.frame(cluster = character(), count = integer(),
+    return(data.frame(cluster = character(), neighborhood = character(), count = integer(),
     proportion = numeric()))}
 
 # Create summary
-result <- data.frame(cluster = neighbors$cluster) |>
-    dplyr::group_by(cluster) |>
+result <- data.frame(neighborhood = neighbors$neighborhood) |>
+    dplyr::group_by(neighborhood) |>
     dplyr::summarise(count = dplyr::n(), .groups = "drop") |>
     dplyr::mutate(proportion = count / sum(count)) |>
     dplyr::arrange(dplyr::desc(count)) |>
     as.data.frame()
+
+# Add cluster column to track source
+source_label <- if (!is.null(cluster)) cluster else spot_id
+result$cluster <- source_label
+result <- result[, c("cluster", "neighborhood", "count", "proportion")]
 
 result
 }
@@ -298,13 +321,17 @@ result
 #' each spot
 #' - `spot_id`: unique identifier for each spot (optional, required for detailed
 #' analysis)
-#' @param sources Optional vector of cluster labels to process. If `NULL`,
+#' @param clusters Optional vector of cluster labels to process. If `NULL`,
 #'   all unique clusters in `df` are used.
 #' @param k Integer. Number of nearest neighbors to consider. Default is 100.
 #'   Larger values capture more distant neighbors.
 #' @param max_dist Numeric. Maximum distance from the target to consider.
 #' If `NULL` (default), all neighbors up to k are included without distance
 #' filtering.
+#' @param inlaid_col Character. Name of the column containing inlaid/annotation
+#' values to count in neighborhoods. If `NULL` (default), uses the
+#'   `cluster_col` value. This allows counting neighborhood composition by any
+#'   column (e.g., cell type, tissue type).
 #' @param coords Character vector of length 2 giving the coordinate column
 #' names.
 #'   Default is `c("x", "y")`.
@@ -322,11 +349,11 @@ result
 #'
 #' @return A data.frame with columns:
 #' \describe{
-#'   \item{source}{The source cluster being analyzed.}
-#'   \item{cluster}{The neighbor cluster type.}
+#'   \item{cluster}{The source cluster being analyzed.}
+#'   \item{neighborhood}{The neighbor cluster type or inlaid value.}
 #'   \item{count}{Number of neighbor spots of this cluster type.}
 #' \item{proportion}{Proportion of this cluster among all neighbors of the
-#' source.}
+#' cluster.}
 #' }
 #' Rows are grouped by source cluster and sorted by count within each group
 #' (descending).
@@ -347,9 +374,10 @@ result
 #' @importFrom dplyr bind_rows
 #' @export
 count_all_neighborhoods <- function(df,
-                                    sources = NULL,
+                                    clusters = NULL,
                                     k = 100,
                                     max_dist = NULL,
+                                    inlaid_col = NULL,
                                     coords = c("x", "y"),
                                     cluster_col = "cluster") {
 
@@ -360,18 +388,18 @@ stopifnot(cluster_col %in% colnames(df))
 stopifnot(nrow(df) >= 1)
 
 # Determine clusters to process
-if (is.null(sources)) {
-    sources <- unique(df[[cluster_col]])
-    sources <- sources[!is.na(sources)]
+if (is.null(clusters)) {
+    clusters <- unique(df[[cluster_col]])
+    clusters <- clusters[!is.na(clusters)]
 }
 
 # Compute neighborhood stats for each cluster
-results <- lapply(sources, function(clust) {
-    neighbor_counts <- count_neighborhood(df, source = clust, k = k,
-    max_dist = max_dist, coords = coords, cluster_col = cluster_col)
-    # Add source column
-    neighbor_counts$source <- clust
-    neighbor_counts <- neighbor_counts[, c("source", "cluster", "count",
+results <- lapply(clusters, function(clust) {
+    neighbor_counts <- count_neighborhood(df, cluster = clust, k = k,
+    max_dist = max_dist, inlaid_col = inlaid_col, coords = coords, cluster_col = cluster_col)
+    # Add cluster column
+    neighbor_counts$cluster <- clust
+    neighbor_counts <- neighbor_counts[, c("cluster", "neighborhood", "count",
     "proportion")]
     neighbor_counts
 })
@@ -379,9 +407,9 @@ results <- lapply(sources, function(clust) {
 # Combine results
 combined <- dplyr::bind_rows(results)
 
-# Sort by source and count (descending)
+# Sort by cluster and count (descending)
 combined <- combined |>
-    dplyr::arrange(source, dplyr::desc(count)) |>
+    dplyr::arrange(cluster, dplyr::desc(count)) |>
     as.data.frame()
 
 combined
@@ -403,7 +431,7 @@ combined
 #' - inlaid column (name specified by `inlaid_col`): inlaid/annotation for each
 #' spot
 #'   - `spot_id`: unique identifier for each spot
-#' @param source The cluster label to retrieve inlaid spots for.
+#' @param cluster The cluster label to retrieve inlaid spots for.
 #' @param inlaid_col Character. Name of the column containing inlaid/annotation
 #' values.
 #'   Default is `"cluster"`.
@@ -420,7 +448,7 @@ combined
 #'   \item{x}{X coordinate.}
 #'   \item{y}{Y coordinate.}
 #'   \item{inlaid}{Inlaid/annotation value.}
-#'   \item{source}{The source cluster being analyzed.}
+#'   \item{cluster}{The source cluster being analyzed.}
 #'   \item{is_inlaid}{Logical, always TRUE for returned rows.}
 #' }
 #' Rows are sorted by inlaid and spot_id.
@@ -436,13 +464,13 @@ combined
 #' inlaid = sample(paste0("type_", 1:3), length(colnames(spe)), replace = TRUE)
 #' )
 #' # Get all inlaid spots within cluster 1
-#' inlaid_spots <- get_inlaid_spots(df, source = 1, inlaid_col = "inlaid")
+#' inlaid_spots <- get_inlaid_spots(df, cluster = 1, inlaid_col = "inlaid")
 #' head(inlaid_spots)
 #'
 #' @importFrom dplyr arrange
 #' @export
 get_inlaid_spots <- function(df,
-                            source,
+                            cluster,
                             inlaid_col = "cluster",
                             cluster_col = "cluster",
                             coords = c("x", "y")) {
@@ -455,19 +483,19 @@ stopifnot(inlaid_col %in% colnames(df))
 stopifnot("spot_id" %in% colnames(df))
 stopifnot(nrow(df) >= 1)
 
-# Get spots from source cluster
-source_idx <- which(df[[cluster_col]] == source)
+# Get spots from cluster
+source_idx <- which(df[[cluster_col]] == cluster)
 
 if (length(source_idx) == 0) {
-    stop("No spots found for source cluster = ", source)
+    stop("No spots found for cluster = ", cluster)
 }
 
 # Build result dataframe
 result <- df[source_idx, c("spot_id", coords, inlaid_col), drop = FALSE]
 colnames(result)[colnames(result) == inlaid_col] <- "inlaid"
-result$source <- source
+result$cluster <- cluster
 result$is_inlaid <- TRUE
-result <- result[, c("spot_id", coords, "inlaid", "source", "is_inlaid")]
+result <- result[, c("spot_id", coords, "cluster", "inlaid", "is_inlaid")]
 
 # Sort by inlaid and spot_id
 result <- dplyr::arrange(result, inlaid, spot_id)
@@ -494,7 +522,7 @@ result
 #' - inlaid column (name specified by `inlaid_col`): inlaid/annotation for each
 #' spot
 #'   - `spot_id`: unique identifier for each spot
-#' @param source The cluster label to analyze inlaid composition for.
+#' @param cluster The cluster label to analyze inlaid composition for.
 #' @param inlaid_col Character. Name of the column containing inlaid/annotation
 #' values.
 #' Default is `"cluster"` (to analyze cluster composition within another
@@ -506,8 +534,8 @@ result
 #' @return A data.frame with columns:
 #' \describe{
 #'   \item{inlaid}{Inlaid/annotation value.}
-#'   \item{count}{Number of spots with this inlaid type in the source.}
-#' \item{proportion}{Proportion of this inlaid type among all spots in source.}
+#'   \item{count}{Number of spots with this inlaid type in the cluster.}
+#' \item{proportion}{Proportion of this inlaid type among all spots in cluster.}
 #' }
 #' Rows are sorted by count in descending order.
 #'
@@ -522,13 +550,13 @@ result
 #' inlaid = sample(paste0("type_", 1:3), length(colnames(spe)), replace = TRUE)
 #' )
 #' # Count inlaid types within cluster 1
-#' inlaid_counts <- count_inlaid(df, source = 1, inlaid_col = "inlaid")
+#' inlaid_counts <- count_inlaid(df, cluster = 1, inlaid_col = "inlaid")
 #' inlaid_counts
 #'
 #' @importFrom dplyr group_by summarise arrange desc
 #' @export
 count_inlaid <- function(df,
-                        source,
+                        cluster,
                         inlaid_col = "cluster",
                         cluster_col = "cluster") {
 
@@ -539,10 +567,10 @@ stopifnot(inlaid_col %in% colnames(df))
 stopifnot(nrow(df) >= 1)
 
 # Use get_inlaid_spots to retrieve inlaid spots
-inlaid_spots <- get_inlaid_spots(df, source, inlaid_col, cluster_col)
+inlaid_spots <- get_inlaid_spots(df, cluster, inlaid_col, cluster_col)
 
 if (nrow(inlaid_spots) == 0) {
-    return(data.frame(inlaid = character(), count = integer(),
+    return(data.frame(cluster = character(), inlaid = character(), count = integer(),
     proportion = numeric()))}
 
 # Count inlaid composition
@@ -552,6 +580,10 @@ result <- data.frame(inlaid = inlaid_spots$inlaid) |>
     dplyr::mutate(proportion = count / sum(count)) |>
     dplyr::arrange(dplyr::desc(count)) |>
     as.data.frame()
+
+# Add cluster column to track source
+result$cluster <- cluster
+result <- result[, c("cluster", "inlaid", "count", "proportion")]
 
 result
 }
@@ -571,7 +603,7 @@ result
 #' - inlaid column (name specified by `inlaid_col`): inlaid/annotation for each
 #' spot
 #'   - `spot_id`: unique identifier for each spot
-#' @param sources Optional vector of cluster labels to process. If `NULL`,
+#' @param clusters Optional vector of cluster labels to process. If `NULL`,
 #'   all unique clusters in `df` are used.
 #' @param inlaid_col Character. Name of the column containing inlaid/annotation
 #' values.
@@ -582,10 +614,10 @@ result
 #'
 #' @return A data.frame with columns:
 #' \describe{
-#'   \item{source}{The source cluster being analyzed.}
+#'   \item{cluster}{The source cluster being analyzed.}
 #'   \item{inlaid}{The inlaid/annotation type.}
-#'   \item{count}{Number of spots with this inlaid type in the source.}
-#' \item{proportion}{Proportion of this inlaid type among all spots in source.}
+#'   \item{count}{Number of spots with this inlaid type in the cluster.}
+#' \item{proportion}{Proportion of this inlaid type among all spots in cluster.}
 #' }
 #' Rows are grouped by source cluster and sorted by count within each group
 #' (descending).
@@ -607,7 +639,7 @@ result
 #' @importFrom dplyr bind_rows
 #' @export
 count_all_inlaids <- function(df,
-                            sources = NULL,
+                            clusters = NULL,
                             inlaid_col = "cluster",
                             cluster_col = "cluster") {
 
@@ -618,18 +650,18 @@ stopifnot(inlaid_col %in% colnames(df))
 stopifnot(nrow(df) >= 1)
 
 # Determine clusters to process
-if (is.null(sources)) {
-    sources <- unique(df[[cluster_col]])
-    sources <- sources[!is.na(sources)]
+if (is.null(clusters)) {
+    clusters <- unique(df[[cluster_col]])
+    clusters <- clusters[!is.na(clusters)]
 }
 
 # Compute inlaid stats for each cluster
-results <- lapply(sources, function(clust) {
-    inlaid_counts <- count_inlaid(df, source = clust, inlaid_col = inlaid_col,
+results <- lapply(clusters, function(clust) {
+    inlaid_counts <- count_inlaid(df, cluster = clust, inlaid_col = inlaid_col,
     cluster_col = cluster_col)
-    # Add source column
-    inlaid_counts$source <- clust
-    inlaid_counts <- inlaid_counts[, c("source", "inlaid", "count",
+    # Add cluster column
+    inlaid_counts$cluster <- clust
+    inlaid_counts <- inlaid_counts[, c("cluster", "inlaid", "count",
     "proportion")]
     inlaid_counts
 })
@@ -637,9 +669,9 @@ results <- lapply(sources, function(clust) {
 # Combine results
 combined <- dplyr::bind_rows(results)
 
-# Sort by source and count (descending)
+# Sort by cluster and count (descending)
 combined <- combined |>
-    dplyr::arrange(source, dplyr::desc(count)) |>
+    dplyr::arrange(cluster, dplyr::desc(count)) |>
     as.data.frame()
 
 combined

@@ -6,7 +6,7 @@
 \usage{
 count_all_inlaids(
   df,
-  sources = NULL,
+  clusters = NULL,
   inlaid_col = "cluster",
   cluster_col = "cluster"
 )
@@ -21,7 +21,7 @@ identifier column, and `spot_id`.
 spot
   - `spot_id`: unique identifier for each spot}
 
-\item{sources}{Optional vector of cluster labels to process. If `NULL`,
+\item{clusters}{Optional vector of cluster labels to process. If `NULL`,
 all unique clusters in `df` are used.}
 
 \item{inlaid_col}{Character. Name of the column containing inlaid/annotation
@@ -35,10 +35,10 @@ assignments.
 \value{
 A data.frame with columns:
 \describe{
-  \item{source}{The source cluster being analyzed.}
+  \item{cluster}{The source cluster being analyzed.}
   \item{inlaid}{The inlaid/annotation type.}
-  \item{count}{Number of spots with this inlaid type in the source.}
-\item{proportion}{Proportion of this inlaid type among all spots in source.}
+  \item{count}{Number of spots with this inlaid type in the cluster.}
+\item{proportion}{Proportion of this inlaid type among all spots in cluster.}
 }
 Rows are grouped by source cluster and sorted by count within each group
 (descending).

@@ -6,10 +6,11 @@
 \usage{
 get_neighborhood_spots(
   df,
-  source = NULL,
+  cluster = NULL,
   spot_id = NULL,
   k = 100,
   max_dist = NULL,
+  inlaid_col = NULL,
   coords = c("x", "y"),
   cluster_col = "cluster"
 )
@@ -22,12 +23,12 @@ get_neighborhood_spots(
 each spot
   - `spot_id`: unique identifier for each spot}
 
-\item{source}{The cluster label for which to analyze the neighborhood. Either
-`source`
+\item{cluster}{The cluster label for which to analyze the neighborhood. Either
+`cluster`
   or `spot_id` must be provided, but not both.}
 
 \item{spot_id}{Character. The spot identifier to find neighbors for. Either
-`source`
+`cluster`
   or `spot_id` must be provided, but not both.}
 
 \item{k}{Integer. Number of nearest neighbors to consider. Default is 100.
@@ -37,6 +38,11 @@ spots, it will be capped at nrow(df) - 1.}
 \item{max_dist}{Numeric. Maximum distance from the target to consider.
 If `NULL` (default), all neighbors up to k are included without distance
 filtering.}
+
+\item{inlaid_col}{Character. Name of the column containing inlaid/annotation
+values to return in the `neighborhood` column. If `NULL` (default), uses the
+  `cluster_col` value. This allows counting neighborhood composition by any
+  column (e.g., cell type, tissue type).}
 
 \item{coords}{Character vector of length 2 giving the coordinate column
 names.
@@ -52,11 +58,11 @@ A data.frame with columns:
   \item{spot_id}{Unique spot identifier.}
   \item{x}{X coordinate.}
   \item{y}{Y coordinate.}
-  \item{cluster}{Cluster label of the neighbor spot.}
-  \item{source}{The source cluster or spot_id being analyzed.}
-  \item{is_neighbourhood}{Logical, always TRUE for returned rows.}
+  \item{neighborhood}{Value from `inlaid_col` (or cluster if inlaid_col is NULL) of the neighbor spot.}
+  \item{cluster}{The source cluster or spot_id being analyzed.}
+  \item{is_neighborhood}{Logical, always TRUE for returned rows.}
 }
-Rows are sorted by cluster and spot_id.
+Rows are sorted by neighborhood and spot_id.
 }
 \description{
 This function identifies all spots in the neighborhood of a target cluster
@@ -66,7 +72,7 @@ that were identified, marking which ones are neighbors.
 }
 \details{
 The function can work in two modes:
-- **Cluster mode**: If `source` is provided, computes k-nearest neighbors for
+- **Cluster mode**: If `cluster` is provided, computes k-nearest neighbors for
 all spots
 in that cluster. Returns all neighbors found (excluding source cluster
 spots).
@@ -83,7 +89,7 @@ df <- data.frame(
   cluster = colData(spe)$cluster
 )
 # Get all neighbor spots for cluster 1
-neighbors_cluster <- get_neighborhood_spots(df, source = 1, k = 50)
+neighbors_cluster <- get_neighborhood_spots(df, cluster = 1, k = 50)
 head(neighbors_cluster)
 
 # Get neighbors for a specific point

@@ -613,10 +613,9 @@ if (mode == "inner") {
     idx_count <- (border_df_filtered$cluster == interface & border_df_filtered$interface == cluster)    
     border_count <- sum(idx_count)
 } else {
-    # Both: cluster -> interface AND interface -> cluster
+    # Both: use cluster -> interface count (same as inner)
     idx_inner <- (border_df_filtered$cluster == cluster & border_df_filtered$interface == interface)    
-    idx_outer <- (border_df_filtered$cluster == interface & border_df_filtered$interface == cluster)    
-    border_count <- sum(idx_inner) + sum(idx_outer)
+    border_count <- sum(idx_inner)
 }
 
 # Get all spots from cluster

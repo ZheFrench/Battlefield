@@ -4,7 +4,7 @@
 \alias{count_inlaid}
 \title{Count inlaid composition within a source cluster}
 \usage{
-count_inlaid(df, source, inlaid_col = "cluster", cluster_col = "cluster")
+count_inlaid(df, cluster, inlaid_col = "cluster", cluster_col = "cluster")
 }
 \arguments{
 \item{df}{A data.frame containing at least the columns `x`, `y`, cluster
@@ -16,7 +16,7 @@ each spot
 spot
   - `spot_id`: unique identifier for each spot}
 
-\item{source}{The cluster label to analyze inlaid composition for.}
+\item{cluster}{The cluster label to analyze inlaid composition for.}
 
 \item{inlaid_col}{Character. Name of the column containing inlaid/annotation
 values.
@@ -31,8 +31,8 @@ assignments.
 A data.frame with columns:
 \describe{
   \item{inlaid}{Inlaid/annotation value.}
-  \item{count}{Number of spots with this inlaid type in the source.}
-\item{proportion}{Proportion of this inlaid type among all spots in source.}
+  \item{count}{Number of spots with this inlaid type in the cluster.}
+\item{proportion}{Proportion of this inlaid type among all spots in cluster.}
 }
 Rows are sorted by count in descending order.
 }
@@ -52,7 +52,7 @@ df <- data.frame(
 inlaid = sample(paste0("type_", 1:3), length(colnames(spe)), replace = TRUE)
 )
 # Count inlaid types within cluster 1
-inlaid_counts <- count_inlaid(df, source = 1, inlaid_col = "inlaid")
+inlaid_counts <- count_inlaid(df, cluster = 1, inlaid_col = "inlaid")
 inlaid_counts
 
 }

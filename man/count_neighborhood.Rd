@@ -6,10 +6,11 @@
 \usage{
 count_neighborhood(
   df,
-  source = NULL,
+  cluster = NULL,
   spot_id = NULL,
   k = 100,
   max_dist = NULL,
+  inlaid_col = NULL,
   coords = c("x", "y"),
   cluster_col = "cluster"
 )
@@ -23,12 +24,12 @@ each spot
 - `spot_id`: unique identifier for each spot (optional, required for detailed
 analysis)}
 
-\item{source}{The cluster label for which to analyze the neighborhood. Either
-`source`
+\item{cluster}{The cluster label for which to analyze the neighborhood. Either
+`cluster`
   or `spot_id` must be provided, but not both.}
 
 \item{spot_id}{Character. The spot identifier to find neighbors for. Either
-`source`
+`cluster`
   or `spot_id` must be provided, but not both.}
 
 \item{k}{Integer. Number of nearest neighbors to consider. Default is 100.
@@ -37,6 +38,11 @@ Larger values capture more distant neighbors.}
 \item{max_dist}{Numeric. Maximum distance from the target to consider.
 If `NULL` (default), all neighbors up to k are included without distance
 #' filtering.}
+
+\item{inlaid_col}{Character. Name of the column containing inlaid/annotation
+values to count in neighborhoods. If `NULL` (default), uses the
+  `cluster_col` value. This allows counting neighborhood composition by any
+  column (e.g., cell type, tissue type).}
 
 \item{coords}{Character vector of length 2 giving the coordinate column
 names.
@@ -49,9 +55,9 @@ assignments.
 \value{
 A data.frame with columns:
 \describe{
-  \item{cluster}{Cluster label (from neighboring spots).}
-  \item{count}{Number of times this cluster appears in the neighborhood.}
-  \item{proportion}{Proportion of this cluster relative to all neighbors.}
+  \item{neighborhood}{Cluster label or inlaid value (from neighboring spots).}
+  \item{count}{Number of times this cluster/type appears in the neighborhood.}
+  \item{proportion}{Proportion of this cluster/type relative to all neighbors.}
 }
 Rows are sorted by count in descending order.
 }
@@ -64,7 +70,7 @@ to identify neighbors, then counts how many belong to each cluster type.
 }
 \details{
 This function wraps [get_neighborhood_spots()] and summarizes the results by
-counting spots from each neighboring cluster. In cluster mode, the source
+counting spots from each neighboring cluster or inlaid type. In cluster mode, the source
 cluster
 itself is excluded from the counts. In point mode, all neighboring clusters
 are counted.
@@ -83,7 +89,7 @@ df <- data.frame(
   cluster = colData(spe)$cluster
 )
 # Count cluster types in neighborhood of cluster 1
-neighbor_counts <- count_neighborhood(df, source = 1, k = 50)
+neighbor_counts <- count_neighborhood(df, cluster = 1, k = 50)
 neighbor_counts
 
 # Count cluster types around a specific point

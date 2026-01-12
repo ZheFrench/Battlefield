@@ -6,7 +6,7 @@
 \usage{
 get_inlaid_spots(
   df,
-  source,
+  cluster,
   inlaid_col = "cluster",
   cluster_col = "cluster",
   coords = c("x", "y")
@@ -22,7 +22,7 @@ each spot
 spot
   - `spot_id`: unique identifier for each spot}
 
-\item{source}{The cluster label to retrieve inlaid spots for.}
+\item{cluster}{The cluster label to retrieve inlaid spots for.}
 
 \item{inlaid_col}{Character. Name of the column containing inlaid/annotation
 values.
@@ -43,7 +43,7 @@ A data.frame with columns:
   \item{x}{X coordinate.}
   \item{y}{Y coordinate.}
   \item{inlaid}{Inlaid/annotation value.}
-  \item{source}{The source cluster being analyzed.}
+  \item{cluster}{The source cluster being analyzed.}
   \item{is_inlaid}{Logical, always TRUE for returned rows.}
 }
 Rows are sorted by inlaid and spot_id.
@@ -65,7 +65,7 @@ df <- data.frame(
 inlaid = sample(paste0("type_", 1:3), length(colnames(spe)), replace = TRUE)
 )
 # Get all inlaid spots within cluster 1
-inlaid_spots <- get_inlaid_spots(df, source = 1, inlaid_col = "inlaid")
+inlaid_spots <- get_inlaid_spots(df, cluster = 1, inlaid_col = "inlaid")
 head(inlaid_spots)
 
 }

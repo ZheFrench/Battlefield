@@ -54,7 +54,6 @@ library(tidyr)
 library(pheatmap)
 library(pals)
 library(grid)
-library(patchwork)
 ```
 # Introduction  
 
@@ -86,13 +85,15 @@ regions where distinct tissue or cell populations interact.
 * **Intra-cluster layers** — characterize spatial layers
 or gradients within a single cluster.
 
-* **Inter-cluster trajectories**  — model spatial transitions 
+* **Inter/Intra-cluster trajectories**  — model spatial transitions 
 across multiple clusters.
 
-* **Cluster spatial neighborhood**  — report the cluster composition 
+* **Spatial neighborhood**  — report the cluster composition 
 of a spatial neighborhood defined by k nearest spots, 
 constrained by a distance threshold.
 
+Finally, you can integrate `Battlefield` results back into 
+a `SpatialExperiment` object for further analysis.
 
 # Starting point
 
@@ -132,11 +133,11 @@ geom_point(size = 3.2,colour = "grey", shape = 21) +
 coord_equal() +
 theme_minimal()+
 labs(x = "", y = "") +
-theme( axis.text = element_blank()) 
+theme(axis.text = element_blank()) 
 ```
 
 You can have acces to some basic information about the dataset
-you are using (grid type,distance threshold(radius) recommonded, etc.).
+you are using (grid type, distance threshold (radius) advised...)
 ```{r interfaces2, results='asis'}
 # Detect grid type and get parameters
 res <- detect_grid_type(df, verbose = TRUE)
@@ -166,64 +167,79 @@ Here we demonstrate how to:
 You must have first defined borders before selecting core spots.
 
 Here we show an example to detect interfaces between clusters 4 and 5.
-We indentify border spots from cluster 4 towards cluster 5 that we
-referenced as interface.  
-We used the `outer` mode to select spots, meaning
-that only spots from cluster 4 that are located on the outside of the
-interface towards cluster 5 are selected.
+We identify border spots from cluster 4 that are adjacent to cluster 5,
+referenced as interface for the adjactent cluster.  
+We used the `inner` mode to select spots, meaning
+that only spots from cluster 4 that are located in the inside of the
+cluster towards cluster 5 (the interface) are selected.  
 
+Note : we used a `max_dist = 60` microns to define the spatial neighborhood to 
+remove spots that would have been too far away to be considered as neighbors.
 ```{r interfaces3, fig.dim = c(7, 3)}
 
-# Select reverse : cluster 4 → 5
-border_out <- select_border_spots(df, 
+
+border_in <- select_border_spots(df, 
     cluster = 4, 
     interface = 5,
-    mode = "outer")
-knitr::kable(head(border_out))
+    mode = "inner",
+    max_dist = 60)
+# A similar approach would have been 
+# select_border_spots(df, 
+#   cluster = 5, 
+#   interface = 4,
+#   mode = "outer",
+#   max_dist = 60)
+knitr::kable(head(border_in))
 
 # Structre data 
-df_out <- df |>
-mutate(is_border = spot_id %in% border_out$spot_id) |>
-left_join(border_out |> 
+df_in <- df |>
+mutate(is_border = spot_id %in% border_in$spot_id) |>
+left_join(border_in |> 
 select(spot_id, is_border_multiple),by = "spot_id") |>
 mutate(is_border_multiple = coalesce(is_border_multiple, FALSE))
 
 
-# Plot interface 4 → 5
-ggplot(df_out, aes(x, y, color = cluster)) +
-geom_point(size = 1) +
-geom_point(data = subset(df_out, is_border & !is_border_multiple),
-          color = "black", size = 2) +
-geom_point(data = subset(df_out, is_border & is_border_multiple),
-          color = "red", size = 2) +
+# Plot interface 5 → 4
+ggplot(df_in, aes(x, y, fill = cluster)) +
+geom_point(size = 3.2, shape = 21, colour = "grey") +
+geom_point(data = subset(df_in, is_border & !is_border_multiple),
+          size = 3.2,  colour = "black", fill = NA) +
+geom_point(data = subset(df_in, is_border & is_border_multiple),
+          size = 3.2,  colour = "red", fill = NA) +
 coord_equal() +
 theme_minimal()+
-labs(x = "", y = "",color = "") +
-theme( axis.text = element_blank()) 
+labs(x = "", y = "") +
+theme(axis.text = element_blank()) 
 
 ```
 
 We can also identify all interfaces at once
 and visualize spots that are part of multiple interfaces.  Here we used
-a `max_dist = 60` microns and `k = 6` neighbors to define the spatial neighborhood.
+again a `max_dist = 60` microns and `k = 6` neighbors to define the spatial neighborhood.  
+
 `is_border_multiple` indicates whether a spot is part of multiple interfaces and
 is plotted with a different alpha in the example.
+
+This approach needs further manual selection of the cluster pair of interest
+as it brings some redundacy. (for example, border spots for both directions 3→4 and
+4→3 are identified twice due to sequencial call of `select_border_spots` with
+the two modes (inner/outer)).
 
 ```{r interfaces4, fig.dim = c(7, 3)}
 all_borders <- build_all_borders(df,max_dist = 60 , k = 6)
 knitr::kable(head(all_borders))
 
-# Structre data 
+# Structure data 
 df2 <- df |>
 left_join(all_borders |> 
 select(spot_id, undirected_pair, is_border_multiple),by = "spot_id") |>
 mutate(is_border = !is.na(undirected_pair),
-        is_border_multiple = coalesce(is_border_multiple, FALSE))
+    is_border_multiple = coalesce(is_border_multiple, FALSE))
 
 # Plot all interfaces
 ggplot(df2, aes(x, y)) +
 geom_point(data = subset(df2, !is_border),
-            color = "gray", size = 3.2) +
+           fill="grey" ,colour = "white", size = 3.2,shape = 21) +
 geom_point(data = subset(df2, is_border & is_border_multiple),
             aes(color = undirected_pair), size = 3.2, alpha = 0.4) +
 geom_point(data = subset(df2, is_border & !is_border_multiple),
@@ -231,15 +247,16 @@ geom_point(data = subset(df2, is_border & !is_border_multiple),
 coord_equal() +
 theme_minimal()+
 labs(x = "", y = "",color = "") +
-theme( axis.text = element_blank()) 
+theme(axis.text = element_blank()) 
 ```
-Here we plot the different
+  
+Next, we plot the different
 types of spots identified for the interface between clusters 3 and 4.
 We identify border spots for both directions (3→4 and 4→3) 
 and a relative selection of core spots within cluster 3 that can 
 be used as control spots for further analysis.
 
-```{r interfaces5, fig.dim = c(6, 5)}
+```{r interfaces5, fig.dim = c(7, 3)}
 
 # Get all pairs and detect grid
 pairs_visium <- directed_cluster_interface_pairs(df$cluster)
@@ -249,19 +266,18 @@ params_visium <- get_neighborhood_params(df, verbose = FALSE)
 cluster_A <- 3
 cluster_B <- 4
 
+# Build all borders to identify inner spots
+all_borders_visium <- build_all_borders(df, k = 6, pairs = pairs_visium)
+
 # Select border spots for both directions
-border_A_to_B <- subset(
-build_all_borders(df, k = 6, pairs = pairs_visium),
+border_A_to_B <- subset(all_borders_visium,
 cluster == cluster_A & interface == cluster_B
 )
 
-border_B_to_A <- subset(
-build_all_borders(df, k = 6, pairs = pairs_visium),
+border_B_to_A <- subset(all_borders_visium,
 cluster == cluster_B & interface == cluster_A
 )
 
-# Build all borders to identify inner spots
-all_borders_visium <- build_all_borders(df, k = 6, pairs = pairs_visium)
 
 # Select inner spots for cluster A
 inner_A <- select_core_spots(df, all_borders_visium, 
@@ -280,32 +296,102 @@ mutate(spot_type = ifelse(spot_id %in% inner_A$spot_id,
                             "inner_A", spot_type)) |>
 as.data.frame()
 
+
 # Plot: clusters with borders and core control spots
-ggplot(df_final, aes(x, y, color = cluster)) +
-geom_point(data = subset(df_final, spot_type == "background"), 
-            size = 1.5, alpha = 0.6) +
+ggplot(df_final, aes(x, y)) +
+# 1) Base clusters           fill="gray" ,colour = "grey", size = 3.2,shape = 21) + # nolint: line_length_linter.
+geom_point(aes(color = cluster), size = 2.5) +
+#  2) Draw outlines (slightly larger) so they "surround" without hiding
 geom_point(data = subset(df_final, spot_type == "border_A_to_B"), 
-            color = "red", size = 3.5, shape = 4, stroke = 1.5) +
+  color = "blue", size = 2.5, shape = 1, stroke = 1.25) +
 geom_point(data = subset(df_final, spot_type == "border_B_to_A"),
-            color = "orange", size = 3.5, shape = 4, stroke = 1.5) +
+  color = "red", size = 2.5, shape = 1, stroke = 1.25) +
 geom_point(data = subset(df_final, spot_type == "inner_A"), 
-            aes(color = NULL), 
-            color = "darkgreen", size = 3.5, shape = 1, stroke = 1.5) +
+  color = "black", size = 2.5, shape = 1, stroke = 1.25) +
+  # 3) Re-draw the colored points ON TOP for the highlighted subset
+geom_point(
+  data = subset(df_final, spot_type %in% c("border_A_to_B", "border_B_to_A", "inner_A")),
+  aes(color = cluster),
+  size = 2.5
+) +
 coord_equal() +
-theme_minimal()+
+theme_minimal() +
 labs(x = "", y = "",color = "") +
-theme( axis.text = element_blank()) 
+theme(axis.text = element_blank())
+
+```
+  
+## Intra-cluster layers  
+
+You can directly work on a specific cluster to define three layers 
+as core, intermediate and border.  
+`intermediate_quantile` allows to control the thickness of the intermediate layer.
+
+```{r layers1,fig.dim = c(7,3)}
+
+target_cluster <- 3
+# Narrow intermediate layer
+layers_df <- create_cluster_layers(df, 
+              target_cluster = target_cluster, 
+              intermediate_quantile = 0.33)
+# Create visualization dataframe
+df_viz <- df |>
+mutate(layer = NA_character_) |>
+as.data.frame()
+
+# Map layers to the full dataset
+idx_match <- match(layers_df$spot_id, df_viz$spot_id)
+valid_idx <- !is.na(idx_match)
+df_viz$layer[idx_match[valid_idx]] <- layers_df$layer[valid_idx]
+
+# Create combined plot: clusters in background + layers overlay with circles
+ggplot(df_viz, aes(x, y)) +
+# base clusters
+geom_point(aes(color = cluster), size = 2.5) +
+# 2) Draw outlines (slightly larger) so they "surround" without hiding
+geom_point(
+    data = subset(df_viz, layer == "core"),
+    shape = 1, color = "#DDDDDD",
+    size = 3.2, stroke = 1.25
+) +
+geom_point(
+    data = subset(df_viz, layer == "intermediate"),
+    shape = 1, color = "#666666",
+    size = 3.2, stroke = 1.25
+) +
+geom_point(
+    data = subset(df_viz, layer == "border"),
+    shape = 1, color ="black",
+    size = 3.2, stroke = 1.25
+) +
+# 3) Re-draw the colored points ON TOP for the highlighted subset
+geom_point(
+    data = subset(df_viz, layer %in% c("core", "intermediate", "border")),
+    aes(color = cluster),
+    size = 2.5
+)  +
+coord_equal() +
+theme_minimal()+  labs(
+  x = "", y = "", color = ""
+) +
+theme(
+  axis.text = element_blank()
+) 
 ```
 
-## Inter-cluster trajectories  
+## Inter/Intra-cluster trajectories  
 
- 
-```{r loading,eval=TRUE,fig.dim = c(7,3)}
+We can also identify spatial trajectories between two spots 
+from two cluster or inside a single cluster.
 
+Here we demonstrate how to build a trajectory between clusters 3 and 4 
+using `build_one_trajectory()`.
+```{r trajectories1,fig.dim = c(7,3)}
+
+# We retrieve expression for later visualization
 expr <- as.numeric(assay(visium_simulated_spe, "counts")["FAKE_GENE", ])
 test <- cbind(as.data.frame(colData(visium_simulated_spe)), df[, c("x", "y"), drop = FALSE])
 test$expr <- expr
-
 
 start_cluster <- "3"
 end_cluster   <- "4"
@@ -316,49 +402,57 @@ centroids <- compute_centroids(df)
 A <- centroids[centroids$cluster == start_cluster, c("x","y")]
 B <- centroids[centroids$cluster == end_cluster,   c("x","y")]
 
+res <- build_one_trajectory(df, A, B, top_n = top_n, max_dist = NULL)
 
-(res <- build_one_trajectory(df, A, B, top_n = top_n, max_dist = NULL))
+knitr::kable(head(res))
 
-ggplot(test, aes(x, y)) +
-geom_point(aes(color = expr),size = 1.6, alpha = 0.85) +
-scale_color_gradient(
-low = "blue",
-high = "red"
-) +
-geom_path(
-data = res,
-aes(x = x, y = y),
-color = "green", linewidth = 1.1
-) +
-geom_path(
-data = res,
-aes(x = x, y = y),
-color = "black", linewidth = 1.1,
-arrow = grid::arrow(type = "closed",
-length = grid::unit(5, "mm"))
-) +
-geom_point(data = res$selected, aes(x, y), 
-inherit.aes = FALSE, size = 2.2, color="green") +
+# Plot cluster distribution
+ggplot(test, aes(x, y, fill = cluster)) +
+geom_point(size = 3.2,colour="grey", shape = 21) +
+geom_path(data=res, aes(x=x, y=y, group=trajectory_id), 
+  color="black",linewidth=2) +
+geom_point(data = res, aes(x, y), 
+  size = 3.2, fill="red",colour="black", shape = 21) +
 coord_equal() +
-theme_minimal()
+theme_minimal() +
+labs(x = "", y = "") +
+theme(axis.text = element_blank())
 
+```  
 
-(out <- build_similar_trajectories(df, A, B, top_n = top_n, n_extra = 2, side = "both"))
+But the real interest here is to identify multiple similar trajectories for a 
+fixed number of spots and trajectories to explore possible gene expression gradients
+using `build_similar_trajectories()`.
+  
+Here we build two extra trajectories on each side of the main trajectory.  
+`lane_factor` allows to control the spacing between trajectories. The number of 
+trajectories returned is `n_extra` according to the `side` parameter setting.
+
+```{r trajectories2, fig.dim = c(7,3)}
+
+out <- build_similar_trajectories(df, A, B, 
+top_n = top_n, 
+n_extra = 2, 
+lane_width_factor = 2.5,
+side = "both")
+knitr::kable(head(out))
 
 ggplot(test, aes(x, y)) +
 geom_point(aes(color = expr),size = 1.6, alpha = 0.85) +
-scale_color_gradient(
-low = "blue",
-high = "red"
-) +
+scale_color_gradient(low = "blue",high = "red") +
 geom_path(data=out, aes(x=x, y=y, group=trajectory_id), 
-inherit.aes = FALSE, color="green",linewidth=1,
-arrow = grid::arrow(type = "closed", length = grid::unit(3, "mm"))) +
-geom_point(data = out$lines, aes(x, y), 
-inherit.aes = FALSE, size = 2.2, color="green") +
+inherit.aes = FALSE, color="black",linewidth=1,
+arrow = grid::arrow(type = "closed", length = grid::unit(2, "mm"))) +
+geom_point(data = out, aes(x, y), 
+inherit.aes = FALSE, size = 2.2, fill="white",color="black") +
 coord_equal() +
-theme_minimal() 
+theme_minimal() +
+labs(x = "", y = "") +
+theme(axis.text = element_blank())
+```
 
+We can now explore quickly the expression of this fake gene via an heatmap. 
+```{r trajectories3, fig.dim = c(7,3)}
 
 meta <- out|>
 transmute(
@@ -396,8 +490,135 @@ cellwidth=25, cellheight=25 , na_col = "grey90"
 )
 ```  
 
+## Spatial neighborhood  
+
+`Battlefield` also provides a utility to report the cluster composition 
+of a spatial neighborhood defined by k nearest spots, 
+constrained by a distance threshold. It can used a cluster or
+a spot of interest.  
+There is three major functions : 
+
+* ` get_neighborhood_spots ` : get the spots in the neighborhood of a cluster
+* ` count_neighborhood ` : count the composition of a neighborhood for a cluster
+* ` count_all_neighborhoods ` : count the composition of neighborhoods for all clusters
+
+By default, it will report clusters present in the neighborhood
+but you can provide another column name with `inlaid_col` parameter
+to report other annotations.
+
+```{r neighborhood1}
+
+# Getting neighborhoods...
+neighborhood_spots_1 <- get_neighborhood_spots(df, cluster = 1, k = 200)
+head(neighborhood_spots_1)
+
+# Counting the clusters in the neighborhoods...
+neighb_vis <- count_neighborhood(df, cluster = 1, k = 100)
+head(neighb_vis)
+```
+
+We simulated another another annotation to create inlaid black spots 
+that we will count in the neighborhood of cluster 1 just after
+the plot.
+
+```{r neighborhood2, fig.dim = c(7,3)}
+
+neighb_vis <- count_all_neighborhoods(df,  k = 100)
+
+# Add inlaid column with random values (5 categories)
+df$inlaid <- sample(paste0("inlaid", 1:5), nrow(df), replace = TRUE)
+
+df_neighborhood_viz <- df |>
+  mutate(
+    spot_type = "background",
+    spot_type = ifelse(cluster == 1, "source", spot_type),
+    spot_type = ifelse(spot_id %in% neighborhood_spots_1$spot_id,
+                       "neighborhood", spot_type)
+  ) |>
+  as.data.frame()
 
 
+# Apply the same cluster factor levels as df_vis
+df_neighborhood_viz$cluster <- factor(df_neighborhood_viz$cluster,
+                                      levels = sort(unique(df$cluster)))
+
+ggplot(df_neighborhood_viz, aes(x, y)) +
+  geom_point(
+    data = subset(df_neighborhood_viz, spot_type == "neighborhood"),
+    shape = 1,
+    color = "grey",
+    size = 3.2,
+    stroke = 1.25
+  ) +
+  geom_point(
+    aes(color = cluster),
+    size = 2.5
+  ) +
+    geom_point(
+    data = subset(df_neighborhood_viz, inlaid == "inlaid1"),
+    fill = "black",
+    size = 2.5
+  ) +
+  coord_equal() +
+  theme_minimal() +
+  labs(x = "", y = "") +
+  theme(axis.text = element_blank()
+  )
+
+# Counting the black point -inlaid spots- in the neighborhood of cluster  1
+neighb_vis <- count_neighborhood(df, cluster = 1, inlaid_col = "inlaid",k = 100)
+head(neighb_vis)
+
+```  
+
+
+We previously count these point in the neighborhood of cluster 1.
+We  can count the black spots directly inside cluster 1.
+
+For this purpose, three major functions are available: 
+
+* ` get_inlaid_spots ` : get the inlaid spots inside a cluster
+* ` count_inlaid ` : count the composition of inlaid spots for a cluster
+* ` count_all_inlaids ` : count the composition of inlaid spots for all clusters
+
+```{r neighborhood3,eval=TRUE}
+
+# === Testing get_inlaid_spots  
+inlaid_spots_1 <- get_inlaid_spots(df, cluster = 1, inlaid_col = "inlaid")
+
+# === Testing count_inlaid ===
+inlaid_1 <- count_inlaid(df, cluster = 1, inlaid_col = "inlaid")
+
+# === Testing count_all_inlaids ===
+all_inlaids <- count_all_inlaids(df, inlaid_col = "inlaid")
+knitr::kable(head(all_inlaids, 15))
+
+``` 
+
+# Ending point
+
+You can finaly integrate `Battlefield` results back into 
+a `SpatialExperiment` object for further analysis :
+
+* `add_borders_to_spe()`
+* `add_layers_to_spe()`
+* `add_trajectories_to_spe()`
+
+```{r integration1}
+
+visium_simulated_spe <- add_borders_to_spe(visium_simulated_spe,
+  border = all_borders)
+head(colData(visium_simulated_spe))
+
+visium_simulated_spe <- add_layers_to_spe(visium_simulated_spe, 
+  layer = layers_df)
+head(colData(visium_simulated_spe))
+
+visium_simulated_spe <- add_trajectories_to_spe(visium_simulated_spe, 
+  trajectory = out)
+head(colData(visium_simulated_spe))
+
+```
 # Session Information
 
 ```{r session-info}
