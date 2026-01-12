@@ -22,7 +22,6 @@ library(tidyr)
 library(pheatmap)
 library(pals)
 library(grid)
-library(patchwork)
 ```
 
 ## Introduction
@@ -52,236 +51,261 @@ study of spatial organization under different biological contexts:
 - **Intra-cluster layers** — characterize spatial layers or gradients
   within a single cluster.
 
-- **Inter-cluster trajectories** — model spatial transitions across
-  multiple clusters.
+- **Inter/Intra-cluster trajectories** — model spatial transitions
+  across multiple clusters.
 
-- **Cluster neighbourhood** — report the cluster composition of a
-  spatial neighborhood defined by k nearest spots, constrained by a
-  distance threshold.
+- **Spatial neighborhood** — report the cluster composition of a spatial
+  neighborhood defined by k nearest spots, constrained by a distance
+  threshold.
+
+Finally, you can integrate `Battlefield` results back into a
+`SpatialExperiment` object for further analysis.
 
 ## Starting point
 
-We start from a SpatialExperiment object that contains (i) spatial
-coordinates for each spot and (ii) a precomputed clustering stored in
-colData(). Battlefield operates on a simple spot-level table, so we
-first export a data.frame with four columns: \* spot_id: spot/barcode
-identifier (colnames(spe)) \* x, y: spatial coordinates
-(spatialCoords(spe)) \* cluster: cluster label provided by the user (a
-column in colData(spe)) Because the cluster annotation can have
-different names depending on the workflow (e.g., cluster,
-seurat_clusters, BayesSpace, etc.), the user can specify which colData()
-column should be used.
+We start from a `SpatialExperiment` object that contains **(i)** spatial
+coordinates for each spot and **(ii)** a precomputed clustering stored
+in colData().
 
-### Interfaces between clusters
+Battlefield operates on a simple spot-level table, so we first export a
+data.frame with four columns:
 
-Battlefield allows you to identify and extract **spatial interfaces**
-between clusters (also known as `invasive margins`, or
-`niche boundaries`). Here we demonstrate how to:
+- spot_id: spot/barcode identifier (colnames(spe))  
+- x, y: spatial coordinates (spatialCoords(spe))  
+- cluster: cluster label provided by the user (a column in colData(spe))
 
-1.  Detect interfaces between two specific clusters
-    (inside/outside/both)
-2.  Identify multi-interface spots (belonging to several interfaces)
-3.  Select all interfaces at once
-4.  Detect associated inner control spots
+Because the cluster annotation can have different names depending on the
+workflow (e.g., cluster, seurat_clusters, BayesSpace, etc.), the user
+can specify which colData() column should be used.
 
 We load a simulated Visium dataset (hexagonal grid) to illustrate the
-different functionalities.
-
-#### Simulated Standard Visium -hexagonal grid
-
-#### Simulated VisiumHD -square grid
-
-#### Real life example
+different functionalities that Battlefield provides.
 
 ``` r
-# Load VisiumHD data at 16 µm resolution
-data("visiumHD_16um_simulated_spe")
-
-df <- data.frame(
-spot_id = colnames(visiumHD_16um_simulated_spe),
-x = spatialCoords(visiumHD_16um_simulated_spe)[, 1],
-y = spatialCoords(visiumHD_16um_simulated_spe)[, 2],
-cluster = colData(visiumHD_16um_simulated_spe)$cluster
-)
-```
-
-``` r
-# Get all directed cluster pairs
-pairs <- directed_cluster_interface_pairs(df$cluster)
-head(pairs)
-```
-
-    ##   cluster interface directed_pair
-    ## 1       4         3           4-3
-    ## 2       5         3           5-3
-    ## 3       1         3           1-3
-    ## 4       2         3           2-3
-    ## 5       3         4           3-4
-    ## 6       5         4           5-4
-
-``` r
-# Detect grid type and get parameters
-res <- detect_grid_type(df, verbose = FALSE)
-params <- get_neighborhood_params(df, square_connectivity = 4)
-```
-
-    ## ---- Grid type detection ----
-
-    ## Estimated grid step: 400
-
-    ## Median distance ratio: 1.414
-
-    ## Detected grid type: square
-
-    ## --------------------------------
-
-    ## ---- Neighborhood parameters ----
-
-    ## grid_type: square
-
-    ## connectivity: 4
-
-    ## radius: 404
-
-    ## k: 16
-
-    ## comment: Visium HD: 4-connectivity (square grid)
-
-    ## --------------------------------
-
-``` r
-# Select specific interface: cluster 5 → 4
-border_in <- select_border_spots(df, cluster = 5, interface = 4, k = 4)
-
-knitr::kable(head(border_in))
-```
-
-|     | spot_id   |    x |    y | directed_pair | undirected_pair | cluster | interface | is_border | is_border_multiple | other_adjacent_borders | mode  |
-|:----|:----------|-----:|-----:|:--------------|:----------------|:--------|----------:|:----------|:-------------------|:-----------------------|:------|
-| 168 | bin16_687 | 2400 | 6800 | 5-4           | 4-5 / 5-4       | 5       |         4 | TRUE      | FALSE              | NA                     | inner |
-| 170 | bin16_767 | 2400 | 7600 | 5-4           | 4-5 / 5-4       | 5       |         4 | TRUE      | FALSE              | NA                     | inner |
-| 172 | bin16_847 | 2400 | 8400 | 5-4           | 4-5 / 5-4       | 5       |         4 | TRUE      | FALSE              | NA                     | inner |
-| 193 | bin16_688 | 2800 | 6800 | 5-4           | 4-5 / 5-4       | 5       |         4 | TRUE      | FALSE              | NA                     | inner |
-| 194 | bin16_728 | 2800 | 7200 | 5-4           | 4-5 / 5-4       | 5       |         4 | TRUE      | FALSE              | NA                     | inner |
-| 196 | bin16_808 | 2800 | 8000 | 5-4           | 4-5 / 5-4       | 5       |         4 | TRUE      | FALSE              | NA                     | inner |
-
-``` r
-df_in <- df |>
-mutate(is_border = spot_id %in% border_in$spot_id) |>
-left_join(border_in |> select(spot_id, is_border_multiple),
-            by = "spot_id") |>
-mutate(is_border_multiple = coalesce(is_border_multiple, FALSE))
-
-# Plot interface 5 → 4
-p_in <- ggplot(df_in, aes(x, y, color = cluster)) +
-geom_point(size = 1) +
-geom_point(data = subset(df_in, is_border & !is_border_multiple),
-            color = "black", size = 2) +
-geom_point(data = subset(df_in, is_border & is_border_multiple),
-            color = "red", size = 2) +
-coord_equal() +
-theme_minimal() +
-labs(title = "Cluster: 5 → 4")
-
-# Select reverse interface: cluster 4 → 5
-border_out <- select_border_spots(df, cluster = 4, interface = 5, k = 4)
-
-df_out <- df |>
-mutate(is_border = spot_id %in% border_out$spot_id) |>
-left_join(border_out |> select(spot_id, is_border_multiple),
-            by = "spot_id") |>
-mutate(is_border_multiple = coalesce(is_border_multiple, FALSE))
-
-
-# Plot interface 4 → 5
-p_out <- ggplot(df_out, aes(x, y, color = cluster)) +
-geom_point(size = 1) +
-geom_point(data = subset(df_out, is_border & !is_border_multiple),
-            color = "black", size = 2) +
-geom_point(data = subset(df_out, is_border & is_border_multiple),
-            color = "red", size = 2) +
-coord_equal() +
-theme_minimal() +
-labs(title = "Interface: 4 → 5")
-
-# Combine both interfaces side by side
-p_in | p_out
-```
-
-![](Battlefield-Main_files/figure-html/interfaces3-1.png)
-
-#### All interfaces overview
-
-``` r
-# Build all borders for all directed pairs
-big_border_df <- build_all_borders(df, k = 4, pairs = pairs)
-
-# Create undirected pair visualization
-df_all <- df |>
-left_join(big_border_df |> select(spot_id, undirected_pair, is_border_multiple),
-            by = "spot_id") |>
-mutate(is_border = !is.na(undirected_pair),
-        is_border_multiple = coalesce(is_border_multiple, FALSE))
-
-# Plot all interfaces colored by undirected pair
-ggplot(df_all, aes(x, y)) +
-geom_point(data = subset(df_all, !is_border),
-            color = "gray", size = 1) +
-geom_point(data = subset(df_all, is_border & is_border_multiple),
-            aes(color = undirected_pair), size = 2, alpha = 0.4) +
-geom_point(data = subset(df_all, is_border & !is_border_multiple),
-            aes(color = undirected_pair), size = 2) +
-coord_equal() +
-theme_minimal() +
-labs(title = "All cluster interfaces (undirected pairs)",
-    subtitle = "Light color: multi-interface spots | Full color: pure interface")
-```
-
-![](Battlefield-Main_files/figure-html/interfaces4-1.png)
-
-#### Standard Visium Simulated
-
-``` r
-# Load standard Visium data at lower resolution
+# Load Visium data 
 data("visium_simulated_spe")
 
-df_visium <- data.frame(
+df <- data.frame(
 spot_id = colnames(visium_simulated_spe),
 x = spatialCoords(visium_simulated_spe)[, 1],
 y = spatialCoords(visium_simulated_spe)[, 2],
 cluster = colData(visium_simulated_spe)$cluster
 )
 
+# Plot cluster distribution
+ggplot(df, aes(x, y, fill = cluster)) +
+geom_point(size = 3.2,colour = "grey", shape = 21) +
+coord_equal() +
+theme_minimal()+
+labs(x = "", y = "") +
+theme(axis.text = element_blank()) 
+```
+
+![](Battlefield-Main_files/figure-html/interfaces1-1.png)
+
+You can have acces to some basic information about the dataset you are
+using (grid type, distance threshold (radius) advised…)
+
+``` r
+# Detect grid type and get parameters
+res <- detect_grid_type(df, verbose = TRUE)
+```
+
+    ## ---- Grid type detection ----
+
+    ## Estimated grid step: 55
+
+    ## Median distance ratio: 1.732
+
+    ## Detected grid type: hexagonal
+
+    ## --------------------------------
+
+``` r
+params <- get_neighborhood_params(df, verbose = TRUE)
+```
+
+    ## ---- Neighborhood parameters ----
+
+    ## grid_type: hexagonal
+
+    ## connectivity: 6
+
+    ## radius: 55.55
+
+    ## k: 6
+
+    ## comment: Standard Visium: 6 hexagonal neighbors
+
+    ## --------------------------------
+
+### Interfaces between clusters
+
+Battlefield allows you to identify and extract **spatial interfaces**
+between clusters. Here we demonstrate how to:
+
+1.  Detect interfaces between two specific clusters (according to three
+    modes of selection called `inner`, `outer` or `both`)
+2.  Identify multi-interface spots all at once
+3.  Detect a same number of control spots relative to the cluster of
+    interest
+
+`Battlefield` offers several functionalities related to interfaces (aka
+borders) via the following fonctions metionned below:
+
+- `select_border_spots`, between two clusters according to a specified
+  mode
+- `build_all_borders`
+- `select_core_spots` , to select control spots within a cluster
+  relative to its border
+- `build_all_cores`
+
+You must have first defined borders before selecting core spots.
+
+Here we show an example to detect interfaces between clusters 4 and 5.
+We identify border spots from cluster 4 that are adjacent to cluster 5,
+referenced as interface for the adjactent cluster.  
+We used the `inner` mode to select spots, meaning that only spots from
+cluster 4 that are located in the inside of the cluster towards cluster
+5 (the interface) are selected.
+
+Note : we used a `max_dist = 60` microns to define the spatial
+neighborhood to remove spots that would have been too far away to be
+considered as neighbors.
+
+``` r
+border_in <- select_border_spots(df, 
+    cluster = 4, 
+    interface = 5,
+    mode = "inner",
+    max_dist = 60)
+# A similar approach would have been 
+# select_border_spots(df, 
+#   cluster = 5, 
+#   interface = 4,
+#   mode = "outer",
+#   max_dist = 60)
+knitr::kable(head(border_in))
+```
+
+|     | spot_id  |   x |        y | directed_pair | undirected_pair | cluster | interface | is_border | is_border_multiple | other_adjacent_borders | mode  |
+|:----|:---------|----:|---------:|:--------------|:----------------|:--------|----------:|:----------|:-------------------|:-----------------------|:------|
+| 647 | SPOT0647 | 330 | 762.1024 | 4-5           | 4-5 / 5-4       | 4       |         5 | TRUE      | FALSE              | NA                     | inner |
+| 648 | SPOT0648 | 385 | 762.1024 | 4-5           | 4-5 / 5-4       | 4       |         5 | TRUE      | FALSE              | NA                     | inner |
+| 649 | SPOT0649 | 440 | 762.1024 | 4-5           | 4-5 / 5-4       | 4       |         5 | TRUE      | FALSE              | NA                     | inner |
+| 650 | SPOT0650 | 495 | 762.1024 | 4-5           | 4-5 / 5-4       | 4       |         5 | TRUE      | FALSE              | NA                     | inner |
+| 651 | SPOT0651 | 550 | 762.1024 | 4-5           | 4-5 / 5-4       | 4       |         5 | TRUE      | FALSE              | NA                     | inner |
+| 652 | SPOT0652 | 605 | 762.1024 | 4-5           | 4-5 / 5-4       | 4       |         5 | TRUE      | FALSE              | NA                     | inner |
+
+``` r
+# Structre data 
+df_in <- df |>
+mutate(is_border = spot_id %in% border_in$spot_id) |>
+left_join(border_in |> 
+select(spot_id, is_border_multiple),by = "spot_id") |>
+mutate(is_border_multiple = coalesce(is_border_multiple, FALSE))
+
+
+# Plot interface 5 → 4
+ggplot(df_in, aes(x, y, fill = cluster)) +
+geom_point(size = 3.2, shape = 21, colour = "grey") +
+geom_point(data = subset(df_in, is_border & !is_border_multiple),
+          size = 3.2,  colour = "black", fill = NA) +
+geom_point(data = subset(df_in, is_border & is_border_multiple),
+          size = 3.2,  colour = "red", fill = NA) +
+coord_equal() +
+theme_minimal()+
+labs(x = "", y = "") +
+theme(axis.text = element_blank()) 
+```
+
+![](Battlefield-Main_files/figure-html/interfaces3-1.png)
+
+We can also identify all interfaces at once and visualize spots that are
+part of multiple interfaces. Here we used again a `max_dist = 60`
+microns and `k = 6` neighbors to define the spatial neighborhood.
+
+`is_border_multiple` indicates whether a spot is part of multiple
+interfaces and is plotted with a different alpha in the example.
+
+This approach needs further manual selection of the cluster pair of
+interest as it brings some redundacy. (for example, border spots for
+both directions 3→4 and 4→3 are identified twice due to sequencial call
+of `select_border_spots` with the two modes (inner/outer)).
+
+``` r
+all_borders <- build_all_borders(df,max_dist = 60 , k = 6)
+knitr::kable(head(all_borders))
+```
+
+| spot_id  |      x |        y | directed_pair | undirected_pair | cluster | interface | is_border | is_border_multiple | other_adjacent_borders | mode  |
+|:---------|-------:|---------:|:--------------|:----------------|:--------|:----------|:----------|:-------------------|:-----------------------|:------|
+| SPOT0299 | 1017.5 | 333.4198 | 1-3           | 1-3 / 3-1       | 1       | 3         | TRUE      | FALSE              | NA                     | inner |
+| SPOT0300 | 1072.5 | 333.4198 | 1-3           | 1-3 / 3-1       | 1       | 3         | TRUE      | FALSE              | NA                     | inner |
+| SPOT0301 | 1127.5 | 333.4198 | 1-3           | 1-3 / 3-1       | 1       | 3         | TRUE      | FALSE              | NA                     | inner |
+| SPOT0302 | 1182.5 | 333.4198 | 1-3           | 1-3 / 3-1       | 1       | 3         | TRUE      | FALSE              | NA                     | inner |
+| SPOT0338 |  935.0 | 381.0512 | 1-3           | 1-3 / 3-1       | 1       | 3         | TRUE      | FALSE              | NA                     | inner |
+| SPOT0339 |  990.0 | 381.0512 | 1-3           | 1-3 / 3-1       | 1       | 3         | TRUE      | FALSE              | NA                     | inner |
+
+``` r
+# Structure data 
+df2 <- df |>
+left_join(all_borders |> 
+select(spot_id, undirected_pair, is_border_multiple),by = "spot_id") |>
+mutate(is_border = !is.na(undirected_pair),
+    is_border_multiple = coalesce(is_border_multiple, FALSE))
+
+# Plot all interfaces
+ggplot(df2, aes(x, y)) +
+geom_point(data = subset(df2, !is_border),
+           fill="grey" ,colour = "white", size = 3.2,shape = 21) +
+geom_point(data = subset(df2, is_border & is_border_multiple),
+            aes(color = undirected_pair), size = 3.2, alpha = 0.4) +
+geom_point(data = subset(df2, is_border & !is_border_multiple),
+            aes(color = undirected_pair), size = 3.2) +
+coord_equal() +
+theme_minimal()+
+labs(x = "", y = "",color = "") +
+theme(axis.text = element_blank()) 
+```
+
+![](Battlefield-Main_files/figure-html/interfaces4-1.png)
+
+Next, we plot the different types of spots identified for the interface
+between clusters 3 and 4. We identify border spots for both directions
+(3→4 and 4→3) and a relative selection of core spots within cluster 3
+that can be used as control spots for further analysis.
+
+``` r
 # Get all pairs and detect grid
-pairs_visium <- directed_cluster_interface_pairs(df_visium$cluster)
-params_visium <- get_neighborhood_params(df_visium, verbose = FALSE)
+pairs_visium <- directed_cluster_interface_pairs(df$cluster)
+params_visium <- get_neighborhood_params(df, verbose = FALSE)
 
 # Define cluster pair of interest
 cluster_A <- 3
 cluster_B <- 4
 
+# Build all borders to identify inner spots
+all_borders_visium <- build_all_borders(df, k = 6, pairs = pairs_visium)
+
 # Select border spots for both directions
-border_A_to_B <- subset(
-build_all_borders(df_visium, k = 6, pairs = pairs_visium),
+border_A_to_B <- subset(all_borders_visium,
 cluster == cluster_A & interface == cluster_B
 )
 
-border_B_to_A <- subset(
-build_all_borders(df_visium, k = 6, pairs = pairs_visium),
+border_B_to_A <- subset(all_borders_visium,
 cluster == cluster_B & interface == cluster_A
 )
 
-# Build all borders to identify inner spots
-all_borders_visium <- build_all_borders(df_visium, k = 6, pairs = pairs_visium)
 
 # Select inner spots for cluster A
-set.seed(42)
-inner_A <- select_core_spots(df_visium, all_borders_visium, 
-                            cluster = cluster_A, interface = cluster_B, 
+inner_A <- select_core_spots(df, all_borders_visium, 
+                            cluster = cluster_A, 
+                            interface = cluster_B, 
                             mode = "both")
 
 # Create visualization dataframe with spot classification
-df_final <- df_visium |>
+df_final <- df |>
 mutate(spot_type = "background") |>
 mutate(spot_type = ifelse(spot_id %in% border_A_to_B$spot_id, 
                             "border_A_to_B", spot_type)) |>
@@ -291,69 +315,106 @@ mutate(spot_type = ifelse(spot_id %in% inner_A$spot_id,
                             "inner_A", spot_type)) |>
 as.data.frame()
 
-# Plot: clusters with borders and inner control spots
-ggplot(df_final, aes(x, y, color = cluster)) +
-geom_point(data = subset(df_final, spot_type == "background"), 
-            size = 1.5, alpha = 0.6) +
+
+# Plot: clusters with borders and core control spots
+ggplot(df_final, aes(x, y)) +
+# 1) Base clusters           fill="gray" ,colour = "grey", size = 3.2,shape = 21) + # nolint: line_length_linter.
+geom_point(aes(color = cluster), size = 2.5) +
+#  2) Draw outlines (slightly larger) so they "surround" without hiding
 geom_point(data = subset(df_final, spot_type == "border_A_to_B"), 
-            color = "red", size = 3.5, shape = 4, stroke = 1.5) +
+  color = "blue", size = 2.5, shape = 1, stroke = 1.25) +
 geom_point(data = subset(df_final, spot_type == "border_B_to_A"),
-            color = "orange", size = 3.5, shape = 4, stroke = 1.5) +
+  color = "red", size = 2.5, shape = 1, stroke = 1.25) +
 geom_point(data = subset(df_final, spot_type == "inner_A"), 
-            aes(color = NULL), 
-            color = "darkgreen", size = 3.5, shape = 1, stroke = 1.5) +
+  color = "black", size = 2.5, shape = 1, stroke = 1.25) +
+  # 3) Re-draw the colored points ON TOP for the highlighted subset
+geom_point(
+  data = subset(df_final, spot_type %in% c("border_A_to_B", "border_B_to_A", "inner_A")),
+  aes(color = cluster),
+  size = 2.5
+) +
 coord_equal() +
-theme_minimal(base_size = 12) +
-labs(
-    title = paste0("Interface analysis: Cluster ", cluster_A, " ↔ ", cluster_B),
-    subtitle = paste0("Red X: ", cluster_A, "→", cluster_B, " | Orange X: ", cluster_B, "→", cluster_A, " | Green O: Inner control spots"),
-    x = "x", y = "y", color = "Cluster"
-)
+theme_minimal() +
+labs(x = "", y = "",color = "") +
+theme(axis.text = element_blank())
 ```
 
-![](Battlefield-Main_files/figure-html/interfaces-visium-1.png)
+![](Battlefield-Main_files/figure-html/interfaces5-1.png)
 
 ### Intra-cluster layers
 
-### Inter-cluster trajectories
-
-Here
+You can directly work on a specific cluster to define three layers as
+core, intermediate and border.  
+`intermediate_quantile` allows to control the thickness of the
+intermediate layer.
 
 ``` r
-data("visium_simulated_spe")
-head("visium_simulated_spe")
+target_cluster <- 3
+# Narrow intermediate layer
+layers_df <- create_cluster_layers(df, 
+              target_cluster = target_cluster, 
+              intermediate_quantile = 0.33)
+# Create visualization dataframe
+df_viz <- df |>
+mutate(layer = NA_character_) |>
+as.data.frame()
+
+# Map layers to the full dataset
+idx_match <- match(layers_df$spot_id, df_viz$spot_id)
+valid_idx <- !is.na(idx_match)
+df_viz$layer[idx_match[valid_idx]] <- layers_df$layer[valid_idx]
+
+# Create combined plot: clusters in background + layers overlay with circles
+ggplot(df_viz, aes(x, y)) +
+# base clusters
+geom_point(aes(color = cluster), size = 2.5) +
+# 2) Draw outlines (slightly larger) so they "surround" without hiding
+geom_point(
+    data = subset(df_viz, layer == "core"),
+    shape = 1, color = "#DDDDDD",
+    size = 3.2, stroke = 1.25
+) +
+geom_point(
+    data = subset(df_viz, layer == "intermediate"),
+    shape = 1, color = "#666666",
+    size = 3.2, stroke = 1.25
+) +
+geom_point(
+    data = subset(df_viz, layer == "border"),
+    shape = 1, color ="black",
+    size = 3.2, stroke = 1.25
+) +
+# 3) Re-draw the colored points ON TOP for the highlighted subset
+geom_point(
+    data = subset(df_viz, layer %in% c("core", "intermediate", "border")),
+    aes(color = cluster),
+    size = 2.5
+)  +
+coord_equal() +
+theme_minimal()+  labs(
+  x = "", y = "", color = ""
+) +
+theme(
+  axis.text = element_blank()
+) 
 ```
 
-    ## [1] "visium_simulated_spe"
+![](Battlefield-Main_files/figure-html/layers1-1.png)
+
+### Inter/Intra-cluster trajectories
+
+We can also identify spatial trajectories between two spots from two
+cluster or inside a single cluster.
+
+Here we demonstrate how to build a trajectory between clusters 3 and 4
+using
+[`build_one_trajectory()`](https://zhefrench.github.io/Battlefield/reference/build_one_trajectory.md).
 
 ``` r
-set.seed(12)
-
-head(colData(visium_simulated_spe))
-```
-
-    ## DataFrame with 6 rows and 3 columns
-    ##           barcode_id  cluster   sample_id
-    ##          <character> <factor> <character>
-    ## SPOT0001    SPOT0001        3    sample01
-    ## SPOT0002    SPOT0002        3    sample01
-    ## SPOT0003    SPOT0003        3    sample01
-    ## SPOT0004    SPOT0004        3    sample01
-    ## SPOT0005    SPOT0005        3    sample01
-    ## SPOT0006    SPOT0006        3    sample01
-
-``` r
-df <- data.frame(
-spot_id = colnames(visium_simulated_spe),
-x = spatialCoords(visium_simulated_spe)[, 1],
-y = spatialCoords(visium_simulated_spe)[, 2],
-cluster = colData(visium_simulated_spe)$cluster
-)
-
+# We retrieve expression for later visualization
 expr <- as.numeric(assay(visium_simulated_spe, "counts")["FAKE_GENE", ])
 test <- cbind(as.data.frame(colData(visium_simulated_spe)), df[, c("x", "y"), drop = FALSE])
 test$expr <- expr
-
 
 start_cluster <- "3"
 end_cluster   <- "4"
@@ -364,151 +425,84 @@ centroids <- compute_centroids(df)
 A <- centroids[centroids$cluster == start_cluster, c("x","y")]
 B <- centroids[centroids$cluster == end_cluster,   c("x","y")]
 
+res <- build_one_trajectory(df, A, B, top_n = top_n, max_dist = NULL)
 
-(res <- build_one_trajectory(df, A, B, top_n = top_n, max_dist = NULL))
+knitr::kable(head(res))
 ```
 
-    ##    spot_id      x        y cluster dist_to_seg pos_on_seg trajectory_id
-    ## 1 SPOT0220 1072.5 238.1570       3  11.5795728 0.00275319          main
-    ## 2 SPOT0300 1072.5 333.4198       1   8.6442774 0.14803792          main
-    ## 3 SPOT0380 1072.5 428.6826       1   5.7089820 0.29332266          main
-    ## 4 SPOT0460 1072.5 523.9454       1   2.7736866 0.43860739          main
-    ## 5 SPOT0540 1072.5 619.2082       1   0.1616088 0.58389212          main
-    ## 6 SPOT0620 1072.5 714.4710       1   3.0969042 0.72917686          main
-    ## 7 SPOT0700 1072.5 809.7338       1   6.0321996 0.87446159          main
-    ## 8 SPOT0780 1072.5 904.9965       4  15.7447575 1.00000000          main
+| spot_id  |      x |        y | cluster | dist_to_seg | pos_on_seg | trajectory_id |
+|:---------|-------:|---------:|:--------|------------:|-----------:|:--------------|
+| SPOT0220 | 1072.5 | 238.1570 | 3       |  11.5795728 |  0.0027532 | main          |
+| SPOT0300 | 1072.5 | 333.4198 | 1       |   8.6442774 |  0.1480379 | main          |
+| SPOT0380 | 1072.5 | 428.6826 | 1       |   5.7089820 |  0.2933227 | main          |
+| SPOT0460 | 1072.5 | 523.9454 | 1       |   2.7736866 |  0.4386074 | main          |
+| SPOT0540 | 1072.5 | 619.2082 | 1       |   0.1616088 |  0.5838921 | main          |
+| SPOT0620 | 1072.5 | 714.4710 | 1       |   3.0969042 |  0.7291769 | main          |
 
 ``` r
-ggplot(test, aes(x, y)) +
-geom_point(aes(color = expr),size = 1.6, alpha = 0.85) +
-scale_color_gradient(
-low = "blue",
-high = "red"
-) +
-geom_path(
-data = res,
-aes(x = x, y = y),
-color = "green", linewidth = 1.1
-) +
-geom_path(
-data = res,
-aes(x = x, y = y),
-color = "black", linewidth = 1.1,
-arrow = grid::arrow(type = "closed",
-length = grid::unit(5, "mm"))
-) +
-geom_point(data = res$selected, aes(x, y), 
-inherit.aes = FALSE, size = 2.2, color="green") +
+# Plot cluster distribution
+ggplot(test, aes(x, y, fill = cluster)) +
+geom_point(size = 3.2,colour="grey", shape = 21) +
+geom_path(data=res, aes(x=x, y=y, group=trajectory_id), 
+  color="black",linewidth=2) +
+geom_point(data = res, aes(x, y), 
+  size = 3.2, fill="red",colour="black", shape = 21) +
 coord_equal() +
-theme_minimal()
+theme_minimal() +
+labs(x = "", y = "") +
+theme(axis.text = element_blank())
 ```
 
-![](Battlefield-Main_files/figure-html/loading-1.png)
+![](Battlefield-Main_files/figure-html/trajectories1-1.png)
+
+But the real interest here is to identify multiple similar trajectories
+for a fixed number of spots and trajectories to explore possible gene
+expression gradients using
+[`build_similar_trajectories()`](https://zhefrench.github.io/Battlefield/reference/build_similar_trajectories.md).
+
+Here we build two extra trajectories on each side of the main
+trajectory.  
+`lane_factor` allows to control the spacing between trajectories. The
+number of trajectories returned is `n_extra` according to the `side`
+parameter setting.
 
 ``` r
-(out <- build_similar_trajectories(df, A, B, top_n = top_n, n_extra = 2, side = "both"))
+out <- build_similar_trajectories(df, A, B, 
+top_n = top_n, 
+n_extra = 2, 
+lane_width_factor = 2.5,
+side = "both")
+knitr::kable(head(out))
 ```
 
-    ##     spot_id      x        y cluster dist_to_seg  pos_on_seg trajectory_id
-    ## 1  SPOT0220 1072.5 238.1570       3  11.5795728 0.002753190          main
-    ## 2  SPOT0300 1072.5 333.4198       1   8.6442774 0.148037923          main
-    ## 3  SPOT0380 1072.5 428.6826       1   5.7089820 0.293322657          main
-    ## 4  SPOT0460 1072.5 523.9454       1   2.7736866 0.438607390          main
-    ## 5  SPOT0540 1072.5 619.2082       1   0.1616088 0.583892123          main
-    ## 6  SPOT0620 1072.5 714.4710       1   3.0969042 0.729176857          main
-    ## 7  SPOT0700 1072.5 809.7338       1   6.0321996 0.874461590          main
-    ## 8  SPOT0780 1072.5 904.9965       4  15.7447575 1.000000000          main
-    ## 9  SPOT0259  990.0 285.7884       3   9.0989022 0.071516864        left_1
-    ## 10 SPOT0339  990.0 381.0512       1  12.0341976 0.216801597        left_1
-    ## 11 SPOT0379 1017.5 428.6826       1  13.9850971 0.290736861        left_1
-    ## 12 SPOT0459 1017.5 523.9454       1  11.0498017 0.436021595        left_1
-    ## 13 SPOT0539 1017.5 619.2082       1   8.1145063 0.581306328        left_1
-    ## 14 SPOT0619 1017.5 714.4710       1   5.1792109 0.726591062        left_1
-    ## 15 SPOT0699 1017.5 809.7338       1   2.2439155 0.871875795        left_1
-    ## 16 SPOT0779 1017.5 904.9965       4  11.2679986 1.000000000        left_1
-    ## 17 SPOT0258  935.0 285.7884       3   0.8227870 0.068931069        left_2
-    ## 18 SPOT0338  935.0 381.0512       1   3.7580824 0.214215802        left_2
-    ## 19 SPOT0418  935.0 476.3140       1   6.6933778 0.359500535        left_2
-    ## 20 SPOT0498  935.0 571.5768       1   9.6286732 0.504785269        left_2
-    ## 21 SPOT0578  935.0 666.8396       1  12.5639686 0.650070002        left_2
-    ## 22 SPOT0618  962.5 714.4710       1  13.4553261 0.724005266        left_2
-    ## 23 SPOT0698  962.5 809.7338       4  10.5200307 0.869290000        left_2
-    ## 24 SPOT0778  962.5 904.9965       4  12.1971444 1.000000000        left_2
-    ## 25 SPOT0221 1127.5 238.1570       3   3.3034576 0.005338985       right_1
-    ## 26 SPOT0301 1127.5 333.4198       1   0.3681622 0.150623718       right_1
-    ## 27 SPOT0381 1127.5 428.6826       1   2.5671332 0.295908452       right_1
-    ## 28 SPOT0461 1127.5 523.9454       1   5.5024286 0.441193185       right_1
-    ## 29 SPOT0541 1127.5 619.2082       1   8.4377240 0.586477918       right_1
-    ## 30 SPOT0621 1127.5 714.4710       1  11.3730194 0.731762652       right_1
-    ## 31 SPOT0701 1127.5 809.7338       1  14.3083148 0.877047385       right_1
-    ## 32 SPOT0742 1155.0 857.3651       4  11.7109799 0.950982649       right_1
-    ## 33 SPOT0222 1182.5 238.1570       3   4.9726575 0.007924780       right_2
-    ## 34 SPOT0302 1182.5 333.4198       1   7.9079529 0.153209513       right_2
-    ## 35 SPOT0382 1182.5 428.6826       1  10.8432484 0.298494247       right_2
-    ## 36 SPOT0462 1182.5 523.9454       1  13.7785438 0.443778980       right_2
-    ## 37 SPOT0503 1210.0 571.5768       1  12.2407510 0.517714244       right_2
-    ## 38 SPOT0583 1210.0 666.8396       1   9.3054555 0.662998978       right_2
-    ## 39 SPOT0663 1210.0 762.1024       1   6.3701601 0.808283711       right_2
-    ## 40 SPOT0743 1210.0 857.3651       4   3.4348647 0.953568445       right_2
-    ##     offset
-    ## 1     0.00
-    ## 2     0.00
-    ## 3     0.00
-    ## 4     0.00
-    ## 5     0.00
-    ## 6     0.00
-    ## 7     0.00
-    ## 8     0.00
-    ## 9    63.25
-    ## 10   63.25
-    ## 11   63.25
-    ## 12   63.25
-    ## 13   63.25
-    ## 14   63.25
-    ## 15   63.25
-    ## 16   63.25
-    ## 17  126.50
-    ## 18  126.50
-    ## 19  126.50
-    ## 20  126.50
-    ## 21  126.50
-    ## 22  126.50
-    ## 23  126.50
-    ## 24  126.50
-    ## 25  -63.25
-    ## 26  -63.25
-    ## 27  -63.25
-    ## 28  -63.25
-    ## 29  -63.25
-    ## 30  -63.25
-    ## 31  -63.25
-    ## 32  -63.25
-    ## 33 -126.50
-    ## 34 -126.50
-    ## 35 -126.50
-    ## 36 -126.50
-    ## 37 -126.50
-    ## 38 -126.50
-    ## 39 -126.50
-    ## 40 -126.50
+| spot_id  |      x |        y | cluster | dist_to_seg | pos_on_seg | trajectory_id | offset |
+|:---------|-------:|---------:|:--------|------------:|-----------:|:--------------|-------:|
+| SPOT0220 | 1072.5 | 238.1570 | 3       |  11.5795728 |  0.0027532 | main          |      0 |
+| SPOT0300 | 1072.5 | 333.4198 | 1       |   8.6442774 |  0.1480379 | main          |      0 |
+| SPOT0380 | 1072.5 | 428.6826 | 1       |   5.7089820 |  0.2933227 | main          |      0 |
+| SPOT0460 | 1072.5 | 523.9454 | 1       |   2.7736866 |  0.4386074 | main          |      0 |
+| SPOT0540 | 1072.5 | 619.2082 | 1       |   0.1616088 |  0.5838921 | main          |      0 |
+| SPOT0620 | 1072.5 | 714.4710 | 1       |   3.0969042 |  0.7291769 | main          |      0 |
 
 ``` r
 ggplot(test, aes(x, y)) +
 geom_point(aes(color = expr),size = 1.6, alpha = 0.85) +
-scale_color_gradient(
-low = "blue",
-high = "red"
-) +
+scale_color_gradient(low = "blue",high = "red") +
 geom_path(data=out, aes(x=x, y=y, group=trajectory_id), 
-inherit.aes = FALSE, color="green",linewidth=1,
-arrow = grid::arrow(type = "closed", length = grid::unit(3, "mm"))) +
-geom_point(data = out$lines, aes(x, y), 
-inherit.aes = FALSE, size = 2.2, color="green") +
+inherit.aes = FALSE, color="black",linewidth=1,
+arrow = grid::arrow(type = "closed", length = grid::unit(2, "mm"))) +
+geom_point(data = out, aes(x, y), 
+inherit.aes = FALSE, size = 2.2, fill="white",color="black") +
 coord_equal() +
-theme_minimal() 
+theme_minimal() +
+labs(x = "", y = "") +
+theme(axis.text = element_blank())
 ```
 
-![](Battlefield-Main_files/figure-html/loading-2.png)
+![](Battlefield-Main_files/figure-html/trajectories2-1.png)
+
+We can now explore quickly the expression of this fake gene via an
+heatmap.
 
 ``` r
 meta <- out|>
@@ -547,7 +541,233 @@ cellwidth=25, cellheight=25 , na_col = "grey90"
 )
 ```
 
-![](Battlefield-Main_files/figure-html/loading-3.png)
+![](Battlefield-Main_files/figure-html/trajectories3-1.png)
+
+### Spatial neighborhood
+
+`Battlefield` also provides a utility to report the cluster composition
+of a spatial neighborhood defined by k nearest spots, constrained by a
+distance threshold. It can used a cluster or a spot of interest.  
+There is three major functions :
+
+- `get_neighborhood_spots` : get the spots in the neighborhood of a
+  cluster
+- `count_neighborhood` : count the composition of a neighborhood for a
+  cluster
+- `count_all_neighborhoods` : count the composition of neighborhoods for
+  all clusters
+
+By default, it will report clusters present in the neighborhood but you
+can provide another column name with `inlaid_col` parameter to report
+other annotations.
+
+``` r
+# Getting neighborhoods...
+neighborhood_spots_1 <- get_neighborhood_spots(df, cluster = 1, k = 200)
+head(neighborhood_spots_1)
+```
+
+    ##           spot_id      x        y cluster neighborhood is_neighborhood
+    ## SPOT0465 SPOT0465 1347.5 523.9454       1            2            TRUE
+    ## SPOT0466 SPOT0466 1402.5 523.9454       1            2            TRUE
+    ## SPOT0467 SPOT0467 1457.5 523.9454       1            2            TRUE
+    ## SPOT0468 SPOT0468 1512.5 523.9454       1            2            TRUE
+    ## SPOT0506 SPOT0506 1375.0 571.5768       1            2            TRUE
+    ## SPOT0507 SPOT0507 1430.0 571.5768       1            2            TRUE
+
+``` r
+# Counting the clusters in the neighborhoods...
+neighb_vis <- count_neighborhood(df, cluster = 1, k = 100)
+head(neighb_vis)
+```
+
+    ##   cluster neighborhood count proportion
+    ## 1       1            4    49       0.49
+    ## 2       1            3    45       0.45
+    ## 3       1            2     6       0.06
+
+We simulated another another annotation to create inlaid black spots
+that we will count in the neighborhood of cluster 1 just after the plot.
+
+``` r
+neighb_vis <- count_all_neighborhoods(df,  k = 100)
+
+# Add inlaid column with random values (5 categories)
+df$inlaid <- sample(paste0("inlaid", 1:5), nrow(df), replace = TRUE)
+
+df_neighborhood_viz <- df |>
+  mutate(
+    spot_type = "background",
+    spot_type = ifelse(cluster == 1, "source", spot_type),
+    spot_type = ifelse(spot_id %in% neighborhood_spots_1$spot_id,
+                       "neighborhood", spot_type)
+  ) |>
+  as.data.frame()
+
+
+# Apply the same cluster factor levels as df_vis
+df_neighborhood_viz$cluster <- factor(df_neighborhood_viz$cluster,
+                                      levels = sort(unique(df$cluster)))
+
+ggplot(df_neighborhood_viz, aes(x, y)) +
+  geom_point(
+    data = subset(df_neighborhood_viz, spot_type == "neighborhood"),
+    shape = 1,
+    color = "grey",
+    size = 3.2,
+    stroke = 1.25
+  ) +
+  geom_point(
+    aes(color = cluster),
+    size = 2.5
+  ) +
+    geom_point(
+    data = subset(df_neighborhood_viz, inlaid == "inlaid1"),
+    fill = "black",
+    size = 2.5
+  ) +
+  coord_equal() +
+  theme_minimal() +
+  labs(x = "", y = "") +
+  theme(axis.text = element_blank()
+  )
+```
+
+![](Battlefield-Main_files/figure-html/neighborhood2-1.png)
+
+``` r
+# Counting the black point -inlaid spots- in the neighborhood of cluster  1
+neighb_vis <- count_neighborhood(df, cluster = 1, inlaid_col = "inlaid",k = 100)
+head(neighb_vis)
+```
+
+    ##   cluster neighborhood count proportion
+    ## 1       1      inlaid2    26       0.26
+    ## 2       1      inlaid4    25       0.25
+    ## 3       1      inlaid5    19       0.19
+    ## 4       1      inlaid1    15       0.15
+    ## 5       1      inlaid3    15       0.15
+
+We previously count these point in the neighborhood of cluster 1. We can
+count the black spots directly inside cluster 1.
+
+For this purpose, three major functions are available:
+
+- `get_inlaid_spots` : get the inlaid spots inside a cluster
+- `count_inlaid` : count the composition of inlaid spots for a cluster
+- `count_all_inlaids` : count the composition of inlaid spots for all
+  clusters
+
+``` r
+# === Testing get_inlaid_spots  
+inlaid_spots_1 <- get_inlaid_spots(df, cluster = 1, inlaid_col = "inlaid")
+
+# === Testing count_inlaid ===
+inlaid_1 <- count_inlaid(df, cluster = 1, inlaid_col = "inlaid")
+
+# === Testing count_all_inlaids ===
+all_inlaids <- count_all_inlaids(df, inlaid_col = "inlaid")
+knitr::kable(head(all_inlaids, 15))
+```
+
+| cluster | inlaid  | count | proportion |
+|:--------|:--------|------:|-----------:|
+| 1       | inlaid2 |    19 |  0.2345679 |
+| 1       | inlaid3 |    19 |  0.2345679 |
+| 1       | inlaid1 |    17 |  0.2098765 |
+| 1       | inlaid4 |    13 |  0.1604938 |
+| 1       | inlaid5 |    13 |  0.1604938 |
+| 2       | inlaid1 |    13 |  0.2765957 |
+| 2       | inlaid3 |    11 |  0.2340426 |
+| 2       | inlaid2 |    10 |  0.2127660 |
+| 2       | inlaid4 |     7 |  0.1489362 |
+| 2       | inlaid5 |     6 |  0.1276596 |
+| 3       | inlaid2 |   100 |  0.2336449 |
+| 3       | inlaid1 |    87 |  0.2032710 |
+| 3       | inlaid4 |    86 |  0.2009346 |
+| 3       | inlaid5 |    83 |  0.1939252 |
+| 3       | inlaid3 |    72 |  0.1682243 |
+
+## Ending point
+
+You can finaly integrate `Battlefield` results back into a
+`SpatialExperiment` object for further analysis :
+
+- [`add_borders_to_spe()`](https://zhefrench.github.io/Battlefield/reference/add_borders_to_spe.md)
+- [`add_layers_to_spe()`](https://zhefrench.github.io/Battlefield/reference/add_layers_to_spe.md)
+- [`add_trajectories_to_spe()`](https://zhefrench.github.io/Battlefield/reference/add_trajectories_to_spe.md)
+
+``` r
+visium_simulated_spe <- add_borders_to_spe(visium_simulated_spe,
+  border = all_borders)
+head(colData(visium_simulated_spe))
+```
+
+    ## DataFrame with 6 rows and 7 columns
+    ##           barcode_id  cluster   sample_id is_border   is_core   interface
+    ##          <character> <factor> <character> <logical> <logical> <character>
+    ## SPOT0001    SPOT0001        3    sample01     FALSE     FALSE          NA
+    ## SPOT0002    SPOT0002        3    sample01     FALSE     FALSE          NA
+    ## SPOT0003    SPOT0003        3    sample01     FALSE     FALSE          NA
+    ## SPOT0004    SPOT0004        3    sample01     FALSE     FALSE          NA
+    ## SPOT0005    SPOT0005        3    sample01     FALSE     FALSE          NA
+    ## SPOT0006    SPOT0006        3    sample01     FALSE     FALSE          NA
+    ##          border_mode
+    ##          <character>
+    ## SPOT0001          NA
+    ## SPOT0002          NA
+    ## SPOT0003          NA
+    ## SPOT0004          NA
+    ## SPOT0005          NA
+    ## SPOT0006          NA
+
+``` r
+visium_simulated_spe <- add_layers_to_spe(visium_simulated_spe, 
+  layer = layers_df)
+head(colData(visium_simulated_spe))
+```
+
+    ## DataFrame with 6 rows and 8 columns
+    ##           barcode_id  cluster   sample_id is_border   is_core   interface
+    ##          <character> <factor> <character> <logical> <logical> <character>
+    ## SPOT0001    SPOT0001        3    sample01     FALSE     FALSE          NA
+    ## SPOT0002    SPOT0002        3    sample01     FALSE     FALSE          NA
+    ## SPOT0003    SPOT0003        3    sample01     FALSE     FALSE          NA
+    ## SPOT0004    SPOT0004        3    sample01     FALSE     FALSE          NA
+    ## SPOT0005    SPOT0005        3    sample01     FALSE     FALSE          NA
+    ## SPOT0006    SPOT0006        3    sample01     FALSE     FALSE          NA
+    ##          border_mode       layer
+    ##          <character> <character>
+    ## SPOT0001          NA        core
+    ## SPOT0002          NA        core
+    ## SPOT0003          NA        core
+    ## SPOT0004          NA        core
+    ## SPOT0005          NA        core
+    ## SPOT0006          NA        core
+
+``` r
+visium_simulated_spe <- add_trajectories_to_spe(visium_simulated_spe, 
+  trajectory = out)
+head(colData(visium_simulated_spe))
+```
+
+    ## DataFrame with 6 rows and 12 columns
+    ##           barcode_id  cluster   sample_id is_border   is_core   interface
+    ##          <character> <factor> <character> <logical> <logical> <character>
+    ## SPOT0001    SPOT0001        3    sample01     FALSE     FALSE          NA
+    ## SPOT0002    SPOT0002        3    sample01     FALSE     FALSE          NA
+    ## SPOT0003    SPOT0003        3    sample01     FALSE     FALSE          NA
+    ## SPOT0004    SPOT0004        3    sample01     FALSE     FALSE          NA
+    ## SPOT0005    SPOT0005        3    sample01     FALSE     FALSE          NA
+    ## SPOT0006    SPOT0006        3    sample01     FALSE     FALSE          NA
+    ##          border_mode       layer trajectory_id    offset pos_on_seg dist_to_seg
+    ##          <character> <character>   <character> <numeric>  <numeric>   <numeric>
+    ## SPOT0001          NA        core            NA        NA         NA          NA
+    ## SPOT0002          NA        core            NA        NA         NA          NA
+    ## SPOT0003          NA        core            NA        NA         NA          NA
+    ## SPOT0004          NA        core            NA        NA         NA          NA
+    ## SPOT0005          NA        core            NA        NA         NA          NA
+    ## SPOT0006          NA        core            NA        NA         NA          NA
 
 ## Session Information
 
@@ -579,21 +799,20 @@ sessionInfo()
     ## [8] methods   base     
     ## 
     ## other attached packages:
-    ##  [1] patchwork_1.3.2             pals_1.10                  
-    ##  [3] pheatmap_1.0.13             tidyr_1.3.2                
-    ##  [5] dplyr_1.1.4                 ggplot2_4.0.1              
-    ##  [7] SpatialExperiment_1.21.0    SingleCellExperiment_1.33.0
-    ##  [9] SummarizedExperiment_1.41.0 Biobase_2.71.0             
-    ## [11] GenomicRanges_1.63.1        Seqinfo_1.1.0              
-    ## [13] IRanges_2.45.0              S4Vectors_0.49.0           
-    ## [15] BiocGenerics_0.57.0         generics_0.1.4             
-    ## [17] MatrixGenerics_1.23.0       matrixStats_1.5.0          
-    ## [19] Battlefield_0.99.01        
+    ##  [1] pals_1.10                   pheatmap_1.0.13            
+    ##  [3] tidyr_1.3.2                 dplyr_1.1.4                
+    ##  [5] ggplot2_4.0.1               SpatialExperiment_1.21.0   
+    ##  [7] SingleCellExperiment_1.33.0 SummarizedExperiment_1.41.0
+    ##  [9] Biobase_2.71.0              GenomicRanges_1.63.1       
+    ## [11] Seqinfo_1.1.0               IRanges_2.45.0             
+    ## [13] S4Vectors_0.49.0            BiocGenerics_0.57.0        
+    ## [15] generics_0.1.4              MatrixGenerics_1.23.0      
+    ## [17] matrixStats_1.5.0           Battlefield_0.99.01        
     ## 
     ## loaded via a namespace (and not attached):
     ##  [1] gtable_0.3.6        rjson_0.2.23        xfun_0.55          
     ##  [4] bslib_0.9.0         htmlwidgets_1.6.4   lattice_0.22-7     
-    ##  [7] vctrs_0.6.5         tools_4.6.0         tibble_3.3.0       
+    ##  [7] vctrs_0.6.5         tools_4.6.0         tibble_3.3.1       
     ## [10] pkgconfig_2.0.3     Matrix_1.7-4        RColorBrewer_1.1-3 
     ## [13] S7_0.2.1            desc_1.4.3          lifecycle_1.0.5    
     ## [16] compiler_4.6.0      farver_2.1.2        textshaping_1.0.4  

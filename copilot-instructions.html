@@ -47,28 +47,32 @@
 <strong>Core use case</strong>: Identify tissue regions (invasive margins, niche borders, cluster interfaces) for downstream analyses like ligand–receptor studies (e.g., ligand-receptor interactions via BulkSignalR).</li>
 <li>
 <strong>Key algorithms</strong>: Bresenham line rasterization, k-NN neighborhood detection, grid type inference (square vs. hexagonal), layer classification, trajectory building via centroid-to-centroid paths.</li>
+<li>
+<strong>R version requirement</strong>: R ≥ 4.5 (base pipe <code>|&gt;</code> syntax required).</li>
 </ul></div>
 <div class="section level2">
 <h2 id="id_2-important-files--locations">2. Important files &amp; locations<a class="anchor" aria-label="anchor" href="#id_2-important-files--locations"></a></h2>
 <ul><li>
-<strong>Package metadata</strong>: <a href="DESCRIPTION">DESCRIPTION</a> (R &gt;= 4.6, dependencies listed).</li>
+<strong>Package metadata</strong>: <a href="DESCRIPTION">DESCRIPTION</a> (R &gt;= 4.5, Bioconductor package dependencies).</li>
 <li>
-<strong>Core algorithms</strong>:
+<strong>Core algorithm modules</strong>:
 <ul><li>
 <a href="R/R-trajectory.R">R/R-trajectory.R</a> — geometry primitives (Bresenham), centroids, trajectory building.</li>
 <li>
 <a href="R/R-grid.R">R/R-grid.R</a> — grid type detection (square vs hexagonal), spacing estimation.</li>
 <li>
-<a href="R/R-frontline.R">R/R-frontline.R</a> — cluster interface/border/core spot selection logic.</li>
+<a href="R/R-border.R">R/R-border.R</a> — cluster interface/border/core spot selection logic.</li>
 <li>
 <a href="R/R-layer.R">R/R-layer.R</a> — layer classification (border/intermediate/core) within clusters.</li>
+<li>
+<a href="R/R-neighbourhood.R">R/R-neighbourhood.R</a> — k-NN neighborhood composition analysis.</li>
 <li>
 <a href="R/R-spe.R">R/R-spe.R</a> — SpatialExperiment integration, adding selections to colData.</li>
 </ul></li>
 <li>
 <strong>Data</strong>: <a href="R/data.R">R/data.R</a> (documents included datasets: <code>visium_simulated_spe</code>, <code>visiumHD_8um_simulated_spe</code>, <code>visiumHD_16um_simulated_spe</code>).</li>
 <li>
-<strong>Tests</strong>: <a href="tests/testthat">tests/testthat</a> (uses testthat edition 3; covers geometry, grid detection, and selection logic).</li>
+<strong>Tests</strong>: <a href="tests/testthat">tests/testthat</a> (uses testthat edition 3; organized by module: trajectory, grid, frontline, layer, neighborhood, spe).</li>
 <li>
 <strong>Developer scripts</strong>:
 <ul><li>
@@ -76,13 +80,15 @@
 <li>
 <a href="forTest/R-visHD.R">forTest/R-visHD.R</a> — realistic end-to-end VisiumHD import &amp; selection example.</li>
 <li>
-<a href="forTest/R-test-traj.R">forTest/R-test-traj.R</a>, <a href="forTest/R-test-frontline.R">forTest/R-test-frontline.R</a> — interactive exploration.</li>
+<a href="forTest/">forTest/R-test-*.R</a> — interactive exploration scripts per module (R-test-traj.R, R-test-frontline.R, etc.).</li>
 </ul></li>
+<li>
+<strong>Main vignette</strong>: <a href="vignettes/Battlefield-Main.Rmd">vignettes/Battlefield-Main.Rmd</a> — primary user documentation with examples for all four core workflows.</li>
 </ul></div>
 <div class="section level2">
 <h2 id="id_3-project-specific-conventions--patterns">3. Project-specific conventions &amp; patterns<a class="anchor" aria-label="anchor" href="#id_3-project-specific-conventions--patterns"></a></h2>
 <ul><li>
-<strong>Pipe &amp; verbs</strong>: Code uses the base pipe <code>|&gt;</code> (R 4.1+) and <code>dplyr</code> verbs (<code>mutate</code>, <code>filter</code>, <code>arrange</code>, <code>bind_rows</code>, <code>group_by</code>, <code>slice_*</code>, <code>pull</code>, <code>summarise</code>). Use modern pipe syntax when editing; avoid magrittr <code>%&gt;%</code>.</li>
+<strong>Pipe &amp; verbs</strong>: Code uses the base pipe <code>|&gt;</code> (R 4.5+) and <code>dplyr</code> verbs (<code>mutate</code>, <code>filter</code>, <code>arrange</code>, <code>bind_rows</code>, <code>group_by</code>, <code>slice_*</code>, <code>pull</code>, <code>summarise</code>). Use modern pipe syntax when editing; avoid magrittr <code>%&gt;%</code>.</li>
 <li>
 <strong>Data shapes</strong>: All selection functions work with <code>data.frame</code>s containing:
 <ul><li>Spatial coords: <code>x</code>, <code>y</code> (numeric; required for geometry helpers)</li>
@@ -90,16 +96,17 @@
 <li>Spot identity: <code>spot_id</code> (optional; used when integrating with SpatialExperiment)</li>
 <li>Selection metadata: <code>interface</code>, <code>mode</code> (added by frontline/layer functions)</li>
 <li>Layer metadata: <code>layer</code> (added by layer functions; values: “border”, “intermediate”, “core”)</li>
+<li>Directed pair: <code>directed_pair</code> (e.g., “3-4” added by <code><a href="reference/directed_cluster_interface_pairs.html">directed_cluster_interface_pairs()</a></code>)</li>
 <li>Keep these column names stable across refactoring; many helpers assume exact names.</li>
 </ul></li>
 <li>
-<strong>Key keying for deduplication</strong>: Coordinate deduplication uses <code>.xy_key &lt;- paste0(round(x), "_", round(y))</code>. This key identifies spatial duplicates; be very careful when changing rounding logic or keying scheme, as intersection detection and nearest-neighbor logic depend on consistent keying.</li>
+<strong>Keying for deduplication</strong>: Coordinate deduplication uses <code>.xy_key &lt;- paste0(round(x), "_", round(y))</code>. This key identifies spatial duplicates; be very careful when changing rounding logic or keying scheme, as intersection detection and nearest-neighbor logic depend on consistent keying.</li>
 <li>
 <strong>Numeric robustness</strong>: Functions defensively check edge cases (zero-length segments, empty clusters, insufficient neighbors) via <code><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot()</a></code>. Examples: <code><a href="reference/unit_normal_left.html">unit_normal_left()</a></code>, <code><a href="reference/build_one_trajectory.html">build_one_trajectory()</a></code>, <code><a href="reference/bresenham_line.html">bresenham_line()</a></code>, <code><a href="reference/detect_grid_type.html">detect_grid_type()</a></code>. Pattern: Always validate <code>is.data.frame(df)</code>, presence of required columns, non-empty rows, numeric coords. Preserve these guards when refactoring.</li>
 <li>
-<strong>Roxygen2 workflow</strong>: All exports are declared via roxygen tags. After any code changes, <strong>always</strong> run <code><a href="https://devtools.r-lib.org/reference/document.html" class="external-link">devtools::document()</a></code> to regenerate <a href="NAMESPACE">NAMESPACE</a> and man pages. Changes to function signatures or <code>@export</code> tags require this step.</li>
+<strong>Roxygen2 workflow</strong>: All exports are declared via roxygen tags. After any code changes, <strong>always</strong> run <code><a href="https://devtools.r-lib.org/reference/document.html" class="external-link">devtools::document()</a></code> to regenerate <a href="NAMESPACE">NAMESPACE</a> and man pages. Changes to function signatures or <code>@export</code> tags require this step. Never manually edit NAMESPACE.</li>
 <li>
-<strong>Grid-aware code</strong>: Functions like <code><a href="reference/detect_grid_type.html">detect_grid_type()</a></code> and <code><a href="reference/estimate_spot_spacing.html">estimate_spot_spacing()</a></code> probe grid geometry. Square grids have ~4 neighbors; hexagonal grids have ~6. Some functions behave differently per grid type; always test with both square and hexagonal layouts.</li>
+<strong>Grid-aware code</strong>: Functions like <code><a href="reference/detect_grid_type.html">detect_grid_type()</a></code> and <code><a href="reference/estimate_spot_spacing.html">estimate_spot_spacing()</a></code> probe grid geometry. Square grids have ~4 neighbors; hexagonal grids have ~6. Some functions behave differently per grid type; always test with both square and hexagonal layouts (using included test datasets).</li>
 <li>
 <strong>Layer depth control</strong>: Layer classification functions use <code>intermediate_quantile</code> (default 0.5) to control the depth of intermediate layers relative to distance to border. Lower values (0.33) create narrow intermediate layers; higher values (0.75) create wider ones. This is a tunable parameter users may adjust.</li>
 </ul></div>
@@ -129,9 +136,15 @@
 </div>
 <div class="section level2">
 <h2 id="id_5-tests--expectations">5. Tests &amp; expectations<a class="anchor" aria-label="anchor" href="#id_5-tests--expectations"></a></h2>
-<ul><li>Unit tests live in <a href="tests/testthat">tests/testthat</a>. They validate geometry (<code>bresenham_line</code>), nearest-neighbor spacing (<code>estimate_spot_spacing</code>), and selection logic (<code>build_similar_trajectories</code>, <code>build_one_trajectory</code>).</li>
-<li>Run tests with <code><a href="https://devtools.r-lib.org/reference/test.html" class="external-link">devtools::test()</a></code> for rapid iteration.</li>
-<li>CI should run <code>R CMD check</code>; tests use testthat edition 3.</li>
+<ul><li><p>Unit tests live in <a href="tests/testthat">tests/testthat</a>. They validate geometry (<code>bresenham_line</code>), nearest-neighbor spacing (<code>estimate_spot_spacing</code>), and selection logic (<code>build_similar_trajectories</code>, <code>build_one_trajectory</code>).</p></li>
+<li>
+<p>Run tests with <code><a href="https://devtools.r-lib.org/reference/test.html" class="external-link">devtools::test()</a></code> for rapid iteration. For debugging individual tests:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org/reference/load_all.html" class="external-link">load_all</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu">testthat</span><span class="fu">::</span><span class="fu"><a href="https://testthat.r-lib.org/reference/test_file.html" class="external-link">test_file</a></span><span class="op">(</span><span class="st">"tests/testthat/test-trajectory.R"</span><span class="op">)</span></span></code></pre></div>
+</li>
+<li><p>CI should run <code>R CMD check</code>; tests use testthat edition 3.</p></li>
+<li><p>After adding/modifying input validation (<code><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot()</a></code> calls), write corresponding test cases covering empty data frames, missing columns, and boundary conditions.</p></li>
 </ul></div>
 <div class="section level2">
 <h2 id="id_6-external-integrations--runtime-deps">6. External integrations &amp; runtime deps<a class="anchor" aria-label="anchor" href="#id_6-external-integrations--runtime-deps"></a></h2>
@@ -143,7 +156,7 @@
 <ul><li><p><strong>Data flow preservation</strong>: Functions accept and return <code>data.frame</code>s with stable column names (<code>x</code>, <code>y</code>, <code>cluster</code>, <code>spot_id</code>, <code>interface</code>, <code>mode</code>, <code>layer</code>). Keep column order and naming consistent across the pipeline to avoid silent failures in downstream consumers.</p></li>
 <li>
 <p><strong>Input validation pattern</strong>: Always include defensive checks (<code>stopifnot</code>) at function entry points:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">is.data.frame</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>,<span class="st">"y"</span>,<span class="st">"cluster"</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">&gt;=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
@@ -155,9 +168,21 @@
 <li><p><strong>Run tests</strong>: After edits, run <code><a href="https://devtools.r-lib.org/reference/test.html" class="external-link">devtools::test()</a></code> to catch breakage early. Focus on geometry and boundary-case tests. Use <code><a href="https://devtools.r-lib.org/reference/load_all.html" class="external-link">devtools::load_all()</a></code> first to load changes without reinstalling.</p></li>
 </ul></div>
 <div class="section level2">
-<h2 id="id_8-quick-pointers-for-common-tasks">8. Quick pointers for common tasks<a class="anchor" aria-label="anchor" href="#id_8-quick-pointers-for-common-tasks"></a></h2>
+<h2 id="id_8-common-gotchas--debugging">8. Common gotchas &amp; debugging<a class="anchor" aria-label="anchor" href="#id_8-common-gotchas--debugging"></a></h2>
+<ul><li>
+<strong>Silent failures from column mismatches</strong>: Functions like <code><a href="reference/build_all_borders.html">build_all_borders()</a></code> silently drop rows if <code>spot_id</code> is missing or has mismatched names. Always verify <code><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames()</a></code> and <code><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow()</a></code> before passing data.frame results downstream.</li>
+<li>
+<strong>RANN k-NN with small clusters</strong>: When a cluster has fewer than <code>k+1</code> spots, <code><a href="https://jefferislab.github.io/RANN/reference/nn2.html" class="external-link">RANN::nn2()</a></code> behaves unexpectedly. Functions defensively check cluster sizes; if tests fail with tiny clusters, verify <code>k &lt; min_cluster_size</code>.</li>
+<li>
+<strong>Roxygen sync issues</strong>: After editing function signatures (parameters, return types) or <code>@export</code> tags, running <code><a href="https://devtools.r-lib.org/reference/test.html" class="external-link">devtools::test()</a></code> without first running <code><a href="https://devtools.r-lib.org/reference/document.html" class="external-link">devtools::document()</a></code> will fail because the NAMESPACE and <code>.Rd</code> files are stale. Always document first.</li>
+<li>
+<strong>Grid type detection edge cases</strong>: <code><a href="reference/detect_grid_type.html">detect_grid_type()</a></code> may return <code>"unknown"</code> for sparse or irregular grids. Check diagnostic output (<code>verbose = TRUE</code>) and test result before downstream code branches on grid type.</li>
+</ul></div>
+<div class="section level2">
+<h2 id="id_9-quick-pointers-for-common-tasks">9. Quick pointers for common tasks<a class="anchor" aria-label="anchor" href="#id_9-quick-pointers-for-common-tasks"></a></h2>
 <ul><li>Find geometry helpers: search for <code>bresenham_line</code>, <code>build_one_trajectory</code>, <code>build_similar_trajectories</code> inside <code>R/</code>.</li>
 <li>Investigate examples: open <a href="forTest/R-visHD.R">forTest/R-visHD.R</a> — it demonstrates realistic end-to-end usage loading VisiumHD data and running selection routines.</li>
+<li>For interactive debugging: use <a href="forTest/R-test-traj.R">forTest/R-test-traj.R</a>, <a href="forTest/R-test-frontline.R">forTest/R-test-frontline.R</a> as templates; they load example data and step through workflows.</li>
 </ul><p>If any part is unclear (missing external data access, CI steps, or runtime environment), tell me which area to expand and I will iterate.</p>
 </div>
 </div>

@@ -68,7 +68,7 @@ Montpellier,
 France<br><a class="author_email" href="mailto:#"></a><a href="mailto:jean-philippe.villemin@inserm.fr" class="email">jean-philippe.villemin@inserm.fr</a>
       </address>
                   
-            <h4 data-toc-skip class="date">01/10/2026</h4>
+            <h4 data-toc-skip class="date">01/12/2026</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ZheFrench/BattleField/blob/HEAD/vignettes/Battlefield-Main.Rmd" class="external-link"><code>vignettes/Battlefield-Main.Rmd</code></a></small>
       <div class="d-none name"><code>Battlefield-Main.Rmd</code></div>
@@ -102,8 +102,7 @@ France<br><a class="author_email" href="mailto:#"></a><a href="mailto:jean-phili
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tidyr.tidyverse.org" class="external-link">tidyr</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">pheatmap</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://kwstat.github.io/pals/" class="external-link">pals</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">grid</span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com" class="external-link">patchwork</a></span><span class="op">)</span></span></code></pre></div>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">grid</span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
@@ -133,102 +132,129 @@ analyze boundary regions where distinct tissue or cell populations
 interact.</p></li>
 <li><p><strong>Intra-cluster layers</strong> — characterize spatial
 layers or gradients within a single cluster.</p></li>
-<li><p><strong>Inter-cluster trajectories</strong> — model spatial
+<li><p><strong>Inter/Intra-cluster trajectories</strong> — model spatial
 transitions across multiple clusters.</p></li>
-<li><p><strong>Cluster neighbourhood</strong> — report the cluster
+<li><p><strong>Spatial neighborhood</strong> — report the cluster
 composition of a spatial neighborhood defined by k nearest spots,
 constrained by a distance threshold.</p></li>
 </ul>
+<p>Finally, you can integrate <code>Battlefield</code> results back into
+a <code>SpatialExperiment</code> object for further analysis.</p>
 </div>
 <div class="section level2">
 <h2 id="starting-point">Starting point<a class="anchor" aria-label="anchor" href="#starting-point"></a>
 </h2>
-<p>We start from a SpatialExperiment object that contains (i) spatial
-coordinates for each spot and (ii) a precomputed clustering stored in
-colData(). Battlefield operates on a simple spot-level table, so we
-first export a data.frame with four columns: * spot_id: spot/barcode
-identifier (colnames(spe)) * x, y: spatial coordinates
-(spatialCoords(spe)) * cluster: cluster label provided by the user (a
-column in colData(spe)) Because the cluster annotation can have
-different names depending on the workflow (e.g., cluster,
-seurat_clusters, BayesSpace, etc.), the user can specify which colData()
-column should be used.</p>
+<p>We start from a <code>SpatialExperiment</code> object that contains
+<strong>(i)</strong> spatial coordinates for each spot and
+<strong>(ii)</strong> a precomputed clustering stored in colData().</p>
+<p>Battlefield operates on a simple spot-level table, so we first export
+a data.frame with four columns:</p>
+<ul>
+<li>spot_id: spot/barcode identifier (colnames(spe))<br>
+</li>
+<li>x, y: spatial coordinates (spatialCoords(spe))<br>
+</li>
+<li>cluster: cluster label provided by the user (a column in
+colData(spe))</li>
+</ul>
+<p>Because the cluster annotation can have different names depending on
+the workflow (e.g., cluster, seurat_clusters, BayesSpace, etc.), the
+user can specify which colData() column should be used.</p>
+<p>We load a simulated Visium dataset (hexagonal grid) to illustrate the
+different functionalities that Battlefield provides.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Load Visium data </span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"visium_simulated_spe"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>spot_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">visium_simulated_spe</span><span class="op">)</span>,</span>
+<span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/SpatialExperiment-methods.html" class="external-link">spatialCoords</a></span><span class="op">(</span><span class="va">visium_simulated_spe</span><span class="op">)</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>,</span>
+<span>y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/SpatialExperiment-methods.html" class="external-link">spatialCoords</a></span><span class="op">(</span><span class="va">visium_simulated_spe</span><span class="op">)</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span>,</span>
+<span>cluster <span class="op">=</span> <span class="fu">colData</span><span class="op">(</span><span class="va">visium_simulated_spe</span><span class="op">)</span><span class="op">$</span><span class="va">cluster</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Plot cluster distribution</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">df</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, fill <span class="op">=</span> <span class="va">cluster</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">3.2</span>,colour <span class="op">=</span> <span class="st">"grey"</span>, shape <span class="op">=</span> <span class="fl">21</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_fixed.html" class="external-link">coord_equal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span><span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">""</span>, y <span class="op">=</span> <span class="st">""</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>axis.text <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> </span></code></pre></div>
+<p><img src="Battlefield-Main_files/figure-html/interfaces1-1.png" class="r-plt" width="672"></p>
+<p>You can have acces to some basic information about the dataset you
+are using (grid type, distance threshold (radius) advised…)</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Detect grid type and get parameters</span></span>
+<span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/detect_grid_type.html">detect_grid_type</a></span><span class="op">(</span><span class="va">df</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## ---- Grid type detection ----</span></span></code></pre>
+<pre><code><span><span class="co">## Estimated grid step: 55</span></span></code></pre>
+<pre><code><span><span class="co">## Median distance ratio: 1.732</span></span></code></pre>
+<pre><code><span><span class="co">## Detected grid type: hexagonal</span></span></code></pre>
+<pre><code><span><span class="co">## --------------------------------</span></span></code></pre>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_neighborhood_params.html">get_neighborhood_params</a></span><span class="op">(</span><span class="va">df</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## ---- Neighborhood parameters ----</span></span></code></pre>
+<pre><code><span><span class="co">## grid_type: hexagonal</span></span></code></pre>
+<pre><code><span><span class="co">## connectivity: 6</span></span></code></pre>
+<pre><code><span><span class="co">## radius: 55.55</span></span></code></pre>
+<pre><code><span><span class="co">## k: 6</span></span></code></pre>
+<pre><code><span><span class="co">## comment: Standard Visium: 6 hexagonal neighbors</span></span></code></pre>
+<pre><code><span><span class="co">## --------------------------------</span></span></code></pre>
 <div class="section level3">
 <h3 id="interfaces-between-clusters">Interfaces between clusters<a class="anchor" aria-label="anchor" href="#interfaces-between-clusters"></a>
 </h3>
 <p>Battlefield allows you to identify and extract <strong>spatial
-interfaces</strong> between clusters (also known as
-<code>invasive margins</code>, or <code>niche boundaries</code>). Here
-we demonstrate how to:</p>
+interfaces</strong> between clusters. Here we demonstrate how to:</p>
 <ol style="list-style-type: decimal">
-<li>Detect interfaces between two specific clusters
-(inside/outside/both)</li>
-<li>Identify multi-interface spots (belonging to several
-interfaces)</li>
-<li>Select all interfaces at once</li>
-<li>Detect associated inner control spots</li>
+<li>Detect interfaces between two specific clusters (according to three
+modes of selection called <code>inner</code>, <code>outer</code> or
+<code>both</code>)</li>
+<li>Identify multi-interface spots all at once</li>
+<li>Detect a same number of control spots relative to the cluster of
+interest</li>
 </ol>
-<p>We load a simulated Visium dataset (hexagonal grid) to illustrate the
-different functionalities.</p>
-<div class="section level4">
-<h4 id="simulated-standard-visium--hexagonal-grid">Simulated Standard Visium -hexagonal grid<a class="anchor" aria-label="anchor" href="#simulated-standard-visium--hexagonal-grid"></a>
-</h4>
-</div>
-<div class="section level4">
-<h4 id="simulated-visiumhd--square-grid">Simulated VisiumHD -square grid<a class="anchor" aria-label="anchor" href="#simulated-visiumhd--square-grid"></a>
-</h4>
-</div>
-<div class="section level4">
-<h4 id="real-life-example">Real life example<a class="anchor" aria-label="anchor" href="#real-life-example"></a>
-</h4>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Load VisiumHD data at 16 µm resolution</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"visiumHD_16um_simulated_spe"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>spot_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">visiumHD_16um_simulated_spe</span><span class="op">)</span>,</span>
-<span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/SpatialExperiment-methods.html" class="external-link">spatialCoords</a></span><span class="op">(</span><span class="va">visiumHD_16um_simulated_spe</span><span class="op">)</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>,</span>
-<span>y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/SpatialExperiment-methods.html" class="external-link">spatialCoords</a></span><span class="op">(</span><span class="va">visiumHD_16um_simulated_spe</span><span class="op">)</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span>,</span>
-<span>cluster <span class="op">=</span> <span class="fu">colData</span><span class="op">(</span><span class="va">visiumHD_16um_simulated_spe</span><span class="op">)</span><span class="op">$</span><span class="va">cluster</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Get all directed cluster pairs</span></span>
-<span><span class="va">pairs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/directed_cluster_interface_pairs.html">directed_cluster_interface_pairs</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">cluster</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">pairs</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##   cluster interface directed_pair</span></span>
-<span><span class="co">## 1       4         3           4-3</span></span>
-<span><span class="co">## 2       5         3           5-3</span></span>
-<span><span class="co">## 3       1         3           1-3</span></span>
-<span><span class="co">## 4       2         3           2-3</span></span>
-<span><span class="co">## 5       3         4           3-4</span></span>
-<span><span class="co">## 6       5         4           5-4</span></span></code></pre>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Detect grid type and get parameters</span></span>
-<span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/detect_grid_type.html">detect_grid_type</a></span><span class="op">(</span><span class="va">df</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="va">params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_neighborhood_params.html">get_neighborhood_params</a></span><span class="op">(</span><span class="va">df</span>, square_connectivity <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## ---- Grid type detection ----</span></span></code></pre>
-<pre><code><span><span class="co">## Estimated grid step: 400</span></span></code></pre>
-<pre><code><span><span class="co">## Median distance ratio: 1.414</span></span></code></pre>
-<pre><code><span><span class="co">## Detected grid type: square</span></span></code></pre>
-<pre><code><span><span class="co">## --------------------------------</span></span></code></pre>
-<pre><code><span><span class="co">## ---- Neighborhood parameters ----</span></span></code></pre>
-<pre><code><span><span class="co">## grid_type: square</span></span></code></pre>
-<pre><code><span><span class="co">## connectivity: 4</span></span></code></pre>
-<pre><code><span><span class="co">## radius: 404</span></span></code></pre>
-<pre><code><span><span class="co">## k: 16</span></span></code></pre>
-<pre><code><span><span class="co">## comment: Visium HD: 4-connectivity (square grid)</span></span></code></pre>
-<pre><code><span><span class="co">## --------------------------------</span></span></code></pre>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Select specific interface: cluster 5 → 4</span></span>
-<span><span class="va">border_in</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/select_border_spots.html">select_border_spots</a></span><span class="op">(</span><span class="va">df</span>, cluster <span class="op">=</span> <span class="fl">5</span>, interface <span class="op">=</span> <span class="fl">4</span>, k <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
-<span></span>
+<p><code>Battlefield</code> offers several functionalities related to
+interfaces (aka borders) via the following fonctions metionned
+below:</p>
+<ul>
+<li>
+<code>select_border_spots</code>, between two clusters according to
+a specified mode</li>
+<li><code>build_all_borders</code></li>
+<li>
+<code>select_core_spots</code> , to select control spots within a
+cluster relative to its border</li>
+<li><code>build_all_cores</code></li>
+</ul>
+<p>You must have first defined borders before selecting core spots.</p>
+<p>Here we show an example to detect interfaces between clusters 4 and
+5. We identify border spots from cluster 4 that are adjacent to cluster
+5, referenced as interface for the adjactent cluster.<br>
+We used the <code>inner</code> mode to select spots, meaning that only
+spots from cluster 4 that are located in the inside of the cluster
+towards cluster 5 (the interface) are selected.</p>
+<p>Note : we used a <code>max_dist = 60</code> microns to define the
+spatial neighborhood to remove spots that would have been too far away
+to be considered as neighbors.</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">border_in</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/select_border_spots.html">select_border_spots</a></span><span class="op">(</span><span class="va">df</span>, </span>
+<span>    cluster <span class="op">=</span> <span class="fl">4</span>, </span>
+<span>    interface <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>    mode <span class="op">=</span> <span class="st">"inner"</span>,</span>
+<span>    max_dist <span class="op">=</span> <span class="fl">60</span><span class="op">)</span></span>
+<span><span class="co"># A similar approach would have been </span></span>
+<span><span class="co"># select_border_spots(df, </span></span>
+<span><span class="co">#   cluster = 5, </span></span>
+<span><span class="co">#   interface = 4,</span></span>
+<span><span class="co">#   mode = "outer",</span></span>
+<span><span class="co">#   max_dist = 60)</span></span>
 <span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">border_in</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <colgroup>
 <col width="3%">
-<col width="7%">
+<col width="6%">
 <col width="3%">
-<col width="3%">
+<col width="6%">
 <col width="10%">
 <col width="12%">
 <col width="6%">
@@ -254,84 +280,84 @@ different functionalities.</p>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="left">168</td>
-<td align="left">bin16_687</td>
-<td align="right">2400</td>
-<td align="right">6800</td>
-<td align="left">5-4</td>
+<td align="left">647</td>
+<td align="left">SPOT0647</td>
+<td align="right">330</td>
+<td align="right">762.1024</td>
+<td align="left">4-5</td>
 <td align="left">4-5 / 5-4</td>
-<td align="left">5</td>
-<td align="right">4</td>
+<td align="left">4</td>
+<td align="right">5</td>
 <td align="left">TRUE</td>
 <td align="left">FALSE</td>
 <td align="left">NA</td>
 <td align="left">inner</td>
 </tr>
 <tr class="even">
-<td align="left">170</td>
-<td align="left">bin16_767</td>
-<td align="right">2400</td>
-<td align="right">7600</td>
-<td align="left">5-4</td>
+<td align="left">648</td>
+<td align="left">SPOT0648</td>
+<td align="right">385</td>
+<td align="right">762.1024</td>
+<td align="left">4-5</td>
 <td align="left">4-5 / 5-4</td>
-<td align="left">5</td>
-<td align="right">4</td>
+<td align="left">4</td>
+<td align="right">5</td>
 <td align="left">TRUE</td>
 <td align="left">FALSE</td>
 <td align="left">NA</td>
 <td align="left">inner</td>
 </tr>
 <tr class="odd">
-<td align="left">172</td>
-<td align="left">bin16_847</td>
-<td align="right">2400</td>
-<td align="right">8400</td>
-<td align="left">5-4</td>
+<td align="left">649</td>
+<td align="left">SPOT0649</td>
+<td align="right">440</td>
+<td align="right">762.1024</td>
+<td align="left">4-5</td>
 <td align="left">4-5 / 5-4</td>
-<td align="left">5</td>
-<td align="right">4</td>
+<td align="left">4</td>
+<td align="right">5</td>
 <td align="left">TRUE</td>
 <td align="left">FALSE</td>
 <td align="left">NA</td>
 <td align="left">inner</td>
 </tr>
 <tr class="even">
-<td align="left">193</td>
-<td align="left">bin16_688</td>
-<td align="right">2800</td>
-<td align="right">6800</td>
-<td align="left">5-4</td>
+<td align="left">650</td>
+<td align="left">SPOT0650</td>
+<td align="right">495</td>
+<td align="right">762.1024</td>
+<td align="left">4-5</td>
 <td align="left">4-5 / 5-4</td>
-<td align="left">5</td>
-<td align="right">4</td>
+<td align="left">4</td>
+<td align="right">5</td>
 <td align="left">TRUE</td>
 <td align="left">FALSE</td>
 <td align="left">NA</td>
 <td align="left">inner</td>
 </tr>
 <tr class="odd">
-<td align="left">194</td>
-<td align="left">bin16_728</td>
-<td align="right">2800</td>
-<td align="right">7200</td>
-<td align="left">5-4</td>
+<td align="left">651</td>
+<td align="left">SPOT0651</td>
+<td align="right">550</td>
+<td align="right">762.1024</td>
+<td align="left">4-5</td>
 <td align="left">4-5 / 5-4</td>
-<td align="left">5</td>
-<td align="right">4</td>
+<td align="left">4</td>
+<td align="right">5</td>
 <td align="left">TRUE</td>
 <td align="left">FALSE</td>
 <td align="left">NA</td>
 <td align="left">inner</td>
 </tr>
 <tr class="even">
-<td align="left">196</td>
-<td align="left">bin16_808</td>
-<td align="right">2800</td>
-<td align="right">8000</td>
-<td align="left">5-4</td>
+<td align="left">652</td>
+<td align="left">SPOT0652</td>
+<td align="right">605</td>
+<td align="right">762.1024</td>
+<td align="left">4-5</td>
 <td align="left">4-5 / 5-4</td>
-<td align="left">5</td>
-<td align="right">4</td>
+<td align="left">4</td>
+<td align="right">5</td>
 <td align="left">TRUE</td>
 <td align="left">FALSE</td>
 <td align="left">NA</td>
@@ -339,121 +365,205 @@ different functionalities.</p>
 </tr>
 </tbody>
 </table>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">df_in</span> <span class="op">&lt;-</span> <span class="va">df</span> <span class="op">|&gt;</span></span>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Structre data </span></span>
+<span><span class="va">df_in</span> <span class="op">&lt;-</span> <span class="va">df</span> <span class="op">|&gt;</span></span>
 <span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>is_border <span class="op">=</span> <span class="va">spot_id</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">border_in</span><span class="op">$</span><span class="va">spot_id</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="va">border_in</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">spot_id</span>, <span class="va">is_border_multiple</span><span class="op">)</span>,</span>
-<span>            by <span class="op">=</span> <span class="st">"spot_id"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="va">border_in</span> <span class="op">|&gt;</span> </span>
+<span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">spot_id</span>, <span class="va">is_border_multiple</span><span class="op">)</span>,by <span class="op">=</span> <span class="st">"spot_id"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>is_border_multiple <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/coalesce.html" class="external-link">coalesce</a></span><span class="op">(</span><span class="va">is_border_multiple</span>, <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
 <span></span>
 <span><span class="co"># Plot interface 5 → 4</span></span>
-<span><span class="va">p_in</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">df_in</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, color <span class="op">=</span> <span class="va">cluster</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">df_in</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, fill <span class="op">=</span> <span class="va">cluster</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">3.2</span>, shape <span class="op">=</span> <span class="fl">21</span>, colour <span class="op">=</span> <span class="st">"grey"</span><span class="op">)</span> <span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">df_in</span>, <span class="va">is_border</span> <span class="op">&amp;</span> <span class="op">!</span><span class="va">is_border_multiple</span><span class="op">)</span>,</span>
-<span>            color <span class="op">=</span> <span class="st">"black"</span>, size <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">+</span></span>
+<span>          size <span class="op">=</span> <span class="fl">3.2</span>,  colour <span class="op">=</span> <span class="st">"black"</span>, fill <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">df_in</span>, <span class="va">is_border</span> <span class="op">&amp;</span> <span class="va">is_border_multiple</span><span class="op">)</span>,</span>
-<span>            color <span class="op">=</span> <span class="st">"red"</span>, size <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">+</span></span>
+<span>          size <span class="op">=</span> <span class="fl">3.2</span>,  colour <span class="op">=</span> <span class="st">"red"</span>, fill <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_fixed.html" class="external-link">coord_equal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Cluster: 5 → 4"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Select reverse interface: cluster 4 → 5</span></span>
-<span><span class="va">border_out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/select_border_spots.html">select_border_spots</a></span><span class="op">(</span><span class="va">df</span>, cluster <span class="op">=</span> <span class="fl">4</span>, interface <span class="op">=</span> <span class="fl">5</span>, k <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">df_out</span> <span class="op">&lt;-</span> <span class="va">df</span> <span class="op">|&gt;</span></span>
-<span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>is_border <span class="op">=</span> <span class="va">spot_id</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">border_out</span><span class="op">$</span><span class="va">spot_id</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="va">border_out</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">spot_id</span>, <span class="va">is_border_multiple</span><span class="op">)</span>,</span>
-<span>            by <span class="op">=</span> <span class="st">"spot_id"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>is_border_multiple <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/coalesce.html" class="external-link">coalesce</a></span><span class="op">(</span><span class="va">is_border_multiple</span>, <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span></span>
-<span><span class="co"># Plot interface 4 → 5</span></span>
-<span><span class="va">p_out</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">df_out</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, color <span class="op">=</span> <span class="va">cluster</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">df_out</span>, <span class="va">is_border</span> <span class="op">&amp;</span> <span class="op">!</span><span class="va">is_border_multiple</span><span class="op">)</span>,</span>
-<span>            color <span class="op">=</span> <span class="st">"black"</span>, size <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">df_out</span>, <span class="va">is_border</span> <span class="op">&amp;</span> <span class="va">is_border_multiple</span><span class="op">)</span>,</span>
-<span>            color <span class="op">=</span> <span class="st">"red"</span>, size <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_fixed.html" class="external-link">coord_equal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Interface: 4 → 5"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Combine both interfaces side by side</span></span>
-<span><span class="va">p_in</span> <span class="op">|</span> <span class="va">p_out</span></span></code></pre></div>
-<p><img src="Battlefield-Main_files/figure-html/interfaces3-1.png" class="r-plt" width="384"></p>
-</div>
-<div class="section level4">
-<h4 id="all-interfaces-overview">All interfaces overview<a class="anchor" aria-label="anchor" href="#all-interfaces-overview"></a>
-</h4>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span><span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">""</span>, y <span class="op">=</span> <span class="st">""</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>axis.text <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> </span></code></pre></div>
+<p><img src="Battlefield-Main_files/figure-html/interfaces3-1.png" class="r-plt" width="672"></p>
+<p>We can also identify all interfaces at once and visualize spots that
+are part of multiple interfaces. Here we used again a
+<code>max_dist = 60</code> microns and <code>k = 6</code> neighbors to
+define the spatial neighborhood.</p>
+<p><code>is_border_multiple</code> indicates whether a spot is part of
+multiple interfaces and is plotted with a different alpha in the
+example.</p>
+<p>This approach needs further manual selection of the cluster pair of
+interest as it brings some redundacy. (for example, border spots for
+both directions 3→4 and 4→3 are identified twice due to sequencial call
+of <code>select_border_spots</code> with the two modes
+(inner/outer)).</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">all_borders</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/build_all_borders.html">build_all_borders</a></span><span class="op">(</span><span class="va">df</span>,max_dist <span class="op">=</span> <span class="fl">60</span> , k <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">all_borders</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<table style="width:100%;" class="table">
+<colgroup>
+<col width="6%">
+<col width="5%">
+<col width="6%">
+<col width="10%">
+<col width="12%">
+<col width="6%">
+<col width="7%">
+<col width="7%">
+<col width="14%">
+<col width="17%">
+<col width="4%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">spot_id</th>
+<th align="right">x</th>
+<th align="right">y</th>
+<th align="left">directed_pair</th>
+<th align="left">undirected_pair</th>
+<th align="left">cluster</th>
+<th align="left">interface</th>
+<th align="left">is_border</th>
+<th align="left">is_border_multiple</th>
+<th align="left">other_adjacent_borders</th>
+<th align="left">mode</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">SPOT0299</td>
+<td align="right">1017.5</td>
+<td align="right">333.4198</td>
+<td align="left">1-3</td>
+<td align="left">1-3 / 3-1</td>
+<td align="left">1</td>
+<td align="left">3</td>
+<td align="left">TRUE</td>
+<td align="left">FALSE</td>
+<td align="left">NA</td>
+<td align="left">inner</td>
+</tr>
+<tr class="even">
+<td align="left">SPOT0300</td>
+<td align="right">1072.5</td>
+<td align="right">333.4198</td>
+<td align="left">1-3</td>
+<td align="left">1-3 / 3-1</td>
+<td align="left">1</td>
+<td align="left">3</td>
+<td align="left">TRUE</td>
+<td align="left">FALSE</td>
+<td align="left">NA</td>
+<td align="left">inner</td>
+</tr>
+<tr class="odd">
+<td align="left">SPOT0301</td>
+<td align="right">1127.5</td>
+<td align="right">333.4198</td>
+<td align="left">1-3</td>
+<td align="left">1-3 / 3-1</td>
+<td align="left">1</td>
+<td align="left">3</td>
+<td align="left">TRUE</td>
+<td align="left">FALSE</td>
+<td align="left">NA</td>
+<td align="left">inner</td>
+</tr>
+<tr class="even">
+<td align="left">SPOT0302</td>
+<td align="right">1182.5</td>
+<td align="right">333.4198</td>
+<td align="left">1-3</td>
+<td align="left">1-3 / 3-1</td>
+<td align="left">1</td>
+<td align="left">3</td>
+<td align="left">TRUE</td>
+<td align="left">FALSE</td>
+<td align="left">NA</td>
+<td align="left">inner</td>
+</tr>
+<tr class="odd">
+<td align="left">SPOT0338</td>
+<td align="right">935.0</td>
+<td align="right">381.0512</td>
+<td align="left">1-3</td>
+<td align="left">1-3 / 3-1</td>
+<td align="left">1</td>
+<td align="left">3</td>
+<td align="left">TRUE</td>
+<td align="left">FALSE</td>
+<td align="left">NA</td>
+<td align="left">inner</td>
+</tr>
+<tr class="even">
+<td align="left">SPOT0339</td>
+<td align="right">990.0</td>
+<td align="right">381.0512</td>
+<td align="left">1-3</td>
+<td align="left">1-3 / 3-1</td>
+<td align="left">1</td>
+<td align="left">3</td>
+<td align="left">TRUE</td>
+<td align="left">FALSE</td>
+<td align="left">NA</td>
+<td align="left">inner</td>
+</tr>
+</tbody>
+</table>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Build all borders for all directed pairs</span></span>
-<span><span class="va">big_border_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/build_all_borders.html">build_all_borders</a></span><span class="op">(</span><span class="va">df</span>, k <span class="op">=</span> <span class="fl">4</span>, pairs <span class="op">=</span> <span class="va">pairs</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Create undirected pair visualization</span></span>
-<span><span class="va">df_all</span> <span class="op">&lt;-</span> <span class="va">df</span> <span class="op">|&gt;</span></span>
-<span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="va">big_border_df</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">spot_id</span>, <span class="va">undirected_pair</span>, <span class="va">is_border_multiple</span><span class="op">)</span>,</span>
-<span>            by <span class="op">=</span> <span class="st">"spot_id"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<code class="sourceCode R"><span><span class="co"># Structure data </span></span>
+<span><span class="va">df2</span> <span class="op">&lt;-</span> <span class="va">df</span> <span class="op">|&gt;</span></span>
+<span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="va">all_borders</span> <span class="op">|&gt;</span> </span>
+<span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">spot_id</span>, <span class="va">undirected_pair</span>, <span class="va">is_border_multiple</span><span class="op">)</span>,by <span class="op">=</span> <span class="st">"spot_id"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>is_border <span class="op">=</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">undirected_pair</span><span class="op">)</span>,</span>
-<span>        is_border_multiple <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/coalesce.html" class="external-link">coalesce</a></span><span class="op">(</span><span class="va">is_border_multiple</span>, <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span>
+<span>    is_border_multiple <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/coalesce.html" class="external-link">coalesce</a></span><span class="op">(</span><span class="va">is_border_multiple</span>, <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Plot all interfaces colored by undirected pair</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">df_all</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">df_all</span>, <span class="op">!</span><span class="va">is_border</span><span class="op">)</span>,</span>
-<span>            color <span class="op">=</span> <span class="st">"gray"</span>, size <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">df_all</span>, <span class="va">is_border</span> <span class="op">&amp;</span> <span class="va">is_border_multiple</span><span class="op">)</span>,</span>
-<span>            <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">undirected_pair</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">2</span>, alpha <span class="op">=</span> <span class="fl">0.4</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">df_all</span>, <span class="va">is_border</span> <span class="op">&amp;</span> <span class="op">!</span><span class="va">is_border_multiple</span><span class="op">)</span>,</span>
-<span>            <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">undirected_pair</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="co"># Plot all interfaces</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">df2</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">df2</span>, <span class="op">!</span><span class="va">is_border</span><span class="op">)</span>,</span>
+<span>           fill<span class="op">=</span><span class="st">"grey"</span> ,colour <span class="op">=</span> <span class="st">"white"</span>, size <span class="op">=</span> <span class="fl">3.2</span>,shape <span class="op">=</span> <span class="fl">21</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">df2</span>, <span class="va">is_border</span> <span class="op">&amp;</span> <span class="va">is_border_multiple</span><span class="op">)</span>,</span>
+<span>            <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">undirected_pair</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">3.2</span>, alpha <span class="op">=</span> <span class="fl">0.4</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">df2</span>, <span class="va">is_border</span> <span class="op">&amp;</span> <span class="op">!</span><span class="va">is_border_multiple</span><span class="op">)</span>,</span>
+<span>            <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">undirected_pair</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">3.2</span><span class="op">)</span> <span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_fixed.html" class="external-link">coord_equal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"All cluster interfaces (undirected pairs)"</span>,</span>
-<span>    subtitle <span class="op">=</span> <span class="st">"Light color: multi-interface spots | Full color: pure interface"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Battlefield-Main_files/figure-html/interfaces4-1.png" class="r-plt" width="576"></p>
-</div>
-<div class="section level4">
-<h4 id="standard-visium-simulated">Standard Visium Simulated<a class="anchor" aria-label="anchor" href="#standard-visium-simulated"></a>
-</h4>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span><span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">""</span>, y <span class="op">=</span> <span class="st">""</span>,color <span class="op">=</span> <span class="st">""</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>axis.text <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> </span></code></pre></div>
+<p><img src="Battlefield-Main_files/figure-html/interfaces4-1.png" class="r-plt" width="672"></p>
+<p>Next, we plot the different types of spots identified for the
+interface between clusters 3 and 4. We identify border spots for both
+directions (3→4 and 4→3) and a relative selection of core spots within
+cluster 3 that can be used as control spots for further analysis.</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Load standard Visium data at lower resolution</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"visium_simulated_spe"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">df_visium</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>spot_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">visium_simulated_spe</span><span class="op">)</span>,</span>
-<span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/SpatialExperiment-methods.html" class="external-link">spatialCoords</a></span><span class="op">(</span><span class="va">visium_simulated_spe</span><span class="op">)</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>,</span>
-<span>y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/SpatialExperiment-methods.html" class="external-link">spatialCoords</a></span><span class="op">(</span><span class="va">visium_simulated_spe</span><span class="op">)</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span>,</span>
-<span>cluster <span class="op">=</span> <span class="fu">colData</span><span class="op">(</span><span class="va">visium_simulated_spe</span><span class="op">)</span><span class="op">$</span><span class="va">cluster</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Get all pairs and detect grid</span></span>
-<span><span class="va">pairs_visium</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/directed_cluster_interface_pairs.html">directed_cluster_interface_pairs</a></span><span class="op">(</span><span class="va">df_visium</span><span class="op">$</span><span class="va">cluster</span><span class="op">)</span></span>
-<span><span class="va">params_visium</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_neighborhood_params.html">get_neighborhood_params</a></span><span class="op">(</span><span class="va">df_visium</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co"># Get all pairs and detect grid</span></span>
+<span><span class="va">pairs_visium</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/directed_cluster_interface_pairs.html">directed_cluster_interface_pairs</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">cluster</span><span class="op">)</span></span>
+<span><span class="va">params_visium</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_neighborhood_params.html">get_neighborhood_params</a></span><span class="op">(</span><span class="va">df</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Define cluster pair of interest</span></span>
 <span><span class="va">cluster_A</span> <span class="op">&lt;-</span> <span class="fl">3</span></span>
 <span><span class="va">cluster_B</span> <span class="op">&lt;-</span> <span class="fl">4</span></span>
 <span></span>
+<span><span class="co"># Build all borders to identify inner spots</span></span>
+<span><span class="va">all_borders_visium</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/build_all_borders.html">build_all_borders</a></span><span class="op">(</span><span class="va">df</span>, k <span class="op">=</span> <span class="fl">6</span>, pairs <span class="op">=</span> <span class="va">pairs_visium</span><span class="op">)</span></span>
+<span></span>
 <span><span class="co"># Select border spots for both directions</span></span>
-<span><span class="va">border_A_to_B</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span></span>
-<span><span class="fu"><a href="../reference/build_all_borders.html">build_all_borders</a></span><span class="op">(</span><span class="va">df_visium</span>, k <span class="op">=</span> <span class="fl">6</span>, pairs <span class="op">=</span> <span class="va">pairs_visium</span><span class="op">)</span>,</span>
+<span><span class="va">border_A_to_B</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">all_borders_visium</span>,</span>
 <span><span class="va">cluster</span> <span class="op">==</span> <span class="va">cluster_A</span> <span class="op">&amp;</span> <span class="va">interface</span> <span class="op">==</span> <span class="va">cluster_B</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">border_B_to_A</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span></span>
-<span><span class="fu"><a href="../reference/build_all_borders.html">build_all_borders</a></span><span class="op">(</span><span class="va">df_visium</span>, k <span class="op">=</span> <span class="fl">6</span>, pairs <span class="op">=</span> <span class="va">pairs_visium</span><span class="op">)</span>,</span>
+<span><span class="va">border_B_to_A</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">all_borders_visium</span>,</span>
 <span><span class="va">cluster</span> <span class="op">==</span> <span class="va">cluster_B</span> <span class="op">&amp;</span> <span class="va">interface</span> <span class="op">==</span> <span class="va">cluster_A</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Build all borders to identify inner spots</span></span>
-<span><span class="va">all_borders_visium</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/build_all_borders.html">build_all_borders</a></span><span class="op">(</span><span class="va">df_visium</span>, k <span class="op">=</span> <span class="fl">6</span>, pairs <span class="op">=</span> <span class="va">pairs_visium</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Select inner spots for cluster A</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span><span class="va">inner_A</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/select_core_spots.html">select_core_spots</a></span><span class="op">(</span><span class="va">df_visium</span>, <span class="va">all_borders_visium</span>, </span>
-<span>                            cluster <span class="op">=</span> <span class="va">cluster_A</span>, interface <span class="op">=</span> <span class="va">cluster_B</span>, </span>
+<span><span class="va">inner_A</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/select_core_spots.html">select_core_spots</a></span><span class="op">(</span><span class="va">df</span>, <span class="va">all_borders_visium</span>, </span>
+<span>                            cluster <span class="op">=</span> <span class="va">cluster_A</span>, </span>
+<span>                            interface <span class="op">=</span> <span class="va">cluster_B</span>, </span>
 <span>                            mode <span class="op">=</span> <span class="st">"both"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Create visualization dataframe with spot classification</span></span>
-<span><span class="va">df_final</span> <span class="op">&lt;-</span> <span class="va">df_visium</span> <span class="op">|&gt;</span></span>
+<span><span class="va">df_final</span> <span class="op">&lt;-</span> <span class="va">df</span> <span class="op">|&gt;</span></span>
 <span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>spot_type <span class="op">=</span> <span class="st">"background"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>spot_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">spot_id</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">border_A_to_B</span><span class="op">$</span><span class="va">spot_id</span>, </span>
 <span>                            <span class="st">"border_A_to_B"</span>, <span class="va">spot_type</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -463,64 +573,99 @@ different functionalities.</p>
 <span>                            <span class="st">"inner_A"</span>, <span class="va">spot_type</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Plot: clusters with borders and inner control spots</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">df_final</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, color <span class="op">=</span> <span class="va">cluster</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">df_final</span>, <span class="va">spot_type</span> <span class="op">==</span> <span class="st">"background"</span><span class="op">)</span>, </span>
-<span>            size <span class="op">=</span> <span class="fl">1.5</span>, alpha <span class="op">=</span> <span class="fl">0.6</span><span class="op">)</span> <span class="op">+</span></span>
+<span></span>
+<span><span class="co"># Plot: clusters with borders and core control spots</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">df_final</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="co"># 1) Base clusters           fill="gray" ,colour = "grey", size = 3.2,shape = 21) + # nolint: line_length_linter.</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">cluster</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">2.5</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="co">#  2) Draw outlines (slightly larger) so they "surround" without hiding</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">df_final</span>, <span class="va">spot_type</span> <span class="op">==</span> <span class="st">"border_A_to_B"</span><span class="op">)</span>, </span>
-<span>            color <span class="op">=</span> <span class="st">"red"</span>, size <span class="op">=</span> <span class="fl">3.5</span>, shape <span class="op">=</span> <span class="fl">4</span>, stroke <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  color <span class="op">=</span> <span class="st">"blue"</span>, size <span class="op">=</span> <span class="fl">2.5</span>, shape <span class="op">=</span> <span class="fl">1</span>, stroke <span class="op">=</span> <span class="fl">1.25</span><span class="op">)</span> <span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">df_final</span>, <span class="va">spot_type</span> <span class="op">==</span> <span class="st">"border_B_to_A"</span><span class="op">)</span>,</span>
-<span>            color <span class="op">=</span> <span class="st">"orange"</span>, size <span class="op">=</span> <span class="fl">3.5</span>, shape <span class="op">=</span> <span class="fl">4</span>, stroke <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  color <span class="op">=</span> <span class="st">"red"</span>, size <span class="op">=</span> <span class="fl">2.5</span>, shape <span class="op">=</span> <span class="fl">1</span>, stroke <span class="op">=</span> <span class="fl">1.25</span><span class="op">)</span> <span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">df_final</span>, <span class="va">spot_type</span> <span class="op">==</span> <span class="st">"inner_A"</span><span class="op">)</span>, </span>
-<span>            <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>, </span>
-<span>            color <span class="op">=</span> <span class="st">"darkgreen"</span>, size <span class="op">=</span> <span class="fl">3.5</span>, shape <span class="op">=</span> <span class="fl">1</span>, stroke <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  color <span class="op">=</span> <span class="st">"black"</span>, size <span class="op">=</span> <span class="fl">2.5</span>, shape <span class="op">=</span> <span class="fl">1</span>, stroke <span class="op">=</span> <span class="fl">1.25</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="co"># 3) Re-draw the colored points ON TOP for the highlighted subset</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span></span>
+<span>  data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">df_final</span>, <span class="va">spot_type</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"border_A_to_B"</span>, <span class="st">"border_B_to_A"</span>, <span class="st">"inner_A"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">cluster</span><span class="op">)</span>,</span>
+<span>  size <span class="op">=</span> <span class="fl">2.5</span></span>
+<span><span class="op">)</span> <span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_fixed.html" class="external-link">coord_equal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">12</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
-<span>    title <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"Interface analysis: Cluster "</span>, <span class="va">cluster_A</span>, <span class="st">" ↔ "</span>, <span class="va">cluster_B</span><span class="op">)</span>,</span>
-<span>    subtitle <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"Red X: "</span>, <span class="va">cluster_A</span>, <span class="st">"→"</span>, <span class="va">cluster_B</span>, <span class="st">" | Orange X: "</span>, <span class="va">cluster_B</span>, <span class="st">"→"</span>, <span class="va">cluster_A</span>, <span class="st">" | Green O: Inner control spots"</span><span class="op">)</span>,</span>
-<span>    x <span class="op">=</span> <span class="st">"x"</span>, y <span class="op">=</span> <span class="st">"y"</span>, color <span class="op">=</span> <span class="st">"Cluster"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<p><img src="Battlefield-Main_files/figure-html/interfaces-visium-1.png" class="r-plt" width="576"></p>
-</div>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">""</span>, y <span class="op">=</span> <span class="st">""</span>,color <span class="op">=</span> <span class="st">""</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>axis.text <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><img src="Battlefield-Main_files/figure-html/interfaces5-1.png" class="r-plt" width="672"></p>
 </div>
 <div class="section level3">
 <h3 id="intra-cluster-layers">Intra-cluster layers<a class="anchor" aria-label="anchor" href="#intra-cluster-layers"></a>
 </h3>
+<p>You can directly work on a specific cluster to define three layers as
+core, intermediate and border.<br><code>intermediate_quantile</code> allows to control the thickness of
+the intermediate layer.</p>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">target_cluster</span> <span class="op">&lt;-</span> <span class="fl">3</span></span>
+<span><span class="co"># Narrow intermediate layer</span></span>
+<span><span class="va">layers_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/create_cluster_layers.html">create_cluster_layers</a></span><span class="op">(</span><span class="va">df</span>, </span>
+<span>              target_cluster <span class="op">=</span> <span class="va">target_cluster</span>, </span>
+<span>              intermediate_quantile <span class="op">=</span> <span class="fl">0.33</span><span class="op">)</span></span>
+<span><span class="co"># Create visualization dataframe</span></span>
+<span><span class="va">df_viz</span> <span class="op">&lt;-</span> <span class="va">df</span> <span class="op">|&gt;</span></span>
+<span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>layer <span class="op">=</span> <span class="cn">NA_character_</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Map layers to the full dataset</span></span>
+<span><span class="va">idx_match</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/match.html" class="external-link">match</a></span><span class="op">(</span><span class="va">layers_df</span><span class="op">$</span><span class="va">spot_id</span>, <span class="va">df_viz</span><span class="op">$</span><span class="va">spot_id</span><span class="op">)</span></span>
+<span><span class="va">valid_idx</span> <span class="op">&lt;-</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">idx_match</span><span class="op">)</span></span>
+<span><span class="va">df_viz</span><span class="op">$</span><span class="va">layer</span><span class="op">[</span><span class="va">idx_match</span><span class="op">[</span><span class="va">valid_idx</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">layers_df</span><span class="op">$</span><span class="va">layer</span><span class="op">[</span><span class="va">valid_idx</span><span class="op">]</span></span>
+<span></span>
+<span><span class="co"># Create combined plot: clusters in background + layers overlay with circles</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">df_viz</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="co"># base clusters</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">cluster</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">2.5</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="co"># 2) Draw outlines (slightly larger) so they "surround" without hiding</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span></span>
+<span>    data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">df_viz</span>, <span class="va">layer</span> <span class="op">==</span> <span class="st">"core"</span><span class="op">)</span>,</span>
+<span>    shape <span class="op">=</span> <span class="fl">1</span>, color <span class="op">=</span> <span class="st">"#DDDDDD"</span>,</span>
+<span>    size <span class="op">=</span> <span class="fl">3.2</span>, stroke <span class="op">=</span> <span class="fl">1.25</span></span>
+<span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span></span>
+<span>    data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">df_viz</span>, <span class="va">layer</span> <span class="op">==</span> <span class="st">"intermediate"</span><span class="op">)</span>,</span>
+<span>    shape <span class="op">=</span> <span class="fl">1</span>, color <span class="op">=</span> <span class="st">"#666666"</span>,</span>
+<span>    size <span class="op">=</span> <span class="fl">3.2</span>, stroke <span class="op">=</span> <span class="fl">1.25</span></span>
+<span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span></span>
+<span>    data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">df_viz</span>, <span class="va">layer</span> <span class="op">==</span> <span class="st">"border"</span><span class="op">)</span>,</span>
+<span>    shape <span class="op">=</span> <span class="fl">1</span>, color <span class="op">=</span><span class="st">"black"</span>,</span>
+<span>    size <span class="op">=</span> <span class="fl">3.2</span>, stroke <span class="op">=</span> <span class="fl">1.25</span></span>
+<span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="co"># 3) Re-draw the colored points ON TOP for the highlighted subset</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span></span>
+<span>    data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">df_viz</span>, <span class="va">layer</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"core"</span>, <span class="st">"intermediate"</span>, <span class="st">"border"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">cluster</span><span class="op">)</span>,</span>
+<span>    size <span class="op">=</span> <span class="fl">2.5</span></span>
+<span><span class="op">)</span>  <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_fixed.html" class="external-link">coord_equal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span><span class="op">+</span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
+<span>  x <span class="op">=</span> <span class="st">""</span>, y <span class="op">=</span> <span class="st">""</span>, color <span class="op">=</span> <span class="st">""</span></span>
+<span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span></span>
+<span>  axis.text <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="op">)</span> </span></code></pre></div>
+<p><img src="Battlefield-Main_files/figure-html/layers1-1.png" class="r-plt" width="672"></p>
 </div>
 <div class="section level3">
-<h3 id="inter-cluster-trajectories">Inter-cluster trajectories<a class="anchor" aria-label="anchor" href="#inter-cluster-trajectories"></a>
+<h3 id="interintra-cluster-trajectories">Inter/Intra-cluster trajectories<a class="anchor" aria-label="anchor" href="#interintra-cluster-trajectories"></a>
 </h3>
-<p>Here</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"visium_simulated_spe"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="st">"visium_simulated_spe"</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "visium_simulated_spe"</span></span></code></pre>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">12</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">colData</span><span class="op">(</span><span class="va">visium_simulated_spe</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## DataFrame with 6 rows and 3 columns</span></span>
-<span><span class="co">##           barcode_id  cluster   sample_id</span></span>
-<span><span class="co">##          &lt;character&gt; &lt;factor&gt; &lt;character&gt;</span></span>
-<span><span class="co">## SPOT0001    SPOT0001        3    sample01</span></span>
-<span><span class="co">## SPOT0002    SPOT0002        3    sample01</span></span>
-<span><span class="co">## SPOT0003    SPOT0003        3    sample01</span></span>
-<span><span class="co">## SPOT0004    SPOT0004        3    sample01</span></span>
-<span><span class="co">## SPOT0005    SPOT0005        3    sample01</span></span>
-<span><span class="co">## SPOT0006    SPOT0006        3    sample01</span></span></code></pre>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>spot_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">visium_simulated_spe</span><span class="op">)</span>,</span>
-<span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/SpatialExperiment-methods.html" class="external-link">spatialCoords</a></span><span class="op">(</span><span class="va">visium_simulated_spe</span><span class="op">)</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>,</span>
-<span>y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/SpatialExperiment-methods.html" class="external-link">spatialCoords</a></span><span class="op">(</span><span class="va">visium_simulated_spe</span><span class="op">)</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span>,</span>
-<span>cluster <span class="op">=</span> <span class="fu">colData</span><span class="op">(</span><span class="va">visium_simulated_spe</span><span class="op">)</span><span class="op">$</span><span class="va">cluster</span></span>
-<span><span class="op">)</span></span>
-<span></span>
+<p>We can also identify spatial trajectories between two spots from two
+cluster or inside a single cluster.</p>
+<p>Here we demonstrate how to build a trajectory between clusters 3 and
+4 using <code><a href="../reference/build_one_trajectory.html">build_one_trajectory()</a></code>.</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># We retrieve expression for later visualization</span></span>
 <span><span class="va">expr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu">assay</span><span class="op">(</span><span class="va">visium_simulated_spe</span>, <span class="st">"counts"</span><span class="op">)</span><span class="op">[</span><span class="st">"FAKE_GENE"</span>, <span class="op">]</span><span class="op">)</span></span>
 <span><span class="va">test</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="fu">colData</span><span class="op">(</span><span class="va">visium_simulated_spe</span><span class="op">)</span><span class="op">)</span>, <span class="va">df</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"y"</span><span class="op">)</span>, drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="va">test</span><span class="op">$</span><span class="va">expr</span> <span class="op">&lt;-</span> <span class="va">expr</span></span>
-<span></span>
 <span></span>
 <span><span class="va">start_cluster</span> <span class="op">&lt;-</span> <span class="st">"3"</span></span>
 <span><span class="va">end_cluster</span>   <span class="op">&lt;-</span> <span class="st">"4"</span></span>
@@ -531,141 +676,215 @@ different functionalities.</p>
 <span><span class="va">A</span> <span class="op">&lt;-</span> <span class="va">centroids</span><span class="op">[</span><span class="va">centroids</span><span class="op">$</span><span class="va">cluster</span> <span class="op">==</span> <span class="va">start_cluster</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>,<span class="st">"y"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="va">B</span> <span class="op">&lt;-</span> <span class="va">centroids</span><span class="op">[</span><span class="va">centroids</span><span class="op">$</span><span class="va">cluster</span> <span class="op">==</span> <span class="va">end_cluster</span>,   <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>,<span class="st">"y"</span><span class="op">)</span><span class="op">]</span></span>
 <span></span>
+<span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/build_one_trajectory.html">build_one_trajectory</a></span><span class="op">(</span><span class="va">df</span>, <span class="va">A</span>, <span class="va">B</span>, top_n <span class="op">=</span> <span class="va">top_n</span>, max_dist <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
-<span><span class="op">(</span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/build_one_trajectory.html">build_one_trajectory</a></span><span class="op">(</span><span class="va">df</span>, <span class="va">A</span>, <span class="va">B</span>, top_n <span class="op">=</span> <span class="va">top_n</span>, max_dist <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##    spot_id      x        y cluster dist_to_seg pos_on_seg trajectory_id</span></span>
-<span><span class="co">## 1 SPOT0220 1072.5 238.1570       3  11.5795728 0.00275319          main</span></span>
-<span><span class="co">## 2 SPOT0300 1072.5 333.4198       1   8.6442774 0.14803792          main</span></span>
-<span><span class="co">## 3 SPOT0380 1072.5 428.6826       1   5.7089820 0.29332266          main</span></span>
-<span><span class="co">## 4 SPOT0460 1072.5 523.9454       1   2.7736866 0.43860739          main</span></span>
-<span><span class="co">## 5 SPOT0540 1072.5 619.2082       1   0.1616088 0.58389212          main</span></span>
-<span><span class="co">## 6 SPOT0620 1072.5 714.4710       1   3.0969042 0.72917686          main</span></span>
-<span><span class="co">## 7 SPOT0700 1072.5 809.7338       1   6.0321996 0.87446159          main</span></span>
-<span><span class="co">## 8 SPOT0780 1072.5 904.9965       4  15.7447575 1.00000000          main</span></span></code></pre>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">test</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">expr</span><span class="op">)</span>,size <span class="op">=</span> <span class="fl">1.6</span>, alpha <span class="op">=</span> <span class="fl">0.85</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_color_gradient</a></span><span class="op">(</span></span>
-<span>low <span class="op">=</span> <span class="st">"blue"</span>,</span>
-<span>high <span class="op">=</span> <span class="st">"red"</span></span>
-<span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_path</a></span><span class="op">(</span></span>
-<span>data <span class="op">=</span> <span class="va">res</span>,</span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y</span><span class="op">)</span>,</span>
-<span>color <span class="op">=</span> <span class="st">"green"</span>, linewidth <span class="op">=</span> <span class="fl">1.1</span></span>
-<span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_path</a></span><span class="op">(</span></span>
-<span>data <span class="op">=</span> <span class="va">res</span>,</span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y</span><span class="op">)</span>,</span>
-<span>color <span class="op">=</span> <span class="st">"black"</span>, linewidth <span class="op">=</span> <span class="fl">1.1</span>,</span>
-<span>arrow <span class="op">=</span> <span class="fu">grid</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/grid/arrow.html" class="external-link">arrow</a></span><span class="op">(</span>type <span class="op">=</span> <span class="st">"closed"</span>,</span>
-<span>length <span class="op">=</span> <span class="fu">grid</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/grid/unit.html" class="external-link">unit</a></span><span class="op">(</span><span class="fl">5</span>, <span class="st">"mm"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">res</span><span class="op">$</span><span class="va">selected</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span>, </span>
-<span>inherit.aes <span class="op">=</span> <span class="cn">FALSE</span>, size <span class="op">=</span> <span class="fl">2.2</span>, color<span class="op">=</span><span class="st">"green"</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="12%">
+<col width="10%">
+<col width="12%">
+<col width="11%">
+<col width="17%">
+<col width="15%">
+<col width="20%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">spot_id</th>
+<th align="right">x</th>
+<th align="right">y</th>
+<th align="left">cluster</th>
+<th align="right">dist_to_seg</th>
+<th align="right">pos_on_seg</th>
+<th align="left">trajectory_id</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">SPOT0220</td>
+<td align="right">1072.5</td>
+<td align="right">238.1570</td>
+<td align="left">3</td>
+<td align="right">11.5795728</td>
+<td align="right">0.0027532</td>
+<td align="left">main</td>
+</tr>
+<tr class="even">
+<td align="left">SPOT0300</td>
+<td align="right">1072.5</td>
+<td align="right">333.4198</td>
+<td align="left">1</td>
+<td align="right">8.6442774</td>
+<td align="right">0.1480379</td>
+<td align="left">main</td>
+</tr>
+<tr class="odd">
+<td align="left">SPOT0380</td>
+<td align="right">1072.5</td>
+<td align="right">428.6826</td>
+<td align="left">1</td>
+<td align="right">5.7089820</td>
+<td align="right">0.2933227</td>
+<td align="left">main</td>
+</tr>
+<tr class="even">
+<td align="left">SPOT0460</td>
+<td align="right">1072.5</td>
+<td align="right">523.9454</td>
+<td align="left">1</td>
+<td align="right">2.7736866</td>
+<td align="right">0.4386074</td>
+<td align="left">main</td>
+</tr>
+<tr class="odd">
+<td align="left">SPOT0540</td>
+<td align="right">1072.5</td>
+<td align="right">619.2082</td>
+<td align="left">1</td>
+<td align="right">0.1616088</td>
+<td align="right">0.5838921</td>
+<td align="left">main</td>
+</tr>
+<tr class="even">
+<td align="left">SPOT0620</td>
+<td align="right">1072.5</td>
+<td align="right">714.4710</td>
+<td align="left">1</td>
+<td align="right">3.0969042</td>
+<td align="right">0.7291769</td>
+<td align="left">main</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Plot cluster distribution</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">test</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, fill <span class="op">=</span> <span class="va">cluster</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">3.2</span>,colour<span class="op">=</span><span class="st">"grey"</span>, shape <span class="op">=</span> <span class="fl">21</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_path</a></span><span class="op">(</span>data<span class="op">=</span><span class="va">res</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">x</span>, y<span class="op">=</span><span class="va">y</span>, group<span class="op">=</span><span class="va">trajectory_id</span><span class="op">)</span>, </span>
+<span>  color<span class="op">=</span><span class="st">"black"</span>,linewidth<span class="op">=</span><span class="fl">2</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">res</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span>, </span>
+<span>  size <span class="op">=</span> <span class="fl">3.2</span>, fill<span class="op">=</span><span class="st">"red"</span>,colour<span class="op">=</span><span class="st">"black"</span>, shape <span class="op">=</span> <span class="fl">21</span><span class="op">)</span> <span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_fixed.html" class="external-link">coord_equal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Battlefield-Main_files/figure-html/loading-1.png" class="r-plt" width="672"></p>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="op">(</span><span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/build_similar_trajectories.html">build_similar_trajectories</a></span><span class="op">(</span><span class="va">df</span>, <span class="va">A</span>, <span class="va">B</span>, top_n <span class="op">=</span> <span class="va">top_n</span>, n_extra <span class="op">=</span> <span class="fl">2</span>, side <span class="op">=</span> <span class="st">"both"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##     spot_id      x        y cluster dist_to_seg  pos_on_seg trajectory_id</span></span>
-<span><span class="co">## 1  SPOT0220 1072.5 238.1570       3  11.5795728 0.002753190          main</span></span>
-<span><span class="co">## 2  SPOT0300 1072.5 333.4198       1   8.6442774 0.148037923          main</span></span>
-<span><span class="co">## 3  SPOT0380 1072.5 428.6826       1   5.7089820 0.293322657          main</span></span>
-<span><span class="co">## 4  SPOT0460 1072.5 523.9454       1   2.7736866 0.438607390          main</span></span>
-<span><span class="co">## 5  SPOT0540 1072.5 619.2082       1   0.1616088 0.583892123          main</span></span>
-<span><span class="co">## 6  SPOT0620 1072.5 714.4710       1   3.0969042 0.729176857          main</span></span>
-<span><span class="co">## 7  SPOT0700 1072.5 809.7338       1   6.0321996 0.874461590          main</span></span>
-<span><span class="co">## 8  SPOT0780 1072.5 904.9965       4  15.7447575 1.000000000          main</span></span>
-<span><span class="co">## 9  SPOT0259  990.0 285.7884       3   9.0989022 0.071516864        left_1</span></span>
-<span><span class="co">## 10 SPOT0339  990.0 381.0512       1  12.0341976 0.216801597        left_1</span></span>
-<span><span class="co">## 11 SPOT0379 1017.5 428.6826       1  13.9850971 0.290736861        left_1</span></span>
-<span><span class="co">## 12 SPOT0459 1017.5 523.9454       1  11.0498017 0.436021595        left_1</span></span>
-<span><span class="co">## 13 SPOT0539 1017.5 619.2082       1   8.1145063 0.581306328        left_1</span></span>
-<span><span class="co">## 14 SPOT0619 1017.5 714.4710       1   5.1792109 0.726591062        left_1</span></span>
-<span><span class="co">## 15 SPOT0699 1017.5 809.7338       1   2.2439155 0.871875795        left_1</span></span>
-<span><span class="co">## 16 SPOT0779 1017.5 904.9965       4  11.2679986 1.000000000        left_1</span></span>
-<span><span class="co">## 17 SPOT0258  935.0 285.7884       3   0.8227870 0.068931069        left_2</span></span>
-<span><span class="co">## 18 SPOT0338  935.0 381.0512       1   3.7580824 0.214215802        left_2</span></span>
-<span><span class="co">## 19 SPOT0418  935.0 476.3140       1   6.6933778 0.359500535        left_2</span></span>
-<span><span class="co">## 20 SPOT0498  935.0 571.5768       1   9.6286732 0.504785269        left_2</span></span>
-<span><span class="co">## 21 SPOT0578  935.0 666.8396       1  12.5639686 0.650070002        left_2</span></span>
-<span><span class="co">## 22 SPOT0618  962.5 714.4710       1  13.4553261 0.724005266        left_2</span></span>
-<span><span class="co">## 23 SPOT0698  962.5 809.7338       4  10.5200307 0.869290000        left_2</span></span>
-<span><span class="co">## 24 SPOT0778  962.5 904.9965       4  12.1971444 1.000000000        left_2</span></span>
-<span><span class="co">## 25 SPOT0221 1127.5 238.1570       3   3.3034576 0.005338985       right_1</span></span>
-<span><span class="co">## 26 SPOT0301 1127.5 333.4198       1   0.3681622 0.150623718       right_1</span></span>
-<span><span class="co">## 27 SPOT0381 1127.5 428.6826       1   2.5671332 0.295908452       right_1</span></span>
-<span><span class="co">## 28 SPOT0461 1127.5 523.9454       1   5.5024286 0.441193185       right_1</span></span>
-<span><span class="co">## 29 SPOT0541 1127.5 619.2082       1   8.4377240 0.586477918       right_1</span></span>
-<span><span class="co">## 30 SPOT0621 1127.5 714.4710       1  11.3730194 0.731762652       right_1</span></span>
-<span><span class="co">## 31 SPOT0701 1127.5 809.7338       1  14.3083148 0.877047385       right_1</span></span>
-<span><span class="co">## 32 SPOT0742 1155.0 857.3651       4  11.7109799 0.950982649       right_1</span></span>
-<span><span class="co">## 33 SPOT0222 1182.5 238.1570       3   4.9726575 0.007924780       right_2</span></span>
-<span><span class="co">## 34 SPOT0302 1182.5 333.4198       1   7.9079529 0.153209513       right_2</span></span>
-<span><span class="co">## 35 SPOT0382 1182.5 428.6826       1  10.8432484 0.298494247       right_2</span></span>
-<span><span class="co">## 36 SPOT0462 1182.5 523.9454       1  13.7785438 0.443778980       right_2</span></span>
-<span><span class="co">## 37 SPOT0503 1210.0 571.5768       1  12.2407510 0.517714244       right_2</span></span>
-<span><span class="co">## 38 SPOT0583 1210.0 666.8396       1   9.3054555 0.662998978       right_2</span></span>
-<span><span class="co">## 39 SPOT0663 1210.0 762.1024       1   6.3701601 0.808283711       right_2</span></span>
-<span><span class="co">## 40 SPOT0743 1210.0 857.3651       4   3.4348647 0.953568445       right_2</span></span>
-<span><span class="co">##     offset</span></span>
-<span><span class="co">## 1     0.00</span></span>
-<span><span class="co">## 2     0.00</span></span>
-<span><span class="co">## 3     0.00</span></span>
-<span><span class="co">## 4     0.00</span></span>
-<span><span class="co">## 5     0.00</span></span>
-<span><span class="co">## 6     0.00</span></span>
-<span><span class="co">## 7     0.00</span></span>
-<span><span class="co">## 8     0.00</span></span>
-<span><span class="co">## 9    63.25</span></span>
-<span><span class="co">## 10   63.25</span></span>
-<span><span class="co">## 11   63.25</span></span>
-<span><span class="co">## 12   63.25</span></span>
-<span><span class="co">## 13   63.25</span></span>
-<span><span class="co">## 14   63.25</span></span>
-<span><span class="co">## 15   63.25</span></span>
-<span><span class="co">## 16   63.25</span></span>
-<span><span class="co">## 17  126.50</span></span>
-<span><span class="co">## 18  126.50</span></span>
-<span><span class="co">## 19  126.50</span></span>
-<span><span class="co">## 20  126.50</span></span>
-<span><span class="co">## 21  126.50</span></span>
-<span><span class="co">## 22  126.50</span></span>
-<span><span class="co">## 23  126.50</span></span>
-<span><span class="co">## 24  126.50</span></span>
-<span><span class="co">## 25  -63.25</span></span>
-<span><span class="co">## 26  -63.25</span></span>
-<span><span class="co">## 27  -63.25</span></span>
-<span><span class="co">## 28  -63.25</span></span>
-<span><span class="co">## 29  -63.25</span></span>
-<span><span class="co">## 30  -63.25</span></span>
-<span><span class="co">## 31  -63.25</span></span>
-<span><span class="co">## 32  -63.25</span></span>
-<span><span class="co">## 33 -126.50</span></span>
-<span><span class="co">## 34 -126.50</span></span>
-<span><span class="co">## 35 -126.50</span></span>
-<span><span class="co">## 36 -126.50</span></span>
-<span><span class="co">## 37 -126.50</span></span>
-<span><span class="co">## 38 -126.50</span></span>
-<span><span class="co">## 39 -126.50</span></span>
-<span><span class="co">## 40 -126.50</span></span></code></pre>
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">""</span>, y <span class="op">=</span> <span class="st">""</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>axis.text <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><img src="Battlefield-Main_files/figure-html/trajectories1-1.png" class="r-plt" width="672"></p>
+<p>But the real interest here is to identify multiple similar
+trajectories for a fixed number of spots and trajectories to explore
+possible gene expression gradients using
+<code><a href="../reference/build_similar_trajectories.html">build_similar_trajectories()</a></code>.</p>
+<p>Here we build two extra trajectories on each side of the main
+trajectory.<br><code>lane_factor</code> allows to control the spacing between
+trajectories. The number of trajectories returned is
+<code>n_extra</code> according to the <code>side</code> parameter
+setting.</p>
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/build_similar_trajectories.html">build_similar_trajectories</a></span><span class="op">(</span><span class="va">df</span>, <span class="va">A</span>, <span class="va">B</span>, </span>
+<span>top_n <span class="op">=</span> <span class="va">top_n</span>, </span>
+<span>n_extra <span class="op">=</span> <span class="fl">2</span>, </span>
+<span>lane_width_factor <span class="op">=</span> <span class="fl">2.5</span>,</span>
+<span>side <span class="op">=</span> <span class="st">"both"</span><span class="op">)</span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">out</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="11%">
+<col width="9%">
+<col width="11%">
+<col width="10%">
+<col width="15%">
+<col width="14%">
+<col width="18%">
+<col width="9%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">spot_id</th>
+<th align="right">x</th>
+<th align="right">y</th>
+<th align="left">cluster</th>
+<th align="right">dist_to_seg</th>
+<th align="right">pos_on_seg</th>
+<th align="left">trajectory_id</th>
+<th align="right">offset</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">SPOT0220</td>
+<td align="right">1072.5</td>
+<td align="right">238.1570</td>
+<td align="left">3</td>
+<td align="right">11.5795728</td>
+<td align="right">0.0027532</td>
+<td align="left">main</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">SPOT0300</td>
+<td align="right">1072.5</td>
+<td align="right">333.4198</td>
+<td align="left">1</td>
+<td align="right">8.6442774</td>
+<td align="right">0.1480379</td>
+<td align="left">main</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">SPOT0380</td>
+<td align="right">1072.5</td>
+<td align="right">428.6826</td>
+<td align="left">1</td>
+<td align="right">5.7089820</td>
+<td align="right">0.2933227</td>
+<td align="left">main</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">SPOT0460</td>
+<td align="right">1072.5</td>
+<td align="right">523.9454</td>
+<td align="left">1</td>
+<td align="right">2.7736866</td>
+<td align="right">0.4386074</td>
+<td align="left">main</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">SPOT0540</td>
+<td align="right">1072.5</td>
+<td align="right">619.2082</td>
+<td align="left">1</td>
+<td align="right">0.1616088</td>
+<td align="right">0.5838921</td>
+<td align="left">main</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">SPOT0620</td>
+<td align="right">1072.5</td>
+<td align="right">714.4710</td>
+<td align="left">1</td>
+<td align="right">3.0969042</td>
+<td align="right">0.7291769</td>
+<td align="left">main</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">test</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">expr</span><span class="op">)</span>,size <span class="op">=</span> <span class="fl">1.6</span>, alpha <span class="op">=</span> <span class="fl">0.85</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_color_gradient</a></span><span class="op">(</span></span>
-<span>low <span class="op">=</span> <span class="st">"blue"</span>,</span>
-<span>high <span class="op">=</span> <span class="st">"red"</span></span>
-<span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_color_gradient</a></span><span class="op">(</span>low <span class="op">=</span> <span class="st">"blue"</span>,high <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span> <span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_path</a></span><span class="op">(</span>data<span class="op">=</span><span class="va">out</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">x</span>, y<span class="op">=</span><span class="va">y</span>, group<span class="op">=</span><span class="va">trajectory_id</span><span class="op">)</span>, </span>
-<span>inherit.aes <span class="op">=</span> <span class="cn">FALSE</span>, color<span class="op">=</span><span class="st">"green"</span>,linewidth<span class="op">=</span><span class="fl">1</span>,</span>
-<span>arrow <span class="op">=</span> <span class="fu">grid</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/grid/arrow.html" class="external-link">arrow</a></span><span class="op">(</span>type <span class="op">=</span> <span class="st">"closed"</span>, length <span class="op">=</span> <span class="fu">grid</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/grid/unit.html" class="external-link">unit</a></span><span class="op">(</span><span class="fl">3</span>, <span class="st">"mm"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">out</span><span class="op">$</span><span class="va">lines</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span>, </span>
-<span>inherit.aes <span class="op">=</span> <span class="cn">FALSE</span>, size <span class="op">=</span> <span class="fl">2.2</span>, color<span class="op">=</span><span class="st">"green"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>inherit.aes <span class="op">=</span> <span class="cn">FALSE</span>, color<span class="op">=</span><span class="st">"black"</span>,linewidth<span class="op">=</span><span class="fl">1</span>,</span>
+<span>arrow <span class="op">=</span> <span class="fu">grid</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/grid/arrow.html" class="external-link">arrow</a></span><span class="op">(</span>type <span class="op">=</span> <span class="st">"closed"</span>, length <span class="op">=</span> <span class="fu">grid</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/grid/unit.html" class="external-link">unit</a></span><span class="op">(</span><span class="fl">2</span>, <span class="st">"mm"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">out</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span>, </span>
+<span>inherit.aes <span class="op">=</span> <span class="cn">FALSE</span>, size <span class="op">=</span> <span class="fl">2.2</span>, fill<span class="op">=</span><span class="st">"white"</span>,color<span class="op">=</span><span class="st">"black"</span><span class="op">)</span> <span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_fixed.html" class="external-link">coord_equal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> </span></code></pre></div>
-<p><img src="Battlefield-Main_files/figure-html/loading-2.png" class="r-plt" width="672"></p>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">""</span>, y <span class="op">=</span> <span class="st">""</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>axis.text <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><img src="Battlefield-Main_files/figure-html/trajectories2-1.png" class="r-plt" width="672"></p>
+<p>We can now explore quickly the expression of this fake gene via an
+heatmap.</p>
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">meta</span> <span class="op">&lt;-</span> <span class="va">out</span><span class="op">|&gt;</span></span>
 <span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/transmute.html" class="external-link">transmute</a></span><span class="op">(</span></span>
 <span>    spot_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">spot_id</span><span class="op">)</span>,</span>
@@ -700,13 +919,309 @@ different functionalities.</p>
 <span>col<span class="op">=</span><span class="fu">pals</span><span class="fu">::</span><span class="fu"><a href="https://kwstat.github.io/pals/reference/continuous.html" class="external-link">coolwarm</a></span><span class="op">(</span><span class="op">)</span>, scale<span class="op">=</span><span class="st">"row"</span>,</span>
 <span>cellwidth<span class="op">=</span><span class="fl">25</span>, cellheight<span class="op">=</span><span class="fl">25</span> , na_col <span class="op">=</span> <span class="st">"grey90"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="Battlefield-Main_files/figure-html/loading-3.png" class="r-plt" width="672"></p>
+<p><img src="Battlefield-Main_files/figure-html/trajectories3-1.png" class="r-plt" width="672"></p>
 </div>
+<div class="section level3">
+<h3 id="spatial-neighborhood">Spatial neighborhood<a class="anchor" aria-label="anchor" href="#spatial-neighborhood"></a>
+</h3>
+<p><code>Battlefield</code> also provides a utility to report the
+cluster composition of a spatial neighborhood defined by k nearest
+spots, constrained by a distance threshold. It can used a cluster or a
+spot of interest.<br>
+There is three major functions :</p>
+<ul>
+<li>
+<code>get_neighborhood_spots</code> : get the spots in the
+neighborhood of a cluster</li>
+<li>
+<code>count_neighborhood</code> : count the composition of a
+neighborhood for a cluster</li>
+<li>
+<code>count_all_neighborhoods</code> : count the composition of
+neighborhoods for all clusters</li>
+</ul>
+<p>By default, it will report clusters present in the neighborhood but
+you can provide another column name with <code>inlaid_col</code>
+parameter to report other annotations.</p>
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Getting neighborhoods...</span></span>
+<span><span class="va">neighborhood_spots_1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_neighborhood_spots.html">get_neighborhood_spots</a></span><span class="op">(</span><span class="va">df</span>, cluster <span class="op">=</span> <span class="fl">1</span>, k <span class="op">=</span> <span class="fl">200</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">neighborhood_spots_1</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##           spot_id      x        y cluster neighborhood is_neighborhood</span></span>
+<span><span class="co">## SPOT0465 SPOT0465 1347.5 523.9454       1            2            TRUE</span></span>
+<span><span class="co">## SPOT0466 SPOT0466 1402.5 523.9454       1            2            TRUE</span></span>
+<span><span class="co">## SPOT0467 SPOT0467 1457.5 523.9454       1            2            TRUE</span></span>
+<span><span class="co">## SPOT0468 SPOT0468 1512.5 523.9454       1            2            TRUE</span></span>
+<span><span class="co">## SPOT0506 SPOT0506 1375.0 571.5768       1            2            TRUE</span></span>
+<span><span class="co">## SPOT0507 SPOT0507 1430.0 571.5768       1            2            TRUE</span></span></code></pre>
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Counting the clusters in the neighborhoods...</span></span>
+<span><span class="va">neighb_vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/count_neighborhood.html">count_neighborhood</a></span><span class="op">(</span><span class="va">df</span>, cluster <span class="op">=</span> <span class="fl">1</span>, k <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">neighb_vis</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##   cluster neighborhood count proportion</span></span>
+<span><span class="co">## 1       1            4    49       0.49</span></span>
+<span><span class="co">## 2       1            3    45       0.45</span></span>
+<span><span class="co">## 3       1            2     6       0.06</span></span></code></pre>
+<p>We simulated another another annotation to create inlaid black spots
+that we will count in the neighborhood of cluster 1 just after the
+plot.</p>
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">neighb_vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/count_all_neighborhoods.html">count_all_neighborhoods</a></span><span class="op">(</span><span class="va">df</span>,  k <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Add inlaid column with random values (5 categories)</span></span>
+<span><span class="va">df</span><span class="op">$</span><span class="va">inlaid</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"inlaid"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">df_neighborhood_viz</span> <span class="op">&lt;-</span> <span class="va">df</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
+<span>    spot_type <span class="op">=</span> <span class="st">"background"</span>,</span>
+<span>    spot_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">cluster</span> <span class="op">==</span> <span class="fl">1</span>, <span class="st">"source"</span>, <span class="va">spot_type</span><span class="op">)</span>,</span>
+<span>    spot_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">spot_id</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">neighborhood_spots_1</span><span class="op">$</span><span class="va">spot_id</span>,</span>
+<span>                       <span class="st">"neighborhood"</span>, <span class="va">spot_type</span><span class="op">)</span></span>
+<span>  <span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span></span>
+<span><span class="co"># Apply the same cluster factor levels as df_vis</span></span>
+<span><span class="va">df_neighborhood_viz</span><span class="op">$</span><span class="va">cluster</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">df_neighborhood_viz</span><span class="op">$</span><span class="va">cluster</span>,</span>
+<span>                                      levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">cluster</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">df_neighborhood_viz</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span></span>
+<span>    data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">df_neighborhood_viz</span>, <span class="va">spot_type</span> <span class="op">==</span> <span class="st">"neighborhood"</span><span class="op">)</span>,</span>
+<span>    shape <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>    color <span class="op">=</span> <span class="st">"grey"</span>,</span>
+<span>    size <span class="op">=</span> <span class="fl">3.2</span>,</span>
+<span>    stroke <span class="op">=</span> <span class="fl">1.25</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">cluster</span><span class="op">)</span>,</span>
+<span>    size <span class="op">=</span> <span class="fl">2.5</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span></span>
+<span>    data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">df_neighborhood_viz</span>, <span class="va">inlaid</span> <span class="op">==</span> <span class="st">"inlaid1"</span><span class="op">)</span>,</span>
+<span>    fill <span class="op">=</span> <span class="st">"black"</span>,</span>
+<span>    size <span class="op">=</span> <span class="fl">2.5</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_fixed.html" class="external-link">coord_equal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">""</span>, y <span class="op">=</span> <span class="st">""</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>axis.text <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+<p><img src="Battlefield-Main_files/figure-html/neighborhood2-1.png" class="r-plt" width="672"></p>
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Counting the black point -inlaid spots- in the neighborhood of cluster  1</span></span>
+<span><span class="va">neighb_vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/count_neighborhood.html">count_neighborhood</a></span><span class="op">(</span><span class="va">df</span>, cluster <span class="op">=</span> <span class="fl">1</span>, inlaid_col <span class="op">=</span> <span class="st">"inlaid"</span>,k <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">neighb_vis</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##   cluster neighborhood count proportion</span></span>
+<span><span class="co">## 1       1      inlaid2    26       0.26</span></span>
+<span><span class="co">## 2       1      inlaid4    25       0.25</span></span>
+<span><span class="co">## 3       1      inlaid5    19       0.19</span></span>
+<span><span class="co">## 4       1      inlaid1    15       0.15</span></span>
+<span><span class="co">## 5       1      inlaid3    15       0.15</span></span></code></pre>
+<p>We previously count these point in the neighborhood of cluster 1. We
+can count the black spots directly inside cluster 1.</p>
+<p>For this purpose, three major functions are available:</p>
+<ul>
+<li>
+<code>get_inlaid_spots</code> : get the inlaid spots inside a
+cluster</li>
+<li>
+<code>count_inlaid</code> : count the composition of inlaid spots
+for a cluster</li>
+<li>
+<code>count_all_inlaids</code> : count the composition of inlaid
+spots for all clusters</li>
+</ul>
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># === Testing get_inlaid_spots  </span></span>
+<span><span class="va">inlaid_spots_1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_inlaid_spots.html">get_inlaid_spots</a></span><span class="op">(</span><span class="va">df</span>, cluster <span class="op">=</span> <span class="fl">1</span>, inlaid_col <span class="op">=</span> <span class="st">"inlaid"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># === Testing count_inlaid ===</span></span>
+<span><span class="va">inlaid_1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/count_inlaid.html">count_inlaid</a></span><span class="op">(</span><span class="va">df</span>, cluster <span class="op">=</span> <span class="fl">1</span>, inlaid_col <span class="op">=</span> <span class="st">"inlaid"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># === Testing count_all_inlaids ===</span></span>
+<span><span class="va">all_inlaids</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/count_all_inlaids.html">count_all_inlaids</a></span><span class="op">(</span><span class="va">df</span>, inlaid_col <span class="op">=</span> <span class="st">"inlaid"</span><span class="op">)</span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">all_inlaids</span>, <span class="fl">15</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th align="left">cluster</th>
+<th align="left">inlaid</th>
+<th align="right">count</th>
+<th align="right">proportion</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">1</td>
+<td align="left">inlaid2</td>
+<td align="right">19</td>
+<td align="right">0.2345679</td>
+</tr>
+<tr class="even">
+<td align="left">1</td>
+<td align="left">inlaid3</td>
+<td align="right">19</td>
+<td align="right">0.2345679</td>
+</tr>
+<tr class="odd">
+<td align="left">1</td>
+<td align="left">inlaid1</td>
+<td align="right">17</td>
+<td align="right">0.2098765</td>
+</tr>
+<tr class="even">
+<td align="left">1</td>
+<td align="left">inlaid4</td>
+<td align="right">13</td>
+<td align="right">0.1604938</td>
+</tr>
+<tr class="odd">
+<td align="left">1</td>
+<td align="left">inlaid5</td>
+<td align="right">13</td>
+<td align="right">0.1604938</td>
+</tr>
+<tr class="even">
+<td align="left">2</td>
+<td align="left">inlaid1</td>
+<td align="right">13</td>
+<td align="right">0.2765957</td>
+</tr>
+<tr class="odd">
+<td align="left">2</td>
+<td align="left">inlaid3</td>
+<td align="right">11</td>
+<td align="right">0.2340426</td>
+</tr>
+<tr class="even">
+<td align="left">2</td>
+<td align="left">inlaid2</td>
+<td align="right">10</td>
+<td align="right">0.2127660</td>
+</tr>
+<tr class="odd">
+<td align="left">2</td>
+<td align="left">inlaid4</td>
+<td align="right">7</td>
+<td align="right">0.1489362</td>
+</tr>
+<tr class="even">
+<td align="left">2</td>
+<td align="left">inlaid5</td>
+<td align="right">6</td>
+<td align="right">0.1276596</td>
+</tr>
+<tr class="odd">
+<td align="left">3</td>
+<td align="left">inlaid2</td>
+<td align="right">100</td>
+<td align="right">0.2336449</td>
+</tr>
+<tr class="even">
+<td align="left">3</td>
+<td align="left">inlaid1</td>
+<td align="right">87</td>
+<td align="right">0.2032710</td>
+</tr>
+<tr class="odd">
+<td align="left">3</td>
+<td align="left">inlaid4</td>
+<td align="right">86</td>
+<td align="right">0.2009346</td>
+</tr>
+<tr class="even">
+<td align="left">3</td>
+<td align="left">inlaid5</td>
+<td align="right">83</td>
+<td align="right">0.1939252</td>
+</tr>
+<tr class="odd">
+<td align="left">3</td>
+<td align="left">inlaid3</td>
+<td align="right">72</td>
+<td align="right">0.1682243</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section level2">
+<h2 id="ending-point">Ending point<a class="anchor" aria-label="anchor" href="#ending-point"></a>
+</h2>
+<p>You can finaly integrate <code>Battlefield</code> results back into a
+<code>SpatialExperiment</code> object for further analysis :</p>
+<ul>
+<li><code><a href="../reference/add_borders_to_spe.html">add_borders_to_spe()</a></code></li>
+<li><code><a href="../reference/add_layers_to_spe.html">add_layers_to_spe()</a></code></li>
+<li><code><a href="../reference/add_trajectories_to_spe.html">add_trajectories_to_spe()</a></code></li>
+</ul>
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">visium_simulated_spe</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/add_borders_to_spe.html">add_borders_to_spe</a></span><span class="op">(</span><span class="va">visium_simulated_spe</span>,</span>
+<span>  border <span class="op">=</span> <span class="va">all_borders</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">colData</span><span class="op">(</span><span class="va">visium_simulated_spe</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## DataFrame with 6 rows and 7 columns</span></span>
+<span><span class="co">##           barcode_id  cluster   sample_id is_border   is_core   interface</span></span>
+<span><span class="co">##          &lt;character&gt; &lt;factor&gt; &lt;character&gt; &lt;logical&gt; &lt;logical&gt; &lt;character&gt;</span></span>
+<span><span class="co">## SPOT0001    SPOT0001        3    sample01     FALSE     FALSE          NA</span></span>
+<span><span class="co">## SPOT0002    SPOT0002        3    sample01     FALSE     FALSE          NA</span></span>
+<span><span class="co">## SPOT0003    SPOT0003        3    sample01     FALSE     FALSE          NA</span></span>
+<span><span class="co">## SPOT0004    SPOT0004        3    sample01     FALSE     FALSE          NA</span></span>
+<span><span class="co">## SPOT0005    SPOT0005        3    sample01     FALSE     FALSE          NA</span></span>
+<span><span class="co">## SPOT0006    SPOT0006        3    sample01     FALSE     FALSE          NA</span></span>
+<span><span class="co">##          border_mode</span></span>
+<span><span class="co">##          &lt;character&gt;</span></span>
+<span><span class="co">## SPOT0001          NA</span></span>
+<span><span class="co">## SPOT0002          NA</span></span>
+<span><span class="co">## SPOT0003          NA</span></span>
+<span><span class="co">## SPOT0004          NA</span></span>
+<span><span class="co">## SPOT0005          NA</span></span>
+<span><span class="co">## SPOT0006          NA</span></span></code></pre>
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">visium_simulated_spe</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/add_layers_to_spe.html">add_layers_to_spe</a></span><span class="op">(</span><span class="va">visium_simulated_spe</span>, </span>
+<span>  layer <span class="op">=</span> <span class="va">layers_df</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">colData</span><span class="op">(</span><span class="va">visium_simulated_spe</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## DataFrame with 6 rows and 8 columns</span></span>
+<span><span class="co">##           barcode_id  cluster   sample_id is_border   is_core   interface</span></span>
+<span><span class="co">##          &lt;character&gt; &lt;factor&gt; &lt;character&gt; &lt;logical&gt; &lt;logical&gt; &lt;character&gt;</span></span>
+<span><span class="co">## SPOT0001    SPOT0001        3    sample01     FALSE     FALSE          NA</span></span>
+<span><span class="co">## SPOT0002    SPOT0002        3    sample01     FALSE     FALSE          NA</span></span>
+<span><span class="co">## SPOT0003    SPOT0003        3    sample01     FALSE     FALSE          NA</span></span>
+<span><span class="co">## SPOT0004    SPOT0004        3    sample01     FALSE     FALSE          NA</span></span>
+<span><span class="co">## SPOT0005    SPOT0005        3    sample01     FALSE     FALSE          NA</span></span>
+<span><span class="co">## SPOT0006    SPOT0006        3    sample01     FALSE     FALSE          NA</span></span>
+<span><span class="co">##          border_mode       layer</span></span>
+<span><span class="co">##          &lt;character&gt; &lt;character&gt;</span></span>
+<span><span class="co">## SPOT0001          NA        core</span></span>
+<span><span class="co">## SPOT0002          NA        core</span></span>
+<span><span class="co">## SPOT0003          NA        core</span></span>
+<span><span class="co">## SPOT0004          NA        core</span></span>
+<span><span class="co">## SPOT0005          NA        core</span></span>
+<span><span class="co">## SPOT0006          NA        core</span></span></code></pre>
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">visium_simulated_spe</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/add_trajectories_to_spe.html">add_trajectories_to_spe</a></span><span class="op">(</span><span class="va">visium_simulated_spe</span>, </span>
+<span>  trajectory <span class="op">=</span> <span class="va">out</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">colData</span><span class="op">(</span><span class="va">visium_simulated_spe</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## DataFrame with 6 rows and 12 columns</span></span>
+<span><span class="co">##           barcode_id  cluster   sample_id is_border   is_core   interface</span></span>
+<span><span class="co">##          &lt;character&gt; &lt;factor&gt; &lt;character&gt; &lt;logical&gt; &lt;logical&gt; &lt;character&gt;</span></span>
+<span><span class="co">## SPOT0001    SPOT0001        3    sample01     FALSE     FALSE          NA</span></span>
+<span><span class="co">## SPOT0002    SPOT0002        3    sample01     FALSE     FALSE          NA</span></span>
+<span><span class="co">## SPOT0003    SPOT0003        3    sample01     FALSE     FALSE          NA</span></span>
+<span><span class="co">## SPOT0004    SPOT0004        3    sample01     FALSE     FALSE          NA</span></span>
+<span><span class="co">## SPOT0005    SPOT0005        3    sample01     FALSE     FALSE          NA</span></span>
+<span><span class="co">## SPOT0006    SPOT0006        3    sample01     FALSE     FALSE          NA</span></span>
+<span><span class="co">##          border_mode       layer trajectory_id    offset pos_on_seg dist_to_seg</span></span>
+<span><span class="co">##          &lt;character&gt; &lt;character&gt;   &lt;character&gt; &lt;numeric&gt;  &lt;numeric&gt;   &lt;numeric&gt;</span></span>
+<span><span class="co">## SPOT0001          NA        core            NA        NA         NA          NA</span></span>
+<span><span class="co">## SPOT0002          NA        core            NA        NA         NA          NA</span></span>
+<span><span class="co">## SPOT0003          NA        core            NA        NA         NA          NA</span></span>
+<span><span class="co">## SPOT0004          NA        core            NA        NA         NA          NA</span></span>
+<span><span class="co">## SPOT0005          NA        core            NA        NA         NA          NA</span></span>
+<span><span class="co">## SPOT0006          NA        core            NA        NA         NA          NA</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="session-information">Session Information<a class="anchor" aria-label="anchor" href="#session-information"></a>
 </h2>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## R Under development (unstable) (2025-12-18 r89199)</span></span>
 <span><span class="co">## Platform: x86_64-pc-linux-gnu</span></span>
@@ -732,21 +1247,20 @@ different functionalities.</p>
 <span><span class="co">## [8] methods   base     </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## other attached packages:</span></span>
-<span><span class="co">##  [1] patchwork_1.3.2             pals_1.10                  </span></span>
-<span><span class="co">##  [3] pheatmap_1.0.13             tidyr_1.3.2                </span></span>
-<span><span class="co">##  [5] dplyr_1.1.4                 ggplot2_4.0.1              </span></span>
-<span><span class="co">##  [7] SpatialExperiment_1.21.0    SingleCellExperiment_1.33.0</span></span>
-<span><span class="co">##  [9] SummarizedExperiment_1.41.0 Biobase_2.71.0             </span></span>
-<span><span class="co">## [11] GenomicRanges_1.63.1        Seqinfo_1.1.0              </span></span>
-<span><span class="co">## [13] IRanges_2.45.0              S4Vectors_0.49.0           </span></span>
-<span><span class="co">## [15] BiocGenerics_0.57.0         generics_0.1.4             </span></span>
-<span><span class="co">## [17] MatrixGenerics_1.23.0       matrixStats_1.5.0          </span></span>
-<span><span class="co">## [19] Battlefield_0.99.01        </span></span>
+<span><span class="co">##  [1] pals_1.10                   pheatmap_1.0.13            </span></span>
+<span><span class="co">##  [3] tidyr_1.3.2                 dplyr_1.1.4                </span></span>
+<span><span class="co">##  [5] ggplot2_4.0.1               SpatialExperiment_1.21.0   </span></span>
+<span><span class="co">##  [7] SingleCellExperiment_1.33.0 SummarizedExperiment_1.41.0</span></span>
+<span><span class="co">##  [9] Biobase_2.71.0              GenomicRanges_1.63.1       </span></span>
+<span><span class="co">## [11] Seqinfo_1.1.0               IRanges_2.45.0             </span></span>
+<span><span class="co">## [13] S4Vectors_0.49.0            BiocGenerics_0.57.0        </span></span>
+<span><span class="co">## [15] generics_0.1.4              MatrixGenerics_1.23.0      </span></span>
+<span><span class="co">## [17] matrixStats_1.5.0           Battlefield_0.99.01        </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## loaded via a namespace (and not attached):</span></span>
 <span><span class="co">##  [1] gtable_0.3.6        rjson_0.2.23        xfun_0.55          </span></span>
 <span><span class="co">##  [4] bslib_0.9.0         htmlwidgets_1.6.4   lattice_0.22-7     </span></span>
-<span><span class="co">##  [7] vctrs_0.6.5         tools_4.6.0         tibble_3.3.0       </span></span>
+<span><span class="co">##  [7] vctrs_0.6.5         tools_4.6.0         tibble_3.3.1       </span></span>
 <span><span class="co">## [10] pkgconfig_2.0.3     Matrix_1.7-4        RColorBrewer_1.1-3 </span></span>
 <span><span class="co">## [13] S7_0.2.1            desc_1.4.3          lifecycle_1.0.5    </span></span>
 <span><span class="co">## [16] compiler_4.6.0      farver_2.1.2        textshaping_1.0.4  </span></span>

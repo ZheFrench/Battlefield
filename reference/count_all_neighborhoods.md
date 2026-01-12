@@ -9,9 +9,10 @@ neighboring cluster types for each source cluster.
 ``` r
 count_all_neighborhoods(
   df,
-  sources = NULL,
+  clusters = NULL,
   k = 100,
   max_dist = NULL,
+  inlaid_col = NULL,
   coords = c("x", "y"),
   cluster_col = "cluster"
 )
@@ -28,7 +29,7 @@ count_all_neighborhoods(
   unique identifier for each spot (optional, required for detailed
   analysis)
 
-- sources:
+- clusters:
 
   Optional vector of cluster labels to process. If \`NULL\`, all unique
   clusters in \`df\` are used.
@@ -44,6 +45,13 @@ count_all_neighborhoods(
   (default), all neighbors up to k are included without distance
   filtering.
 
+- inlaid_col:
+
+  Character. Name of the column containing inlaid/annotation values to
+  count in neighborhoods. If \`NULL\` (default), uses the
+  \`cluster_col\` value. This allows counting neighborhood composition
+  by any column (e.g., cell type, tissue type).
+
 - coords:
 
   Character vector of length 2 giving the coordinate column names.
@@ -58,13 +66,13 @@ count_all_neighborhoods(
 
 A data.frame with columns:
 
-- source:
+- cluster:
 
   The source cluster being analyzed.
 
-- cluster:
+- neighborhood:
 
-  The neighbor cluster type.
+  The neighbor cluster type or inlaid value.
 
 - count:
 
@@ -72,7 +80,7 @@ A data.frame with columns:
 
 - proportion:
 
-  Proportion of this cluster among all neighbors of the source.
+  Proportion of this cluster among all neighbors of the cluster.
 
 Rows are grouped by source cluster and sorted by count within each group
 (descending).

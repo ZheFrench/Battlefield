@@ -122,7 +122,7 @@ cores_both <- select_core_spots(
   interface = "B",
   mode = "both"
 )
-#> Not enough core spots for pair(cluster=A, interface=B, mode=both). Requested:354, Available:0. Returning all available.
+#> Not enough core spots for pair(cluster=A, interface=B, mode=both). Requested:170, Available:0. Returning all available.
 #> Error in `$<-.data.frame`(`*tmp*`, "interface", value = "B"): replacement has 1 row, data has 0
 head(cores_both)
 #> Error: object 'cores_both' not found

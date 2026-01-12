@@ -9,7 +9,7 @@ each source cluster.
 ``` r
 count_all_inlaids(
   df,
-  sources = NULL,
+  clusters = NULL,
   inlaid_col = "cluster",
   cluster_col = "cluster"
 )
@@ -26,7 +26,7 @@ count_all_inlaids(
   (name specified by \`inlaid_col\`): inlaid/annotation for each spot -
   \`spot_id\`: unique identifier for each spot
 
-- sources:
+- clusters:
 
   Optional vector of cluster labels to process. If \`NULL\`, all unique
   clusters in \`df\` are used.
@@ -45,7 +45,7 @@ count_all_inlaids(
 
 A data.frame with columns:
 
-- source:
+- cluster:
 
   The source cluster being analyzed.
 
@@ -55,11 +55,11 @@ A data.frame with columns:
 
 - count:
 
-  Number of spots with this inlaid type in the source.
+  Number of spots with this inlaid type in the cluster.
 
 - proportion:
 
-  Proportion of this inlaid type among all spots in source.
+  Proportion of this inlaid type among all spots in cluster.
 
 Rows are grouped by source cluster and sorted by count within each group
 (descending).

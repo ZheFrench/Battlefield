@@ -10,10 +10,11 @@ neighbors.
 ``` r
 get_neighborhood_spots(
   df,
-  source = NULL,
+  cluster = NULL,
   spot_id = NULL,
   k = 100,
   max_dist = NULL,
+  inlaid_col = NULL,
   coords = c("x", "y"),
   cluster_col = "cluster"
 )
@@ -29,15 +30,15 @@ get_neighborhood_spots(
   \`cluster_col\`): cluster assignment for each spot - \`spot_id\`:
   unique identifier for each spot
 
-- source:
+- cluster:
 
   The cluster label for which to analyze the neighborhood. Either
-  \`source\` or \`spot_id\` must be provided, but not both.
+  \`cluster\` or \`spot_id\` must be provided, but not both.
 
 - spot_id:
 
   Character. The spot identifier to find neighbors for. Either
-  \`source\` or \`spot_id\` must be provided, but not both.
+  \`cluster\` or \`spot_id\` must be provided, but not both.
 
 - k:
 
@@ -50,6 +51,13 @@ get_neighborhood_spots(
   Numeric. Maximum distance from the target to consider. If \`NULL\`
   (default), all neighbors up to k are included without distance
   filtering.
+
+- inlaid_col:
+
+  Character. Name of the column containing inlaid/annotation values to
+  return in the \`neighborhood\` column. If \`NULL\` (default), uses the
+  \`cluster_col\` value. This allows counting neighborhood composition
+  by any column (e.g., cell type, tissue type).
 
 - coords:
 
@@ -77,24 +85,25 @@ A data.frame with columns:
 
   Y coordinate.
 
+- neighborhood:
+
+  Value from \`inlaid_col\` (or cluster if inlaid_col is NULL) of the
+  neighbor spot.
+
 - cluster:
-
-  Cluster label of the neighbor spot.
-
-- source:
 
   The source cluster or spot_id being analyzed.
 
-- is_neighbourhood:
+- is_neighborhood:
 
   Logical, always TRUE for returned rows.
 
-Rows are sorted by cluster and spot_id.
+Rows are sorted by neighborhood and spot_id.
 
 ## Details
 
 The function can work in two modes: - \*\*Cluster mode\*\*: If
-\`source\` is provided, computes k-nearest neighbors for all spots in
+\`cluster\` is provided, computes k-nearest neighbors for all spots in
 that cluster. Returns all neighbors found (excluding source cluster
 spots). - \*\*Point mode\*\*: If \`spot_id\` is provided, finds the
 k-nearest neighbors to specific spot.
@@ -112,8 +121,8 @@ df <- data.frame(
 )
 #> Error in spatialCoords(spe): could not find function "spatialCoords"
 # Get all neighbor spots for cluster 1
-neighbors_cluster <- get_neighborhood_spots(df, source = 1, k = 50)
-#> Error in get_neighborhood_spots(df, source = 1, k = 50): is.data.frame(df) is not TRUE
+neighbors_cluster <- get_neighborhood_spots(df, cluster = 1, k = 50)
+#> Error in get_neighborhood_spots(df, cluster = 1, k = 50): is.data.frame(df) is not TRUE
 head(neighbors_cluster)
 #> Error: object 'neighbors_cluster' not found
 

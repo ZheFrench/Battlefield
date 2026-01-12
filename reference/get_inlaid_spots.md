@@ -9,7 +9,7 @@ returns spots \*inside\* the source cluster itself, not around it.
 ``` r
 get_inlaid_spots(
   df,
-  source,
+  cluster,
   inlaid_col = "cluster",
   cluster_col = "cluster",
   coords = c("x", "y")
@@ -27,7 +27,7 @@ get_inlaid_spots(
   (name specified by \`inlaid_col\`): inlaid/annotation for each spot -
   \`spot_id\`: unique identifier for each spot
 
-- source:
+- cluster:
 
   The cluster label to retrieve inlaid spots for.
 
@@ -66,7 +66,7 @@ A data.frame with columns:
 
   Inlaid/annotation value.
 
-- source:
+- cluster:
 
   The source cluster being analyzed.
 
@@ -90,8 +90,8 @@ inlaid = sample(paste0("type_", 1:3), length(colnames(spe)), replace = TRUE)
 )
 #> Error in spatialCoords(spe): could not find function "spatialCoords"
 # Get all inlaid spots within cluster 1
-inlaid_spots <- get_inlaid_spots(df, source = 1, inlaid_col = "inlaid")
-#> Error in get_inlaid_spots(df, source = 1, inlaid_col = "inlaid"): is.data.frame(df) is not TRUE
+inlaid_spots <- get_inlaid_spots(df, cluster = 1, inlaid_col = "inlaid")
+#> Error in get_inlaid_spots(df, cluster = 1, inlaid_col = "inlaid"): is.data.frame(df) is not TRUE
 head(inlaid_spots)
 #> Error: object 'inlaid_spots' not found
 ```

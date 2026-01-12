@@ -19,21 +19,24 @@ needs to be productive in the Battlefield R package repository.
 - **Key algorithms**: Bresenham line rasterization, k-NN neighborhood
   detection, grid type inference (square vs. hexagonal), layer
   classification, trajectory building via centroid-to-centroid paths.
+- **R version requirement**: R ≥ 4.5 (base pipe `|>` syntax required).
 
 ## 2. Important files & locations
 
 - **Package metadata**:
   [DESCRIPTION](https://zhefrench.github.io/Battlefield/DESCRIPTION) (R
-  \>= 4.6, dependencies listed).
-- **Core algorithms**:
+  \>= 4.5, Bioconductor package dependencies).
+- **Core algorithm modules**:
   - [R/R-trajectory.R](https://zhefrench.github.io/Battlefield/R/R-trajectory.R)
     — geometry primitives (Bresenham), centroids, trajectory building.
   - [R/R-grid.R](https://zhefrench.github.io/Battlefield/R/R-grid.R) —
     grid type detection (square vs hexagonal), spacing estimation.
-  - [R/R-frontline.R](https://zhefrench.github.io/Battlefield/R/R-frontline.R)
+  - [R/R-border.R](https://zhefrench.github.io/Battlefield/R/R-border.R)
     — cluster interface/border/core spot selection logic.
   - [R/R-layer.R](https://zhefrench.github.io/Battlefield/R/R-layer.R) —
     layer classification (border/intermediate/core) within clusters.
+  - [R/R-neighbourhood.R](https://zhefrench.github.io/Battlefield/R/R-neighbourhood.R)
+    — k-NN neighborhood composition analysis.
   - [R/R-spe.R](https://zhefrench.github.io/Battlefield/R/R-spe.R) —
     SpatialExperiment integration, adding selections to colData.
 - **Data**: [R/data.R](https://zhefrench.github.io/Battlefield/R/data.R)
@@ -41,20 +44,24 @@ needs to be productive in the Battlefield R package repository.
   `visiumHD_8um_simulated_spe`, `visiumHD_16um_simulated_spe`).
 - **Tests**:
   [tests/testthat](https://zhefrench.github.io/Battlefield/tests/testthat)
-  (uses testthat edition 3; covers geometry, grid detection, and
-  selection logic).
+  (uses testthat edition 3; organized by module: trajectory, grid,
+  frontline, layer, neighborhood, spe).
 - **Developer scripts**:
   - [forTest/R-build.R](https://zhefrench.github.io/Battlefield/forTest/R-build.R)
     — full build, document, test, BiocCheck flow.
   - [forTest/R-visHD.R](https://zhefrench.github.io/Battlefield/forTest/R-visHD.R)
     — realistic end-to-end VisiumHD import & selection example.
-  - [forTest/R-test-traj.R](https://zhefrench.github.io/Battlefield/forTest/R-test-traj.R),
-    [forTest/R-test-frontline.R](https://zhefrench.github.io/Battlefield/forTest/R-test-frontline.R)
-    — interactive exploration.
+  - [forTest/R-test-\*.R](https://zhefrench.github.io/Battlefield/forTest/)
+    — interactive exploration scripts per module (R-test-traj.R,
+    R-test-frontline.R, etc.).
+- **Main vignette**:
+  [vignettes/Battlefield-Main.Rmd](https://zhefrench.github.io/Battlefield/vignettes/Battlefield-Main.Rmd)
+  — primary user documentation with examples for all four core
+  workflows.
 
 ## 3. Project-specific conventions & patterns
 
-- **Pipe & verbs**: Code uses the base pipe `|>` (R 4.1+) and `dplyr`
+- **Pipe & verbs**: Code uses the base pipe `|>` (R 4.5+) and `dplyr`
   verbs (`mutate`, `filter`, `arrange`, `bind_rows`, `group_by`,
   `slice_*`, `pull`, `summarise`). Use modern pipe syntax when editing;
   avoid magrittr `%>%`.
@@ -69,9 +76,11 @@ needs to be productive in the Battlefield R package repository.
     functions)
   - Layer metadata: `layer` (added by layer functions; values: “border”,
     “intermediate”, “core”)
+  - Directed pair: `directed_pair` (e.g., “3-4” added by
+    [`directed_cluster_interface_pairs()`](https://zhefrench.github.io/Battlefield/reference/directed_cluster_interface_pairs.md))
   - Keep these column names stable across refactoring; many helpers
     assume exact names.
-- **Key keying for deduplication**: Coordinate deduplication uses
+- **Keying for deduplication**: Coordinate deduplication uses
   `.xy_key <- paste0(round(x), "_", round(y))`. This key identifies
   spatial duplicates; be very careful when changing rounding logic or
   keying scheme, as intersection detection and nearest-neighbor logic
@@ -92,14 +101,14 @@ needs to be productive in the Battlefield R package repository.
   to regenerate
   [NAMESPACE](https://zhefrench.github.io/Battlefield/NAMESPACE) and man
   pages. Changes to function signatures or `@export` tags require this
-  step.
+  step. Never manually edit NAMESPACE.
 - **Grid-aware code**: Functions like
   [`detect_grid_type()`](https://zhefrench.github.io/Battlefield/reference/detect_grid_type.md)
   and
   [`estimate_spot_spacing()`](https://zhefrench.github.io/Battlefield/reference/estimate_spot_spacing.md)
   probe grid geometry. Square grids have ~4 neighbors; hexagonal grids
   have ~6. Some functions behave differently per grid type; always test
-  with both square and hexagonal layouts.
+  with both square and hexagonal layouts (using included test datasets).
 - **Layer depth control**: Layer classification functions use
   `intermediate_quantile` (default 0.5) to control the depth of
   intermediate layers relative to distance to border. Lower values
@@ -145,10 +154,22 @@ BiocCheck).
   They validate geometry (`bresenham_line`), nearest-neighbor spacing
   (`estimate_spot_spacing`), and selection logic
   (`build_similar_trajectories`, `build_one_trajectory`).
+
 - Run tests with
   [`devtools::test()`](https://devtools.r-lib.org/reference/test.html)
-  for rapid iteration.
+  for rapid iteration. For debugging individual tests:
+
+  ``` r
+  devtools::load_all()
+  testthat::test_file("tests/testthat/test-trajectory.R")
+  ```
+
 - CI should run `R CMD check`; tests use testthat edition 3.
+
+- After adding/modifying input validation
+  ([`stopifnot()`](https://rdrr.io/r/base/stopifnot.html) calls), write
+  corresponding test cases covering empty data frames, missing columns,
+  and boundary conditions.
 
 ## 6. External integrations & runtime deps
 
@@ -204,7 +225,33 @@ BiocCheck).
   [`devtools::load_all()`](https://devtools.r-lib.org/reference/load_all.html)
   first to load changes without reinstalling.
 
-## 8. Quick pointers for common tasks
+## 8. Common gotchas & debugging
+
+- **Silent failures from column mismatches**: Functions like
+  [`build_all_borders()`](https://zhefrench.github.io/Battlefield/reference/build_all_borders.md)
+  silently drop rows if `spot_id` is missing or has mismatched names.
+  Always verify [`colnames()`](https://rdrr.io/r/base/colnames.html) and
+  [`nrow()`](https://rdrr.io/r/base/nrow.html) before passing data.frame
+  results downstream.
+- **RANN k-NN with small clusters**: When a cluster has fewer than `k+1`
+  spots,
+  [`RANN::nn2()`](https://jefferislab.github.io/RANN/reference/nn2.html)
+  behaves unexpectedly. Functions defensively check cluster sizes; if
+  tests fail with tiny clusters, verify `k < min_cluster_size`.
+- **Roxygen sync issues**: After editing function signatures
+  (parameters, return types) or `@export` tags, running
+  [`devtools::test()`](https://devtools.r-lib.org/reference/test.html)
+  without first running
+  [`devtools::document()`](https://devtools.r-lib.org/reference/document.html)
+  will fail because the NAMESPACE and `.Rd` files are stale. Always
+  document first.
+- **Grid type detection edge cases**:
+  [`detect_grid_type()`](https://zhefrench.github.io/Battlefield/reference/detect_grid_type.md)
+  may return `"unknown"` for sparse or irregular grids. Check diagnostic
+  output (`verbose = TRUE`) and test result before downstream code
+  branches on grid type.
+
+## 9. Quick pointers for common tasks
 
 - Find geometry helpers: search for `bresenham_line`,
   `build_one_trajectory`, `build_similar_trajectories` inside `R/`.
@@ -212,6 +259,10 @@ BiocCheck).
   [forTest/R-visHD.R](https://zhefrench.github.io/Battlefield/forTest/R-visHD.R)
   — it demonstrates realistic end-to-end usage loading VisiumHD data and
   running selection routines.
+- For interactive debugging: use
+  [forTest/R-test-traj.R](https://zhefrench.github.io/Battlefield/forTest/R-test-traj.R),
+  [forTest/R-test-frontline.R](https://zhefrench.github.io/Battlefield/forTest/R-test-frontline.R)
+  as templates; they load example data and step through workflows.
 
 If any part is unclear (missing external data access, CI steps, or
 runtime environment), tell me which area to expand and I will iterate.

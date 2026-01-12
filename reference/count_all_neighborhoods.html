@@ -52,9 +52,10 @@ for each source cluster.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">count_all_neighborhoods</span><span class="op">(</span></span>
 <span>  <span class="va">df</span>,</span>
-<span>  sources <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  clusters <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  k <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>  max_dist <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  inlaid_col <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"y"</span><span class="op">)</span>,</span>
 <span>  cluster_col <span class="op">=</span> <span class="st">"cluster"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -74,7 +75,7 @@ each spot
 analysis)</p></dd>
 
 
-<dt id="arg-sources">sources<a class="anchor" aria-label="anchor" href="#arg-sources"></a></dt>
+<dt id="arg-clusters">clusters<a class="anchor" aria-label="anchor" href="#arg-clusters"></a></dt>
 <dd><p>Optional vector of cluster labels to process. If `NULL`,
 all unique clusters in `df` are used.</p></dd>
 
@@ -88,6 +89,13 @@ Larger values capture more distant neighbors.</p></dd>
 <dd><p>Numeric. Maximum distance from the target to consider.
 If `NULL` (default), all neighbors up to k are included without distance
 filtering.</p></dd>
+
+
+<dt id="arg-inlaid-col">inlaid_col<a class="anchor" aria-label="anchor" href="#arg-inlaid-col"></a></dt>
+<dd><p>Character. Name of the column containing inlaid/annotation
+values to count in neighborhoods. If `NULL` (default), uses the
+  `cluster_col` value. This allows counting neighborhood composition by any
+  column (e.g., cell type, tissue type).</p></dd>
 
 
 <dt id="arg-coords">coords<a class="anchor" aria-label="anchor" href="#arg-coords"></a></dt>
@@ -104,18 +112,18 @@ assignments.
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A data.frame with columns:</p><dl><dt>source</dt>
+    <p>A data.frame with columns:</p><dl><dt>cluster</dt>
 <dd><p>The source cluster being analyzed.</p></dd>
 
-  <dt>cluster</dt>
-<dd><p>The neighbor cluster type.</p></dd>
+  <dt>neighborhood</dt>
+<dd><p>The neighbor cluster type or inlaid value.</p></dd>
 
   <dt>count</dt>
 <dd><p>Number of neighbor spots of this cluster type.</p></dd>
 
 <dt>proportion</dt>
 <dd><p>Proportion of this cluster among all neighbors of the
-source.</p></dd>
+cluster.</p></dd>
 
 
 </dl><p>Rows are grouped by source cluster and sorted by count within each group

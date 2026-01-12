@@ -10,10 +10,11 @@ counts how many belong to each cluster type.
 ``` r
 count_neighborhood(
   df,
-  source = NULL,
+  cluster = NULL,
   spot_id = NULL,
   k = 100,
   max_dist = NULL,
+  inlaid_col = NULL,
   coords = c("x", "y"),
   cluster_col = "cluster"
 )
@@ -30,15 +31,15 @@ count_neighborhood(
   unique identifier for each spot (optional, required for detailed
   analysis)
 
-- source:
+- cluster:
 
   The cluster label for which to analyze the neighborhood. Either
-  \`source\` or \`spot_id\` must be provided, but not both.
+  \`cluster\` or \`spot_id\` must be provided, but not both.
 
 - spot_id:
 
   Character. The spot identifier to find neighbors for. Either
-  \`source\` or \`spot_id\` must be provided, but not both.
+  \`cluster\` or \`spot_id\` must be provided, but not both.
 
 - k:
 
@@ -50,6 +51,13 @@ count_neighborhood(
   Numeric. Maximum distance from the target to consider. If \`NULL\`
   (default), all neighbors up to k are included without distance \#'
   filtering.
+
+- inlaid_col:
+
+  Character. Name of the column containing inlaid/annotation values to
+  count in neighborhoods. If \`NULL\` (default), uses the
+  \`cluster_col\` value. This allows counting neighborhood composition
+  by any column (e.g., cell type, tissue type).
 
 - coords:
 
@@ -65,26 +73,26 @@ count_neighborhood(
 
 A data.frame with columns:
 
-- cluster:
+- neighborhood:
 
-  Cluster label (from neighboring spots).
+  Cluster label or inlaid value (from neighboring spots).
 
 - count:
 
-  Number of times this cluster appears in the neighborhood.
+  Number of times this cluster/type appears in the neighborhood.
 
 - proportion:
 
-  Proportion of this cluster relative to all neighbors.
+  Proportion of this cluster/type relative to all neighbors.
 
 Rows are sorted by count in descending order.
 
 ## Details
 
 This function wraps \[get_neighborhood_spots()\] and summarizes the
-results by counting spots from each neighboring cluster. In cluster
-mode, the source cluster itself is excluded from the counts. In point
-mode, all neighboring clusters are counted.
+results by counting spots from each neighboring cluster or inlaid type.
+In cluster mode, the source cluster itself is excluded from the counts.
+In point mode, all neighboring clusters are counted.
 
 The result shows the composition of the neighborhood: how many spots of
 each cluster type surround the target.
@@ -102,8 +110,8 @@ df <- data.frame(
 )
 #> Error in spatialCoords(spe): could not find function "spatialCoords"
 # Count cluster types in neighborhood of cluster 1
-neighbor_counts <- count_neighborhood(df, source = 1, k = 50)
-#> Error in get_neighborhood_spots(df, source, spot_id, k, max_dist, coords,     cluster_col): is.data.frame(df) is not TRUE
+neighbor_counts <- count_neighborhood(df, cluster = 1, k = 50)
+#> Error in get_neighborhood_spots(df, cluster, spot_id, k, max_dist, inlaid_col,     coords, cluster_col): is.data.frame(df) is not TRUE
 neighbor_counts
 #> Error: object 'neighbor_counts' not found
 
@@ -111,7 +119,7 @@ neighbor_counts
 first_spot <- df$spot_id[1]
 #> Error in df$spot_id: object of type 'closure' is not subsettable
 point_neighbors <- count_neighborhood(df, spot_id = first_spot, k = 10)
-#> Error in get_neighborhood_spots(df, source, spot_id, k, max_dist, coords,     cluster_col): is.data.frame(df) is not TRUE
+#> Error in get_neighborhood_spots(df, cluster, spot_id, k, max_dist, inlaid_col,     coords, cluster_col): is.data.frame(df) is not TRUE
 point_neighbors
 #> Error: object 'point_neighbors' not found
 ```

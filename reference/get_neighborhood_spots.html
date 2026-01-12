@@ -52,10 +52,11 @@ that were identified, marking which ones are neighbors.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_neighborhood_spots</span><span class="op">(</span></span>
 <span>  <span class="va">df</span>,</span>
-<span>  source <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  cluster <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  spot_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  k <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>  max_dist <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  inlaid_col <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"y"</span><span class="op">)</span>,</span>
 <span>  cluster_col <span class="op">=</span> <span class="st">"cluster"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -74,15 +75,15 @@ each spot
   - `spot_id`: unique identifier for each spot</p></dd>
 
 
-<dt id="arg-source">source<a class="anchor" aria-label="anchor" href="#arg-source"></a></dt>
+<dt id="arg-cluster">cluster<a class="anchor" aria-label="anchor" href="#arg-cluster"></a></dt>
 <dd><p>The cluster label for which to analyze the neighborhood. Either
-`source`
+`cluster`
   or `spot_id` must be provided, but not both.</p></dd>
 
 
 <dt id="arg-spot-id">spot_id<a class="anchor" aria-label="anchor" href="#arg-spot-id"></a></dt>
 <dd><p>Character. The spot identifier to find neighbors for. Either
-`source`
+`cluster`
   or `spot_id` must be provided, but not both.</p></dd>
 
 
@@ -96,6 +97,13 @@ spots, it will be capped at nrow(df) - 1.</p></dd>
 <dd><p>Numeric. Maximum distance from the target to consider.
 If `NULL` (default), all neighbors up to k are included without distance
 filtering.</p></dd>
+
+
+<dt id="arg-inlaid-col">inlaid_col<a class="anchor" aria-label="anchor" href="#arg-inlaid-col"></a></dt>
+<dd><p>Character. Name of the column containing inlaid/annotation
+values to return in the `neighborhood` column. If `NULL` (default), uses the
+  `cluster_col` value. This allows counting neighborhood composition by any
+  column (e.g., cell type, tissue type).</p></dd>
 
 
 <dt id="arg-coords">coords<a class="anchor" aria-label="anchor" href="#arg-coords"></a></dt>
@@ -121,22 +129,22 @@ assignments.
   <dt>y</dt>
 <dd><p>Y coordinate.</p></dd>
 
-  <dt>cluster</dt>
-<dd><p>Cluster label of the neighbor spot.</p></dd>
+  <dt>neighborhood</dt>
+<dd><p>Value from `inlaid_col` (or cluster if inlaid_col is NULL) of the neighbor spot.</p></dd>
 
-  <dt>source</dt>
+  <dt>cluster</dt>
 <dd><p>The source cluster or spot_id being analyzed.</p></dd>
 
-  <dt>is_neighbourhood</dt>
+  <dt>is_neighborhood</dt>
 <dd><p>Logical, always TRUE for returned rows.</p></dd>
 
 
-</dl><p>Rows are sorted by cluster and spot_id.</p>
+</dl><p>Rows are sorted by neighborhood and spot_id.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The function can work in two modes:
-- **Cluster mode**: If `source` is provided, computes k-nearest neighbors for
+- **Cluster mode**: If `cluster` is provided, computes k-nearest neighbors for
 all spots
 in that cluster. Returns all neighbors found (excluding source cluster
 spots).
@@ -156,8 +164,8 @@ spots).
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in spatialCoords(spe):</span> could not find function "spatialCoords"</span>
 <span class="r-in"><span><span class="co"># Get all neighbor spots for cluster 1</span></span></span>
-<span class="r-in"><span><span class="va">neighbors_cluster</span> <span class="op">&lt;-</span> <span class="fu">get_neighborhood_spots</span><span class="op">(</span><span class="va">df</span>, source <span class="op">=</span> <span class="fl">1</span>, k <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in get_neighborhood_spots(df, source = 1, k = 50):</span> is.data.frame(df) is not TRUE</span>
+<span class="r-in"><span><span class="va">neighbors_cluster</span> <span class="op">&lt;-</span> <span class="fu">get_neighborhood_spots</span><span class="op">(</span><span class="va">df</span>, cluster <span class="op">=</span> <span class="fl">1</span>, k <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in get_neighborhood_spots(df, cluster = 1, k = 50):</span> is.data.frame(df) is not TRUE</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">neighbors_cluster</span><span class="op">)</span></span></span>
 <span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'neighbors_cluster' not found</span>
 <span class="r-in"><span></span></span>
