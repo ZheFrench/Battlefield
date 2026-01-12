@@ -55,6 +55,7 @@ or NA (from the \`mode\` column in input data)
 ``` r
 data("visiumHD_16um_simulated_spe", package = "Battlefield")
 spe <- visiumHD_16um_simulated_spe
+#> Loading required namespace: SpatialExperiment
 df <- data.frame(
   spot_id = colnames(spe),
   x = spatialCoords(spe)[, 1],
