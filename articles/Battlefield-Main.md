@@ -775,7 +775,7 @@ head(colData(visium_simulated_spe))
 sessionInfo()
 ```
 
-    ## R Under development (unstable) (2025-12-18 r89199)
+    ## R version 4.5.2 (2025-10-31)
     ## Platform: x86_64-pc-linux-gnu
     ## Running under: Ubuntu 24.04.3 LTS
     ## 
@@ -784,14 +784,12 @@ sessionInfo()
     ## LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
     ## 
     ## locale:
-    ##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
-    ##  [3] LC_TIME=fr_FR.UTF-8        LC_COLLATE=en_US.UTF-8    
-    ##  [5] LC_MONETARY=fr_FR.UTF-8    LC_MESSAGES=en_US.UTF-8   
-    ##  [7] LC_PAPER=fr_FR.UTF-8       LC_NAME=C                 
-    ##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
-    ## [11] LC_MEASUREMENT=fr_FR.UTF-8 LC_IDENTIFICATION=C       
+    ##  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       
+    ##  [4] LC_COLLATE=C.UTF-8     LC_MONETARY=C.UTF-8    LC_MESSAGES=C.UTF-8   
+    ##  [7] LC_PAPER=C.UTF-8       LC_NAME=C              LC_ADDRESS=C          
+    ## [10] LC_TELEPHONE=C         LC_MEASUREMENT=C.UTF-8 LC_IDENTIFICATION=C   
     ## 
-    ## time zone: Europe/Paris
+    ## time zone: UTC
     ## tzcode source: system (glibc)
     ## 
     ## attached base packages:
@@ -801,31 +799,31 @@ sessionInfo()
     ## other attached packages:
     ##  [1] pals_1.10                   pheatmap_1.0.13            
     ##  [3] tidyr_1.3.2                 dplyr_1.1.4                
-    ##  [5] ggplot2_4.0.1               SpatialExperiment_1.21.0   
-    ##  [7] SingleCellExperiment_1.33.0 SummarizedExperiment_1.41.0
-    ##  [9] Biobase_2.71.0              GenomicRanges_1.63.1       
-    ## [11] Seqinfo_1.1.0               IRanges_2.45.0             
-    ## [13] S4Vectors_0.49.0            BiocGenerics_0.57.0        
-    ## [15] generics_0.1.4              MatrixGenerics_1.23.0      
+    ##  [5] ggplot2_4.0.1               SpatialExperiment_1.20.0   
+    ##  [7] SingleCellExperiment_1.32.0 SummarizedExperiment_1.40.0
+    ##  [9] Biobase_2.70.0              GenomicRanges_1.62.1       
+    ## [11] Seqinfo_1.0.0               IRanges_2.44.0             
+    ## [13] S4Vectors_0.48.0            BiocGenerics_0.56.0        
+    ## [15] generics_0.1.4              MatrixGenerics_1.22.0      
     ## [17] matrixStats_1.5.0           Battlefield_0.99.01        
     ## 
     ## loaded via a namespace (and not attached):
     ##  [1] gtable_0.3.6        rjson_0.2.23        xfun_0.55          
-    ##  [4] bslib_0.9.0         htmlwidgets_1.6.4   lattice_0.22-7     
-    ##  [7] vctrs_0.6.5         tools_4.6.0         tibble_3.3.1       
-    ## [10] pkgconfig_2.0.3     Matrix_1.7-4        RColorBrewer_1.1-3 
-    ## [13] S7_0.2.1            desc_1.4.3          lifecycle_1.0.5    
-    ## [16] compiler_4.6.0      farver_2.1.2        textshaping_1.0.4  
-    ## [19] mapproj_1.2.12      maps_3.4.3          htmltools_0.5.9    
-    ## [22] sass_0.4.10         yaml_2.3.12         pillar_1.11.1      
-    ## [25] pkgdown_2.2.0       jquerylib_0.1.4     DelayedArray_0.37.0
-    ## [28] cachem_1.1.0        magick_2.9.0        abind_1.4-8        
-    ## [31] tidyselect_1.2.1    digest_0.6.39       purrr_1.2.1        
-    ## [34] labeling_0.4.3      fastmap_1.2.0       colorspace_2.1-2   
-    ## [37] cli_3.6.5           SparseArray_1.11.10 magrittr_2.0.4     
-    ## [40] S4Arrays_1.11.1     dichromat_2.0-0.1   withr_3.0.2        
-    ## [43] scales_1.4.0        rmarkdown_2.30      XVector_0.51.0     
-    ## [46] RANN_2.6.2          ragg_1.5.0          evaluate_1.0.5     
-    ## [49] knitr_1.50          rlang_1.1.7         Rcpp_1.1.1         
-    ## [52] glue_1.8.0          jsonlite_2.0.0      R6_2.6.1           
-    ## [55] systemfonts_1.3.1   fs_1.6.6
+    ##  [4] bslib_0.9.0         lattice_0.22-7      vctrs_0.6.5        
+    ##  [7] tools_4.5.2         tibble_3.3.1        pkgconfig_2.0.3    
+    ## [10] Matrix_1.7-4        RColorBrewer_1.1-3  S7_0.2.1           
+    ## [13] desc_1.4.3          lifecycle_1.0.5     compiler_4.5.2     
+    ## [16] farver_2.1.2        textshaping_1.0.4   mapproj_1.2.12     
+    ## [19] htmltools_0.5.9     maps_3.4.3          sass_0.4.10        
+    ## [22] yaml_2.3.12         pillar_1.11.1       pkgdown_2.2.0      
+    ## [25] jquerylib_0.1.4     DelayedArray_0.36.0 cachem_1.1.0       
+    ## [28] magick_2.9.0        abind_1.4-8         tidyselect_1.2.1   
+    ## [31] digest_0.6.39       purrr_1.2.1         labeling_0.4.3     
+    ## [34] fastmap_1.2.0       colorspace_2.1-2    cli_3.6.5          
+    ## [37] SparseArray_1.10.8  magrittr_2.0.4      S4Arrays_1.10.1    
+    ## [40] dichromat_2.0-0.1   withr_3.0.2         scales_1.4.0       
+    ## [43] rmarkdown_2.30      XVector_0.50.0      RANN_2.6.2         
+    ## [46] ragg_1.5.0          evaluate_1.0.5      knitr_1.51         
+    ## [49] rlang_1.1.7         Rcpp_1.1.1          glue_1.8.0         
+    ## [52] jsonlite_2.0.0      R6_2.6.1            systemfonts_1.3.1  
+    ## [55] fs_1.6.6

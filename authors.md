@@ -8,7 +8,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/ZheFrench/BattleField/blob/HEAD/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/ZheFrench/BattleField/blob/master/DESCRIPTION)
 
 Villemin J (2026). *Battlefield: Swiss-army toolkit for selecting niche
 fronts and invasive margins in spatial transcriptomics data*. R package
