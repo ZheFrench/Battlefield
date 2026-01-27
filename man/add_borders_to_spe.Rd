@@ -45,13 +45,13 @@ data("visiumHD_16um_simulated_spe", package = "Battlefield")
 spe <- visiumHD_16um_simulated_spe
 df <- data.frame(
   spot_id = colnames(spe),
-  x = spatialCoords(spe)[, 1],
-  y = spatialCoords(spe)[, 2],
-  cluster = colData(spe)$cluster
+  x = SpatialExperiment::spatialCoords(spe)[, 1],
+  y = SpatialExperiment::spatialCoords(spe)[, 2],
+  cluster = SummarizedExperiment::colData(spe)$cluster
 )
 # Using build_all_borders and build_all_cores
 all_borders <- build_all_borders(df, k = 6)
-all_cores <- build_all_cores(df, all_borders, region = "inner")
+all_cores <- build_all_cores(df, all_borders, mode = "inner")
 
 # Or using individual select functions
 border_3_to_4 <- select_border_spots(df, cluster = 3, interface = 4, k = 6)

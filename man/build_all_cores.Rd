@@ -64,6 +64,7 @@ If `pairs` is not provided, it is generated from the cluster labels using
 # Example with synthetic data
 set.seed(1)
 df_ex <- data.frame(
+  spot_id = paste0("spot_", seq_len(200)),
   x = rnorm(200),
   y = rnorm(200),
   cluster = sample(c("A","B","C"), 200, replace = TRUE)

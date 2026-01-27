@@ -39,7 +39,7 @@
 #'   \item \code{\link{compute_centroids}}
 #' }
 #'
-#'"visium_simulated_spe"
+#' visium_simulated_spe
 "visium_simulated_spe"
 
 #' Simulated VisiumHD 8 µm binned SpatialExperiment dataset
@@ -73,12 +73,12 @@
 #' @source
 #' Simulated internally for package development.
 #'
-#' @usage data(visiumHD_simulated_spe)
+#' @usage data(visiumHD_8um_simulated_spe)
 #'
 #' @examples
-#' data(visiumHD_simulated_spe)
+#' data(visiumHD_8um_simulated_spe)
 #'
-#' visiumHD_simulated_spe
+#' visiumHD_8um_simulated_spe
 #'
 #' @seealso
 #' \itemize{
@@ -86,8 +86,8 @@
 #'   \item \code{\link{compute_centroids}}
 #' }
 #'
-#'"visiumHD_simulated_spe"
-"visiumHD_simulated_spe"
+#' visiumHD_8um_simulated_spe
+"visiumHD_8um_simulated_spe"
 
 #' Simulated VisiumHD 16 µm binned SpatialExperiment dataset
 #'
@@ -133,5 +133,5 @@
 #'   \item \code{\link{compute_centroids}}
 #' }
 #'
-#'"visiumHD_16um_simulated_spe"
+#' visiumHD_16um_simulated_spe
 "visiumHD_16um_simulated_spe"

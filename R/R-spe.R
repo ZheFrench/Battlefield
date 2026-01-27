@@ -33,13 +33,13 @@
 #' spe <- visiumHD_16um_simulated_spe
 #' df <- data.frame(
 #'   spot_id = colnames(spe),
-#'   x = spatialCoords(spe)[, 1],
-#'   y = spatialCoords(spe)[, 2],
-#'   cluster = colData(spe)$cluster
+#'   x = SpatialExperiment::spatialCoords(spe)[, 1],
+#'   y = SpatialExperiment::spatialCoords(spe)[, 2],
+#'   cluster = SummarizedExperiment::colData(spe)$cluster
 #' )
 #' # Using build_all_borders and build_all_cores
 #' all_borders <- build_all_borders(df, k = 6)
-#' all_cores <- build_all_cores(df, all_borders, region = "inner")
+#' all_cores <- build_all_cores(df, all_borders, mode = "inner")
 # spe <- add_borders_to_spe(spe, border = all_borders, core = all_cores)
 #'
 #' # Or using individual select functions
@@ -163,9 +163,9 @@ spe
 #' spe <- visiumHD_16um_simulated_spe
 #' df <- data.frame(
 #'   spot_id = colnames(spe),
-#'   x = spatialCoords(spe)[, 1],
-#'   y = spatialCoords(spe)[, 2],
-#'   cluster = colData(spe)$cluster
+#'   x = SpatialExperiment::spatialCoords(spe)[, 1],
+#'   y = SpatialExperiment::spatialCoords(spe)[, 2],
+#'   cluster = SummarizedExperiment::colData(spe)$cluster
 #' )
 #' # Or for a single cluster
 #' cluster_1_layers <- create_cluster_layers(df, target_cluster = 1, k = 6)
@@ -263,9 +263,9 @@ spe
 #' spe <- visiumHD_16um_simulated_spe
 #' df <- data.frame(
 #'   spot_id = colnames(spe),
-#'   x = spatialCoords(spe)[, 1],
-#'   y = spatialCoords(spe)[, 2],
-#'   cluster = colData(spe)$cluster
+#'   x = SpatialExperiment::spatialCoords(spe)[, 1],
+#'   y = SpatialExperiment::spatialCoords(spe)[, 2],
+#'   cluster = SummarizedExperiment::colData(spe)$cluster
 #' )
 #' centroids <- compute_centroids(df)
 #' A <- centroids[centroids$cluster == 1, c("x", "y")]

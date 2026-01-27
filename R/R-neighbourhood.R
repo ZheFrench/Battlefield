@@ -60,9 +60,9 @@
 #' spe <- visium_simulated_spe
 #' df <- data.frame(
 #'   spot_id = colnames(spe),
-#'   x = spatialCoords(spe)[, 1],
-#'   y = spatialCoords(spe)[, 2],
-#'   cluster = colData(spe)$cluster
+#'   x = SpatialExperiment::spatialCoords(spe)[, 1],
+#'   y = SpatialExperiment::spatialCoords(spe)[, 2],
+#'   cluster = SummarizedExperiment::colData(spe)$cluster
 #' )
 #' # Get all neighbor spots for cluster 1
 #' neighbors_cluster <- get_neighborhood_spots(df, cluster = 1, k = 50)
@@ -75,6 +75,7 @@
 #'
 #' @importFrom RANN nn2
 #' @importFrom dplyr arrange
+#' @importFrom utils head
 #' @export
 get_neighborhood_spots <- function(df,
                                 cluster = NULL,
@@ -84,7 +85,7 @@ get_neighborhood_spots <- function(df,
                                 inlaid_col = NULL,
                                 coords = c("x", "y"),
                                 cluster_col = "cluster") {
-
+neighborhood <- NULL
 # Validation
 stopifnot(is.data.frame(df))
 stopifnot(all(coords %in% colnames(df)))
@@ -258,9 +259,9 @@ result
 #' spe <- visium_simulated_spe
 #' df <- data.frame(
 #'   spot_id = colnames(spe),
-#'   x = spatialCoords(spe)[, 1],
-#'   y = spatialCoords(spe)[, 2],
-#'   cluster = colData(spe)$cluster
+#'   x = SpatialExperiment::spatialCoords(spe)[, 1],
+#'   y = SpatialExperiment::spatialCoords(spe)[, 2],
+#'   cluster = SummarizedExperiment::colData(spe)$cluster
 #' )
 #' # Count cluster types in neighborhood of cluster 1
 #' neighbor_counts <- count_neighborhood(df, cluster = 1, k = 50)
@@ -282,7 +283,7 @@ count_neighborhood <- function(df,
                             inlaid_col = NULL,
                             coords = c("x", "y"),
                             cluster_col = "cluster") {
-
+neighborhood <- count <- NULL
 # Use get_neighborhood_spots to identify neighbors
 neighbors <- get_neighborhood_spots(df, cluster, spot_id, k, max_dist, inlaid_col, coords,
 cluster_col)
@@ -363,9 +364,9 @@ result
 #' spe <- visium_simulated_spe
 #' df <- data.frame(
 #'   spot_id = colnames(spe),
-#'   x = spatialCoords(spe)[, 1],
-#'   y = spatialCoords(spe)[, 2],
-#'   cluster = colData(spe)$cluster
+#'   x = SpatialExperiment::spatialCoords(spe)[, 1],
+#'   y = SpatialExperiment::spatialCoords(spe)[, 2],
+#'   cluster = SummarizedExperiment::colData(spe)$cluster
 #' )
 #' # Get neighborhood statistics for all clusters
 #' all_neighbors <- count_all_neighborhoods(df, k = 50)
@@ -380,7 +381,7 @@ count_all_neighborhoods <- function(df,
                                     inlaid_col = NULL,
                                     coords = c("x", "y"),
                                     cluster_col = "cluster") {
-
+cluster <- count <- NULL
 # Validation
 stopifnot(is.data.frame(df))
 stopifnot(all(coords %in% colnames(df)))
@@ -458,9 +459,9 @@ combined
 #' spe <- visium_simulated_spe
 #' df <- data.frame(
 #'   spot_id = colnames(spe),
-#'   x = spatialCoords(spe)[, 1],
-#'   y = spatialCoords(spe)[, 2],
-#'   cluster = colData(spe)$cluster,
+#'   x = SpatialExperiment::spatialCoords(spe)[, 1],
+#'   y = SpatialExperiment::spatialCoords(spe)[, 2],
+#'   cluster = SummarizedExperiment::colData(spe)$cluster,
 #' inlaid = sample(paste0("type_", 1:3), length(colnames(spe)), replace = TRUE)
 #' )
 #' # Get all inlaid spots within cluster 1
@@ -474,7 +475,7 @@ get_inlaid_spots <- function(df,
                             inlaid_col = "cluster",
                             cluster_col = "cluster",
                             coords = c("x", "y")) {
-
+inlaid <- spot_id <- NULL
 # Validation
 stopifnot(is.data.frame(df))
 stopifnot(all(coords %in% colnames(df)))
@@ -544,9 +545,9 @@ result
 #' spe <- visium_simulated_spe
 #' df <- data.frame(
 #'   spot_id = colnames(spe),
-#'   x = spatialCoords(spe)[, 1],
-#'   y = spatialCoords(spe)[, 2],
-#'   cluster = colData(spe)$cluster,
+#'   x = SpatialExperiment::spatialCoords(spe)[, 1],
+#'   y = SpatialExperiment::spatialCoords(spe)[, 2],
+#'   cluster = SummarizedExperiment::colData(spe)$cluster,
 #' inlaid = sample(paste0("type_", 1:3), length(colnames(spe)), replace = TRUE)
 #' )
 #' # Count inlaid types within cluster 1
@@ -559,7 +560,7 @@ count_inlaid <- function(df,
                         cluster,
                         inlaid_col = "cluster",
                         cluster_col = "cluster") {
-
+inlaid <- count <- NULL
 # Validation
 stopifnot(is.data.frame(df))
 stopifnot(cluster_col %in% colnames(df))
@@ -627,9 +628,9 @@ result
 #' spe <- visium_simulated_spe
 #' df <- data.frame(
 #'   spot_id = colnames(spe),
-#'   x = spatialCoords(spe)[, 1],
-#'   y = spatialCoords(spe)[, 2],
-#'   cluster = colData(spe)$cluster,
+#'   x = SpatialExperiment::spatialCoords(spe)[, 1],
+#'   y = SpatialExperiment::spatialCoords(spe)[, 2],
+#'   cluster = SummarizedExperiment::colData(spe)$cluster,
 #' inlaid = sample(paste0("type_", 1:3), length(colnames(spe)), replace = TRUE)
 #' )
 #' # Get inlaid statistics for all clusters
@@ -642,7 +643,7 @@ count_all_inlaids <- function(df,
                             clusters = NULL,
                             inlaid_col = "cluster",
                             cluster_col = "cluster") {
-
+cluster <- count <- NULL
 # Validation
 stopifnot(is.data.frame(df))
 stopifnot(cluster_col %in% colnames(df))

@@ -549,7 +549,7 @@ data.frame(x = P$x[1] + offset * nx,
 #'
 #' @export
 build_one_line <- function(df_rest, A, B, top_n = 19, max_dist = NULL) {
-
+pos_on_seg <- NULL
 res <- build_one_trajectory(df_rest, A, B, top_n = top_n, max_dist = max_dist)
 res |> dplyr::arrange(pos_on_seg)
 }
@@ -727,7 +727,7 @@ dplyr::bind_rows(lines)
 filter_out_by_endpoint_clusters <- function(out,
                                         allowed_start_clusters,
                                         allowed_end_clusters) {
-trajectory_id <- cluster <- start_cluster <- end_cluster <- NULL                                       
+trajectory_id <- cluster <- start_cluster <- end_cluster <- pos_on_seg <- NULL                                       
 stopifnot(is.data.frame(out))
 stopifnot("trajectory_id" %in% names(out))
 stopifnot("cluster" %in% names(out))

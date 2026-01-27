@@ -31,6 +31,7 @@
 directed_cluster_interface_pairs <- function(cluster_labels,
                                 interface_separator = "-",
                                 sort_clusters = FALSE) {
+cluster <- interface <- NULL
 cl <- unique(as.character(cluster_labels))
 cl <- cl[!is.na(cl)]
 
@@ -172,6 +173,7 @@ stopifnot(mode %in% c("inner", "outer", "both"))
 
 # Helper function to do the actual border selection
 .select_border_single <- function(c_val, i_val) {
+spot_id <- x <- y <- directed_pair <- undirected_pair <- is_border <- is_border_multiple <- other_adjacent_borders <- NULL
     coords <- as.matrix(df[, coord_cols])
     cl <- df[[cluster_col]]
 
@@ -398,6 +400,7 @@ out
 #' # Example with synthetic data
 #' set.seed(1)
 #' df_ex <- data.frame(
+#'   spot_id = paste0("spot_", seq_len(200)),
 #'   x = rnorm(200),
 #'   y = rnorm(200),
 #'   cluster = sample(c("A","B","C"), 200, replace = TRUE)
@@ -650,21 +653,25 @@ if (n_core < border_count) {
 }
 
 # Sample and return
-if (sample_n > 0) {
+if (sample_n > 0 && nrow(core_candidates) > 0) {
     idx_sample <- sample(seq_len(nrow(core_candidates)), size = sample_n,
     replace = FALSE)    
     out <- core_candidates[idx_sample, ]
+    
+    out$interface <- interface
+    out$is_core <- TRUE
+    out$mode <- mode
+    
+    # Reorder columns to put mode at the end
+    out <- out |>
+        dplyr::select(-mode, mode)
 } else {
+    # Return empty dataframe with correct structure
     out <- core_candidates[0, ]
+    out$interface <- character(0)
+    out$is_core <- logical(0)
+    out$mode <- character(0)
 }
-
-out$interface <- interface
-out$is_core <- TRUE
-out$mode <- mode
-
-# Reorder columns to put mode at the end
-out <- out |>
-    dplyr::select(-mode, mode)
 
 out
 }

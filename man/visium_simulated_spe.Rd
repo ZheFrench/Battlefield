@@ -46,6 +46,6 @@ visium_simulated_spe
   \item \code{\link{compute_centroids}}
 }
 
-"visium_simulated_spe"
+visium_simulated_spe
 }
 \keyword{datasets}

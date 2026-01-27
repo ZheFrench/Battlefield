@@ -50,6 +50,6 @@ visiumHD_16um_simulated_spe
   \item \code{\link{compute_centroids}}
 }
 
-"visiumHD_16um_simulated_spe"
+visiumHD_16um_simulated_spe
 }
 \keyword{datasets}
