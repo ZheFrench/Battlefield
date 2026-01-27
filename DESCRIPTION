@@ -2,7 +2,7 @@ Package: Battlefield
 Type: Package
 Title: Swiss-army toolkit for selecting niche fronts and invasive margins  
   in spatial transcriptomics data 
-Version: 0.99.02
+Version: 0.99.03
 Authors@R: c(
     person("Jean-Philippe","Villemin",email="jpvillemin@gmail.com",role=c("aut", "cre"),comment = c(ORCID = "0000-0002-1838-5880")))
 Description: Battlefield is a Swiss-army toolkit originally developed to define and extract spatial spots
