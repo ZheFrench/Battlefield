@@ -1,2 +1,10 @@
-Changes in version 0.99.0 (2025-12-31)
-+ Submitted to Bioconductor
+Changes in version 0.99.1 (2026-03)
++  Follow guidelines on package versioning
++  Add founding in description
++  Add a package help/.man package 
++  Add a inst/script
++  BiocStyle for vignette
++  Typos/Style
+Changes in version 0.99.03 (2025-12)
++  Submitted to Bioconductor
+

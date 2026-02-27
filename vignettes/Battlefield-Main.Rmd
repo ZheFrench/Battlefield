@@ -25,7 +25,7 @@ abstract: >
   Visium HD (binned).</br></br>
   Battlefield package version: `r packageVersion("Battlefield")`
 output: 
-  rmarkdown::html_vignette:
+    BiocStyle::html_document:
     self_contained: true
     toc: true
     toc_depth: 4
@@ -93,25 +93,25 @@ of a spatial neighborhood defined by k nearest spots,
 constrained by a distance threshold.
 
 Finally, you can integrate `Battlefield` results back into 
-a `SpatialExperiment` object for further analysis.
+a `r Biocpkg("SpatialExperiment")` object for further analysis.
 
 # Starting point
 
-We start from a `SpatialExperiment` object that contains **(i)** 
+We start from a `r Biocpkg("SpatialExperiment")` object that contains **(i)** 
 spatial coordinates for each spot and **(ii)** a precomputed clustering
-stored in colData().  
+stored in `colData()`.  
 
 Battlefield operates on a simple spot-level table, 
-so we first export a data.frame with four columns:  
+so we first export a `data.frame` with four columns:  
 
-* spot_id: spot/barcode identifier (colnames(spe))  
-* x, y: spatial coordinates (spatialCoords(spe))  
-* cluster: cluster label provided by the user (a column in colData(spe))  
+* `spot_id`: spot/barcode identifier (`colnames(spe)`)  
+* `x`, `y`: spatial coordinates (`spatialCoords(spe)`)  
+* `cluster`: cluster label provided by the user (a column in `colData(spe)`)  
 
 Because the cluster annotation can have different names
-depending on the workflow (e.g., cluster, 
-seurat_clusters, BayesSpace, etc.), the user can specify
-which colData() column should be used.
+depending on the workflow (e.g., `cluster`, 
+`seurat_clusters`, `r Biocpkg("BayesSpace")`, etc.), the user can specify
+which `colData()` column should be used.
 
 We  load a simulated Visium dataset (hexagonal grid) to illustrate 
 the different functionalities that Battlefield provides.
@@ -136,12 +136,12 @@ labs(x = "", y = "") +
 theme(axis.text = element_blank()) 
 ```
 
-You can have acces to some basic information about the dataset
+You can have access to some basic information about the dataset
 you are using (grid type, distance threshold (radius) advised...)
 ```{r interfaces2, results='asis'}
 # Detect grid type and get parameters
-res <- detect_grid_type(df, verbose = TRUE)
-params <- get_neighborhood_params(df, verbose = TRUE)
+res <- detect_grid_type(df, verbose = FALSE)
+params <- get_neighborhood_params(df, verbose = FALSE)
 ```
 
 ## Interfaces between clusters
@@ -286,15 +286,11 @@ inner_A <- select_core_spots(df, all_borders_visium,
                             mode = "both")
 
 # Create visualization dataframe with spot classification
-df_final <- df |>
-mutate(spot_type = "background") |>
-mutate(spot_type = ifelse(spot_id %in% border_A_to_B$spot_id, 
-                            "border_A_to_B", spot_type)) |>
-mutate(spot_type = ifelse(spot_id %in% border_B_to_A$spot_id, 
-                            "border_B_to_A", spot_type)) |>
-mutate(spot_type = ifelse(spot_id %in% inner_A$spot_id, 
-                            "inner_A", spot_type)) |>
-as.data.frame()
+df_final <- mutate(df, spot_type=case_when(
+    spot_id %in% border_A_to_B$spot_id ~ "border_A_to_B",
+    spot_id %in% border_B_to_A$spot_id ~ "border_B_to_A",
+    spot_id %in% inner_A$spot_id ~ "inner_A",
+    TRUE ~ "background")) |> as.data.frame()
 
 
 # Plot: clusters with borders and core control spots
@@ -598,24 +594,24 @@ knitr::kable(head(all_inlaids, 15))
 # Ending point
 
 You can finaly integrate `Battlefield` results back into 
-a `SpatialExperiment` object for further analysis :
+a `r Biocpkg("SpatialExperiment")` object for further analysis :
 
-* `add_borders_to_spe()`
-* `add_layers_to_spe()`
-* `add_trajectories_to_spe()`
+* `add_borders_to_spe()` — adds `interface`, `directed_pair`, `is_border`, and `is_core` columns to `colData()`
+* `add_layers_to_spe()` — adds `layer` column ("border", "intermediate", or "core") to `colData()`
+* `add_trajectories_to_spe()` — adds `trajectory_id`, `pos_on_seg`, and trajectory metadata columns to `colData()`
 
 ```{r integration1}
 
 visium_simulated_spe <- add_borders_to_spe(visium_simulated_spe,
   border = all_borders)
-head(colData(visium_simulated_spe))
 
 visium_simulated_spe <- add_layers_to_spe(visium_simulated_spe, 
   layer = layers_df)
-head(colData(visium_simulated_spe))
 
 visium_simulated_spe <- add_trajectories_to_spe(visium_simulated_spe, 
   trajectory = out)
+
+# View the annotated colData
 head(colData(visium_simulated_spe))
 
 ```

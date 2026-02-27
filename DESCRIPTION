@@ -2,9 +2,13 @@ Package: Battlefield
 Type: Package
 Title: Swiss-army toolkit for selecting niche fronts and invasive margins  
   in spatial transcriptomics data 
-Version: 0.99.03
+Version: 0.99.1
 Authors@R: c(
-    person("Jean-Philippe","Villemin",email="jpvillemin@gmail.com",role=c("aut", "cre"),comment = c(ORCID = "0000-0002-1838-5880")))
+    person("Jean-Philippe","Villemin",email="jpvillemin@gmail.com",role=c("aut", "cre"),
+    comment = c(ORCID = "0000-0002-1838-5880")),
+    person("European Research Council",
+         role = "fnd",
+         comment = "ERC-2022"))
 Description: Battlefield is a Swiss-army toolkit originally developed to define and extract spatial spots
  from specific tissue regions—such as front regions, niche borders, invasive margins, 
  and cluster interfaces—using spatial transcriptomics data or clustered tissue maps.
@@ -27,6 +31,7 @@ Imports:
     SummarizedExperiment,
     methods
 Suggests: 
+    BiocStyle,
     knitr,
     markdown,
     rmarkdown,
