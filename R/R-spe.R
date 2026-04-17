@@ -113,7 +113,7 @@ if (!is.null(core) && nrow(core) > 0) {
     valid_idx <- !is.na(idx)
 
     # Only set to core if not already marked as border
-    is_core_only <- is.na(is_border_col[idx[valid_idx]])
+    is_core_only <- !is_border_col[idx[valid_idx]]
     is_core_col[idx[valid_idx][is_core_only]] <- TRUE
 
     # Only set interface/mode for spots marked as core (not already border)

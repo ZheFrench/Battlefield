@@ -1,3 +1,6 @@
+Changes in version 0.99.2 (2026-04)
++  Fix bug in add_borders_to_spe: is_core column was always FALSE due to incorrect use of is.na() on logical vector. Changed to use negation operator (!) to properly identify non-border spots as core spots.
+
 Changes in version 0.99.1 (2026-03)
 +  Follow guidelines on package versioning
 +  Add founding in description
