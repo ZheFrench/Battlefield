@@ -1,3 +1,6 @@
+Changes in version 1.3.1 (2026-11)
++  Add compare_gene_trends(): test whether genes decrease or increase along a trajectory stored by add_trajectories_to_spe(), using generalized least squares with spatially correlated residuals, and compare their smoothed profile with that of a reference gene.
+
 Changes in version 0.99.2 (2026-04)
 +  Fix bug in add_borders_to_spe: is_core column was always FALSE due to incorrect use of is.na() on logical vector. Changed to use negation operator (!) to properly identify non-border spots as core spots.
 
