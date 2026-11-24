@@ -69,7 +69,7 @@ devtools::install_github("ZheFrench/Battlefield",build_vignettes = TRUE)
 
 ## Changes
 
-Major changes are reported in the [NEWS file](https://github.com/ZheFrench/Battlefield/blob/master/NEWS), make sure to check it out if you want to follow the latest developments.
+Major changes are reported in the [NEWS file](https://github.com/ZheFrench/Battlefield/blob/devel/NEWS), make sure to check it out if you want to follow the latest developments.
 
 ## Issues and bug reports
 Please use https://github.com/ZheFrench/Battlefield/issues to submit issues, bug reports, and comments.
@@ -78,7 +78,7 @@ Please use https://github.com/ZheFrench/Battlefield/issues to submit issues, bug
 **Battlefield** has been successfully installed on Mac OS X, Linux, and Windows using R version 4.5.
 
 
-The code in this repository is published with the [CeCILL](https://github.com/ZheFrench/Battlefield/blob/master/LICENSE.md) License.
+The code in this repository is published with the [CeCILL](https://github.com/ZheFrench/Battlefield/blob/devel/LICENSE.md) License.
 
 
 <!-- badges: start -->
