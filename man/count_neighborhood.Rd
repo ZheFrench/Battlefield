@@ -28,9 +28,10 @@ analysis)}
 `cluster`
   or `spot_id` must be provided, but not both.}
 
-\item{spot_id}{Character. The spot identifier to find neighbors for. Either
-`cluster`
-  or `spot_id` must be provided, but not both.}
+\item{spot_id}{The spot to find neighbors for: its identifier, or a one-row
+data.frame with its exact coordinates (e.g., `A` copied from
+[view_spots()]). Coordinates must be those of an existing spot. Either
+`cluster` or `spot_id` must be provided, but not both.}
 
 \item{k}{Integer. Number of nearest neighbors to consider. Default is 100.
 Larger values capture more distant neighbors.}

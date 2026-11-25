@@ -1,3 +1,26 @@
+# Row of `df` for one spot, given by its identifier or by its exact coordinates
+# (one-row data.frame). Coordinates that are not those of a spot are an error.
+.spot_row <- function(df, spot, coords, arg) {
+if (is.data.frame(spot)) {
+    if (nrow(spot) != 1 || !all(coords %in% colnames(spot))) {
+    stop("'", arg, "' must be a one-row data.frame with columns ",
+        paste(coords, collapse = ", "), ".")
+    }
+    same <- function(col) abs(df[[col]] - spot[[col]]) <= 1e-8 * (1 + abs(df[[col]]))
+    row <- which(same(coords[1]) & same(coords[2]))
+    label <- paste(format(unlist(spot[, coords])), collapse = ", ")
+} else {
+    if (length(spot) != 1 || is.na(spot)) {
+    stop("'", arg, "' must be a single spot.")
+    }
+    row <- which(df$spot_id == spot)
+    label <- spot
+}
+if (length(row) == 0) stop("No spot found with ", arg, " = ", label)
+if (length(row) > 1) stop("Several spots found with ", arg, " = ", label)
+row
+}
+
 #' Get neighborhood spots around a target cluster or point
 #'
 #' This function identifies all spots in the neighborhood of a target cluster
@@ -14,9 +37,10 @@
 #' @param cluster The cluster label for which to analyze the neighborhood. Either
 #' `cluster`
 #'   or `spot_id` must be provided, but not both.
-#' @param spot_id Character. The spot identifier to find neighbors for. Either
-#' `cluster`
-#'   or `spot_id` must be provided, but not both.
+#' @param spot_id The spot to find neighbors for: its identifier, or a one-row
+#'   data.frame with its exact coordinates (e.g., `A` copied from
+#'   [view_spots()]). Coordinates must be those of an existing spot. Either
+#'   `cluster` or `spot_id` must be provided, but not both.
 #' @param k Integer. Number of nearest neighbors to consider. Default is 100.
 #'   Larger values capture more distant neighbors. If k exceeds the number of 
 #'   spots, it will be capped at nrow(df) - 1.
@@ -118,11 +142,8 @@ if (!is.null(cluster)) {
     exclude_cluster <- cluster
 } else {
     # Point mode: find neighbors for a specific spot
-    target_idx <- which(df$spot_id == spot_id)
-    if (length(target_idx) == 0) {
-    stop("No spot found with spot_id = ", spot_id)
-    }
-    source_label <- spot_id
+    target_idx <- .spot_row(df, spot_id, coords, "spot_id")
+    source_label <- df$spot_id[target_idx]
     exclude_cluster <- NULL  # Don't exclude any cluster in point mode
 }
 
@@ -216,9 +237,10 @@ result
 #' @param cluster The cluster label for which to analyze the neighborhood. Either
 #' `cluster`
 #'   or `spot_id` must be provided, but not both.
-#' @param spot_id Character. The spot identifier to find neighbors for. Either
-#' `cluster`
-#'   or `spot_id` must be provided, but not both.
+#' @param spot_id The spot to find neighbors for: its identifier, or a one-row
+#'   data.frame with its exact coordinates (e.g., `A` copied from
+#'   [view_spots()]). Coordinates must be those of an existing spot. Either
+#'   `cluster` or `spot_id` must be provided, but not both.
 #' @param k Integer. Number of nearest neighbors to consider. Default is 100.
 #'   Larger values capture more distant neighbors.
 #' @param max_dist Numeric. Maximum distance from the target to consider.
@@ -300,7 +322,7 @@ result <- data.frame(neighborhood = neighbors$neighborhood) |>
     as.data.frame()
 
 # Add cluster column to track source
-source_label <- if (!is.null(cluster)) cluster else spot_id
+source_label <- neighbors$cluster[1]
 result$cluster <- source_label
 result <- result[, c("cluster", "neighborhood", "count", "proportion")]
 

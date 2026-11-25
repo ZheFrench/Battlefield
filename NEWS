@@ -1,5 +1,11 @@
 Changes in version 1.3.1 (2026-11)
 +  Add compare_gene_trends(): test whether genes decrease or increase along a trajectory stored by add_trajectories_to_spe(), using generalized least squares with spatially correlated residuals, and compare their smoothed profile with that of a reference gene.
++  Add view_spots(): interactive viewer (plotly) to pick spots on the slide image, uncoloured or coloured by a colData column, and retrieve their identifiers and coordinates.
++  create_cluster_layers(): new arguments center, a spot used as the center of the core, and core_radius. Core and border spots are then never in contact.
++  get_neighborhood_spots() and count_neighborhood(): spot_id also accepts the exact coordinates of a spot, and several spots are now an error.
++  Add add_split_to_spe(): store the labels of a split cluster in colData, matched by spot_id.
++  Add split_clusters(), to split a scattered cluster into contiguous pieces, and clean_orphans(), to remove its small isolated pieces. New dependency: igraph.
++  create_cluster_layers(): spots touching a border spot are now always intermediate, so core and border are never in contact. Narrow clusters may have no core.
 
 Changes in version 0.99.2 (2026-04)
 +  Fix bug in add_borders_to_spe: is_core column was always FALSE due to incorrect use of is.na() on logical vector. Changed to use negation operator (!) to properly identify non-border spots as core spots.

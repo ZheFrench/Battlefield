@@ -258,3 +258,39 @@ expect_true(all(cd$is_core == FALSE))
 expect_true(all(is.na(cd$border_mode)))
 expect_true(all(is.na(cd$interface)))
 })
+test_that("add_split_to_spe matches labels by spot_id", {
+spe <- SpatialExperiment::SpatialExperiment(
+    assays = list(counts = matrix(1, 1, 5,
+        dimnames = list("g", paste0("s", 1:5)))),
+    spatialCoords = cbind(x = 1:5, y = 1:5))
+spe$cluster <- c("A", "A", "A", "B", "B")
+split <- data.frame(spot_id = paste0("s", c(4, 2, 1, 3)),
+    cluster_split = c("B", "A_2", "A_1", "A"))
+
+res <- add_split_to_spe(spe, split)
+expect_equal(res$cluster_split, c("A_1", "A_2", "A", "B", NA))
+expect_equal(res$cluster, spe$cluster)
+expect_equal(colnames(res), colnames(spe))
+
+# existing column: kept unless erase = TRUE
+new <- transform(split, cluster_split = "z")
+expect_message(same <- add_split_to_spe(res, new), "already exists")
+expect_equal(same$cluster_split, res$cluster_split)
+expect_equal(add_split_to_spe(res, new, erase = TRUE)$cluster_split,
+    c(rep("z", 4), NA))
+
+# other column name, factor labels, spot_id in colData
+names(split)[2] <- "piece"
+split$piece <- factor(split$piece)
+expect_equal(add_split_to_spe(spe, split, split_col = "piece")$piece,
+    c("A_1", "A_2", "A", "B", NA))
+alt <- spe
+alt$spot_id <- paste0("s", 5:1)
+expect_equal(add_split_to_spe(alt, split, "piece")$piece,
+    c(NA, "B", "A", "A_2", "A_1"))
+
+expect_error(add_split_to_spe(spe, split), "Missing")
+expect_error(add_split_to_spe(spe, rbind(split, split), "piece"), "Duplicated")
+bad <- data.frame(spot_id = "nope", cluster_split = "A")
+expect_error(add_split_to_spe(spe, bad), "not found")
+})

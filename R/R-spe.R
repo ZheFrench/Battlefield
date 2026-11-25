@@ -352,3 +352,80 @@ colData(spe) <- cd
 
 spe
 }
+
+#' Add split cluster labels to SpatialExperiment colData
+#'
+#' This function adds the labels of a split cluster (e.g., `C2_1`, `C2_2`)
+#' to the colData of a SpatialExperiment object. Labels are matched by
+#' `spot_id`, whatever the order of the rows. The original cluster column is
+#' not changed.
+#'
+#' @param spe A SpatialExperiment object from which the split data.frame was
+#'   derived.
+#' @param split A data.frame with one row per spot and columns `spot_id` and
+#'   `split_col`, typically the output of [split_clusters()].
+#' @param split_col Character. Name of the column of `split` holding the labels,
+#'   also used as the name of the new colData column. Default is
+#'   `"cluster_split"`.
+#' @param erase Logical. If `TRUE`, replace a pre-existing column of that name.
+#'   If `FALSE` (default), the object is returned unchanged with a message if
+#'   the column already exists.
+#'
+#' @details
+#' Spots of `spe` that are absent from `split` get `NA`. It is an error if a
+#' spot of `split` is absent from `spe`, or if identifiers are duplicated.
+#'
+#' Spot identifiers of `spe` are taken from the `spot_id` column of `colData`
+#' if present, otherwise from `colnames(spe)`.
+#'
+#' @return The SpatialExperiment object with updated colData.
+#'
+#' @examples
+#' data("visium_simulated_spe", package = "Battlefield")
+#' spe <- visium_simulated_spe
+#' df <- data.frame(
+#'   spot_id = colnames(spe),
+#'   x = SpatialExperiment::spatialCoords(spe)[, 1],
+#'   y = SpatialExperiment::spatialCoords(spe)[, 2],
+#'   cluster = SummarizedExperiment::colData(spe)$cluster
+#' )
+#' split <- split_clusters(df, "1", min_size = 5)
+#' spe <- add_split_to_spe(spe, split)
+#' table(spe$cluster, spe$cluster_split)
+#'
+#' @importFrom SummarizedExperiment colData "colData<-"
+#' @importFrom methods is
+#' @export
+add_split_to_spe <- function(spe,
+                            split,
+                            split_col = "cluster_split",
+                            erase = FALSE) {
+    stopifnot(methods::is(spe, "SpatialExperiment"), is.data.frame(split),
+        is.character(split_col), length(split_col) == 1)
+    missing_cols <- setdiff(c("spot_id", split_col), colnames(split))
+    if (length(missing_cols) > 0) {
+        stop("Missing column(s) in 'split': ",
+            paste(missing_cols, collapse = ", "))
+    }
+    if (split_col == "spot_id") stop("'split_col' cannot be 'spot_id'.")
+
+    cd <- colData(spe)
+    if (split_col %in% colnames(cd) && !erase) {
+        message("Column '", split_col,
+            "' already exists. Set erase=TRUE to overwrite it.")
+        return(spe)
+    }
+    ids <- if ("spot_id" %in% colnames(cd)) cd$spot_id else colnames(spe)
+    if (is.null(ids)) stop("Spots have no identifier: set colnames(spe).")
+    ids <- as.character(ids)
+    from <- as.character(split$spot_id)
+    if (anyDuplicated(ids)) stop("Spot identifiers of 'spe' are not unique.")
+    if (anyDuplicated(from)) stop("Duplicated spot_id in 'split'.")
+    unknown <- sum(!from %in% ids)
+    if (unknown > 0) {
+        stop(unknown, " spot(s) of 'split' not found in 'spe'.")
+    }
+    cd[[split_col]] <- as.character(split[[split_col]])[match(ids, from)]
+    colData(spe) <- cd
+    spe
+}

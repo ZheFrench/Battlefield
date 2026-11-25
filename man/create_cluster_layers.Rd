@@ -11,7 +11,9 @@ create_cluster_layers(
   max_dist = NULL,
   intermediate_quantile = 0.5,
   coord_cols = c("x", "y"),
-  cluster_col = "cluster"
+  cluster_col = "cluster",
+  center = NULL,
+  core_radius = NULL
 )
 }
 \arguments{
@@ -42,6 +44,16 @@ names.
 
 \item{cluster_col}{Character. Name of the column containing cluster labels.
 Default is `"cluster"`.}
+
+\item{center}{Optional spot used as the center of the core: its identifier,
+or a one-row data.frame with its exact coordinates (e.g., `A` copied from
+[view_spots()]). It must be an existing non-border spot of
+`target_cluster` that does not touch the border layer either. If `NULL`
+(default), layers are defined by the distance to the border.}
+
+\item{core_radius}{Optional numeric, only used with `center`. Maximum
+distance to `center` of core spots, in coordinate units. If `NULL`
+(default), it is set from `intermediate_quantile`.}
 }
 \value{
 A data.frame based on `df` filtered to contain only spots from
@@ -63,6 +75,14 @@ different cluster (kNN-based).
 spot is within
   the `intermediate_quantile` threshold of all non-border spots.
 - **Core**: All remaining non-border spots that are far from the border.
+
+Spots touching a border spot (kNN-based, in either direction) are always
+intermediate, so that core and border are never in contact. Narrow clusters
+may thus have no core.
+
+If `center` is provided, border spots are unchanged, but core spots are the
+non-border spots closest to `center`: those within `core_radius` or, by
+default, the closest `1 - intermediate_quantile` proportion.
 
 The `intermediate_quantile` parameter controls the depth of the intermediate
 layer:
@@ -87,5 +107,13 @@ table(layers$layer)
 layers_narrow <- create_cluster_layers(df, target_cluster = 1, k = 6,
 intermediate_quantile = 0.33)
 table(layers_narrow$layer)
+
+# Core centered on a chosen spot: here the core spot closest to the
+# cluster centroid
+inner <- layers[layers$layer == "core", ]
+center <- closest_spot(inner, mean(inner$x), mean(inner$y))$spot_id
+layers_center <- create_cluster_layers(df, target_cluster = 1, k = 6,
+center = center)
+table(layers_center$layer)
 
 }

@@ -429,3 +429,64 @@ result <- create_all_layers(df, k = 8)
 # Verify we have valid layer types
 expect_true(all(result$layer %in% c("border", "intermediate", "core")))
 })
+
+test_that("create_cluster_layers centers the core on a chosen spot", {
+df <- expand.grid(x = 1:20, y = 1:10)
+df$spot_id <- paste0("s", seq_len(nrow(df)))
+df$cluster <- ifelse(df$x <= 12, "A", "B")
+id <- df$spot_id[df$x == 3 & df$y == 4]
+
+ref <- create_cluster_layers(df, "A", k = 4)
+res <- create_cluster_layers(df, "A", k = 4, center = id)
+expect_equal(res$spot_id, ref$spot_id)
+expect_equal(res$layer == "border", ref$layer == "border")
+expect_equal(res$layer[res$spot_id == id], "core")
+d <- sqrt((res$x - 3)^2 + (res$y - 4)^2)
+# border is x = 12 here, so x = 11 can never be core
+expect_true(all(res$layer[res$x == 11] == "intermediate"))
+all_in <- create_cluster_layers(df, "A", k = 4, center = id, core_radius = 100)
+expect_setequal(unique(all_in$x[all_in$layer == "core"]), 1:10)
+expect_true(all(all_in$layer[all_in$x == 11] == "intermediate"))
+r2 <- create_cluster_layers(df, "A", k = 4, center = id, core_radius = 2)
+expect_equal(r2$layer == "core", d <= 2)
+expect_error(create_cluster_layers(df, "A", k = 4, core_radius = 2), "requires")
+
+# same spot given by its coordinates
+xy <- data.frame(x = 3, y = 4)
+expect_equal(create_cluster_layers(df, "A", k = 4, center = xy), res)
+# smaller core
+few <- create_cluster_layers(df, "A", k = 4, center = id,
+    intermediate_quantile = 0.9)
+expect_lt(sum(few$layer == "core"), sum(res$layer == "core"))
+one <- create_cluster_layers(df, "A", k = 4, center = id,
+    intermediate_quantile = 1)
+expect_equal(one$spot_id[one$layer == "core"], id)
+
+at <- function(x, y) data.frame(x = x, y = y)
+expect_error(create_cluster_layers(df, "A", k = 4, center = at(3.5, 4)),
+    "No spot found")
+expect_error(create_cluster_layers(df, "A", k = 4, center = at(15, 4)),
+    "not in cluster")
+expect_error(create_cluster_layers(df, "A", k = 4, center = at(12, 4)),
+    "border spot")
+expect_error(create_cluster_layers(df, "A", k = 4, center = at(11, 4)),
+    "touches the border")
+expect_error(create_cluster_layers(df, "A", k = 4, center = c("s1", "s2")),
+    "single spot")
+})
+
+test_that("create_cluster_layers never puts core in contact with border", {
+df <- expand.grid(x = 1:20, y = 1:10)
+df$spot_id <- paste0("s", seq_len(nrow(df)))
+df$cluster <- ifelse(df$x <= 8, "A", "B")
+for (q in c(0, 0.1, 0.5, 1)) {
+    res <- suppressMessages(create_cluster_layers(df, "A", k = 4,
+        intermediate_quantile = q))
+    expect_true(all(res$layer[res$x == 7] == "intermediate"))
+    expect_true(any(res$layer == "core"))
+}
+# two columns only: no core possible
+df$cluster <- ifelse(df$x <= 2, "A", "B")
+expect_message(res <- create_cluster_layers(df, "A", k = 4), "No 'core'")
+expect_setequal(unique(res$layer), c("border", "intermediate"))
+})
