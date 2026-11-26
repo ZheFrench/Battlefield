@@ -4,10 +4,13 @@
 <url><loc>https://zhefrench.github.io/Battlefield/LICENSE.html</loc></url>
 <url><loc>https://zhefrench.github.io/Battlefield/articles/Battlefield-Main.html</loc></url>
 <url><loc>https://zhefrench.github.io/Battlefield/articles/index.html</loc></url>
+<url><loc>https://zhefrench.github.io/Battlefield/articles/new-in-1-3.html</loc></url>
 <url><loc>https://zhefrench.github.io/Battlefield/authors.html</loc></url>
 <url><loc>https://zhefrench.github.io/Battlefield/index.html</loc></url>
+<url><loc>https://zhefrench.github.io/Battlefield/reference/Battlefield-package.html</loc></url>
 <url><loc>https://zhefrench.github.io/Battlefield/reference/add_borders_to_spe.html</loc></url>
 <url><loc>https://zhefrench.github.io/Battlefield/reference/add_layers_to_spe.html</loc></url>
+<url><loc>https://zhefrench.github.io/Battlefield/reference/add_split_to_spe.html</loc></url>
 <url><loc>https://zhefrench.github.io/Battlefield/reference/add_trajectories_to_spe.html</loc></url>
 <url><loc>https://zhefrench.github.io/Battlefield/reference/adjacent_endpoint.html</loc></url>
 <url><loc>https://zhefrench.github.io/Battlefield/reference/bresenham_line.html</loc></url>
@@ -16,7 +19,9 @@
 <url><loc>https://zhefrench.github.io/Battlefield/reference/build_one_line.html</loc></url>
 <url><loc>https://zhefrench.github.io/Battlefield/reference/build_one_trajectory.html</loc></url>
 <url><loc>https://zhefrench.github.io/Battlefield/reference/build_similar_trajectories.html</loc></url>
+<url><loc>https://zhefrench.github.io/Battlefield/reference/clean_orphans.html</loc></url>
 <url><loc>https://zhefrench.github.io/Battlefield/reference/closest_spot.html</loc></url>
+<url><loc>https://zhefrench.github.io/Battlefield/reference/compare_gene_trends.html</loc></url>
 <url><loc>https://zhefrench.github.io/Battlefield/reference/compute_centroids.html</loc></url>
 <url><loc>https://zhefrench.github.io/Battlefield/reference/count_all_inlaids.html</loc></url>
 <url><loc>https://zhefrench.github.io/Battlefield/reference/count_all_neighborhoods.html</loc></url>
@@ -37,9 +42,11 @@
 <url><loc>https://zhefrench.github.io/Battlefield/reference/select_border_spots.html</loc></url>
 <url><loc>https://zhefrench.github.io/Battlefield/reference/select_core_spots.html</loc></url>
 <url><loc>https://zhefrench.github.io/Battlefield/reference/shift_point.html</loc></url>
+<url><loc>https://zhefrench.github.io/Battlefield/reference/split_clusters.html</loc></url>
 <url><loc>https://zhefrench.github.io/Battlefield/reference/unit_normal_left.html</loc></url>
+<url><loc>https://zhefrench.github.io/Battlefield/reference/view_spots.html</loc></url>
 <url><loc>https://zhefrench.github.io/Battlefield/reference/visiumHD_16um_simulated_spe.html</loc></url>
-<url><loc>https://zhefrench.github.io/Battlefield/reference/visiumHD_simulated_spe.html</loc></url>
+<url><loc>https://zhefrench.github.io/Battlefield/reference/visiumHD_8um_simulated_spe.html</loc></url>
 <url><loc>https://zhefrench.github.io/Battlefield/reference/visium_simulated_spe.html</loc></url>
 </urlset>
 

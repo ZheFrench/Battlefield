@@ -99,14 +99,18 @@ data("visium_simulated_spe", package = "Battlefield")
 spe <- visium_simulated_spe
 df <- data.frame(
   spot_id = colnames(spe),
-  x = spatialCoords(spe)[, 1],
-  y = spatialCoords(spe)[, 2],
-  cluster = colData(spe)$cluster
+  x = SpatialExperiment::spatialCoords(spe)[, 1],
+  y = SpatialExperiment::spatialCoords(spe)[, 2],
+  cluster = SummarizedExperiment::colData(spe)$cluster
 )
-#> Error in spatialCoords(spe): could not find function "spatialCoords"
 # Get neighborhood statistics for all clusters
 all_neighbors <- count_all_neighborhoods(df, k = 50)
-#> Error in count_all_neighborhoods(df, k = 50): is.data.frame(df) is not TRUE
 head(all_neighbors)
-#> Error: object 'all_neighbors' not found
+#>   cluster neighborhood count proportion
+#> 1       1            3    24       0.48
+#> 2       1            4    21       0.42
+#> 3       1            2     5       0.10
+#> 4       2            3    29       0.58
+#> 5       2            4    16       0.32
+#> 6       2            1     5       0.10
 ```

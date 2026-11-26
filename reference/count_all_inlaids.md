@@ -71,15 +71,19 @@ data("visium_simulated_spe", package = "Battlefield")
 spe <- visium_simulated_spe
 df <- data.frame(
   spot_id = colnames(spe),
-  x = spatialCoords(spe)[, 1],
-  y = spatialCoords(spe)[, 2],
-  cluster = colData(spe)$cluster,
+  x = SpatialExperiment::spatialCoords(spe)[, 1],
+  y = SpatialExperiment::spatialCoords(spe)[, 2],
+  cluster = SummarizedExperiment::colData(spe)$cluster,
 inlaid = sample(paste0("type_", 1:3), length(colnames(spe)), replace = TRUE)
 )
-#> Error in spatialCoords(spe): could not find function "spatialCoords"
 # Get inlaid statistics for all clusters
 all_inlaids <- count_all_inlaids(df, inlaid_col = "inlaid")
-#> Error in count_all_inlaids(df, inlaid_col = "inlaid"): is.data.frame(df) is not TRUE
 head(all_inlaids)
-#> Error: object 'all_inlaids' not found
+#>   cluster inlaid count proportion
+#> 1       1 type_1    30  0.3703704
+#> 2       1 type_2    26  0.3209877
+#> 3       1 type_3    25  0.3086420
+#> 4       2 type_1    19  0.4042553
+#> 5       2 type_3    15  0.3191489
+#> 6       2 type_2    13  0.2765957
 ```

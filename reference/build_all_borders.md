@@ -86,8 +86,19 @@ df_ex <- data.frame(
   cluster = sample(c("A","B","C"), 200, replace = TRUE)
 )
 all_borders <- build_all_borders(df_ex, k = 6)
-#> Error in dplyr::select(dplyr::mutate(out, interface = i_val, directed_pair = paste0(c_val,     "-", i_val), undirected_pair = undirected_pair_val, is_border = TRUE,     is_border_multiple = touches_other[touches_to], other_adjacent_borders = other_clusters[touches_to],     mode = ""), spot_id, x, y, directed_pair, undirected_pair,     cluster, interface, is_border, is_border_multiple, other_adjacent_borders,     mode): Can't select columns that don't exist.
-#> ✖ Column `spot_id` doesn't exist.
 head(all_borders)
-#> Error: object 'all_borders' not found
+#>            x           y directed_pair undirected_pair cluster interface
+#> 1  0.1836433  1.68887329           A-C       A-C / C-A       A         C
+#> 2 -0.8356286  1.58658843           A-C       A-C / C-A       A         C
+#> 3  0.3295078 -2.28523554           A-C       A-C / C-A       A         C
+#> 4  0.4874291  0.66706617           A-C       A-C / C-A       A         C
+#> 5  0.5757814 -0.01339952           A-C       A-C / C-A       A         C
+#> 6 -0.3053884  0.51010842           A-C       A-C / C-A       A         C
+#>   is_border is_border_multiple other_adjacent_borders  mode
+#> 1      TRUE               TRUE                      B inner
+#> 2      TRUE              FALSE                   <NA> inner
+#> 3      TRUE               TRUE                      B inner
+#> 4      TRUE              FALSE                   <NA> inner
+#> 5      TRUE               TRUE                      B inner
+#> 6      TRUE               TRUE                      B inner
 ```

@@ -7,7 +7,7 @@ coordinates and cluster annotations, and is intended for testing.
 ## Usage
 
 ``` r
-data(visiumHD_simulated_spe)
+data(visiumHD_8um_simulated_spe)
 ```
 
 ## Format
@@ -51,14 +51,25 @@ square grid.
 
 - [`compute_centroids`](https://zhefrench.github.io/Battlefield/reference/compute_centroids.md)
 
-"visiumHD_simulated_spe"
+visiumHD_8um_simulated_spe
 
 ## Examples
 
 ``` r
-data(visiumHD_simulated_spe)
-#> Warning: data set ‘visiumHD_simulated_spe’ not found
+data(visiumHD_8um_simulated_spe)
 
-visiumHD_simulated_spe
-#> Error: object 'visiumHD_simulated_spe' not found
+visiumHD_8um_simulated_spe
+#> class: SpatialExperiment 
+#> dim: 1 1000 
+#> metadata(0):
+#> assays(1): counts
+#> rownames(1): FAKE_GENE
+#> rowData names(0):
+#> colnames(1000): bin_1 bin_41 ... bin_960 bin_1000
+#> colData names(3): barcode_id cluster sample_id
+#> reducedDimNames(0):
+#> mainExpName: NULL
+#> altExpNames(0):
+#> spatialCoords names(2) : pxl_col_in_fullres pxl_row_in_fullres
+#> imgData names(0):
 ```

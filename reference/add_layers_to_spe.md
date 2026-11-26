@@ -47,14 +47,11 @@ data("visiumHD_16um_simulated_spe", package = "Battlefield")
 spe <- visiumHD_16um_simulated_spe
 df <- data.frame(
   spot_id = colnames(spe),
-  x = spatialCoords(spe)[, 1],
-  y = spatialCoords(spe)[, 2],
-  cluster = colData(spe)$cluster
+  x = SpatialExperiment::spatialCoords(spe)[, 1],
+  y = SpatialExperiment::spatialCoords(spe)[, 2],
+  cluster = SummarizedExperiment::colData(spe)$cluster
 )
-#> Error in spatialCoords(spe): could not find function "spatialCoords"
 # Or for a single cluster
 cluster_1_layers <- create_cluster_layers(df, target_cluster = 1, k = 6)
-#> Error in create_cluster_layers(df, target_cluster = 1, k = 6): all(coord_cols %in% colnames(df)) is not TRUE
 spe <- add_layers_to_spe(spe, layer = cluster_1_layers)
-#> Error: object 'cluster_1_layers' not found
 ```

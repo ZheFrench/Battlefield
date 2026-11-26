@@ -55,23 +55,20 @@ or NA (from the \`mode\` column in input data)
 ``` r
 data("visiumHD_16um_simulated_spe", package = "Battlefield")
 spe <- visiumHD_16um_simulated_spe
-#> Loading required namespace: SpatialExperiment
 df <- data.frame(
   spot_id = colnames(spe),
-  x = spatialCoords(spe)[, 1],
-  y = spatialCoords(spe)[, 2],
-  cluster = colData(spe)$cluster
+  x = SpatialExperiment::spatialCoords(spe)[, 1],
+  y = SpatialExperiment::spatialCoords(spe)[, 2],
+  cluster = SummarizedExperiment::colData(spe)$cluster
 )
-#> Error in spatialCoords(spe): could not find function "spatialCoords"
 # Using build_all_borders and build_all_cores
 all_borders <- build_all_borders(df, k = 6)
-#> Error in df[[cluster_col]]: object of type 'closure' is not subsettable
-all_cores <- build_all_cores(df, all_borders, region = "inner")
-#> Error in build_all_cores(df, all_borders, region = "inner"): unused argument (region = "inner")
+all_cores <- build_all_cores(df, all_borders, mode = "inner")
+#> Not enough core spots for pair(cluster=2, interface=3, mode=inner). Requested:15, Available:13. Returning all available.
+#> Not enough core spots for pair(cluster=5, interface=4, mode=inner). Requested:21, Available:12. Returning all available.
+#> Not enough core spots for pair(cluster=2, interface=4, mode=inner). Requested:16, Available:13. Returning all available.
 
 # Or using individual select functions
 border_3_to_4 <- select_border_spots(df, cluster = 3, interface = 4, k = 6)
-#> Error in select_border_spots(df, cluster = 3, interface = 4, k = 6): all(coord_cols %in% colnames(df)) is not TRUE
 core_3_to_4 <- select_core_spots(df, all_borders, cluster = 3, interface = 4)
-#> Error in select_core_spots(df, all_borders, cluster = 3, interface = 4): all(coord_cols %in% colnames(df)) is not TRUE
 ```

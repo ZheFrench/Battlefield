@@ -37,8 +37,10 @@ get_neighborhood_spots(
 
 - spot_id:
 
-  Character. The spot identifier to find neighbors for. Either
-  \`cluster\` or \`spot_id\` must be provided, but not both.
+  The spot to find neighbors for: its identifier, or a one-row
+  data.frame with its exact coordinates (e.g., \`A\` copied from
+  \[view_spots()\]). Coordinates must be those of an existing spot.
+  Either \`cluster\` or \`spot_id\` must be provided, but not both.
 
 - k:
 
@@ -115,22 +117,30 @@ data("visium_simulated_spe", package = "Battlefield")
 spe <- visium_simulated_spe
 df <- data.frame(
   spot_id = colnames(spe),
-  x = spatialCoords(spe)[, 1],
-  y = spatialCoords(spe)[, 2],
-  cluster = colData(spe)$cluster
+  x = SpatialExperiment::spatialCoords(spe)[, 1],
+  y = SpatialExperiment::spatialCoords(spe)[, 2],
+  cluster = SummarizedExperiment::colData(spe)$cluster
 )
-#> Error in spatialCoords(spe): could not find function "spatialCoords"
 # Get all neighbor spots for cluster 1
 neighbors_cluster <- get_neighborhood_spots(df, cluster = 1, k = 50)
-#> Error in get_neighborhood_spots(df, cluster = 1, k = 50): is.data.frame(df) is not TRUE
 head(neighbors_cluster)
-#> Error: object 'neighbors_cluster' not found
+#>           spot_id      x        y cluster neighborhood is_neighborhood
+#> SPOT0465 SPOT0465 1347.5 523.9454       1            2            TRUE
+#> SPOT0466 SPOT0466 1402.5 523.9454       1            2            TRUE
+#> SPOT0506 SPOT0506 1375.0 571.5768       1            2            TRUE
+#> SPOT0545 SPOT0545 1347.5 619.2082       1            2            TRUE
+#> SPOT0546 SPOT0546 1402.5 619.2082       1            2            TRUE
+#> SPOT0219 SPOT0219 1017.5 238.1570       1            3            TRUE
 
 # Get neighbors for a specific point
 first_spot <- df$spot_id[1]
-#> Error in df$spot_id: object of type 'closure' is not subsettable
 neighbors_point <- get_neighborhood_spots(df, spot_id = first_spot, k = 10)
-#> Error in get_neighborhood_spots(df, spot_id = first_spot, k = 10): is.data.frame(df) is not TRUE
 head(neighbors_point)
-#> Error: object 'neighbors_point' not found
+#>           spot_id     x        y  cluster neighborhood is_neighborhood
+#> SPOT0002 SPOT0002  55.0  0.00000 SPOT0001            3            TRUE
+#> SPOT0003 SPOT0003 110.0  0.00000 SPOT0001            3            TRUE
+#> SPOT0041 SPOT0041  27.5 47.63140 SPOT0001            3            TRUE
+#> SPOT0042 SPOT0042  82.5 47.63140 SPOT0001            3            TRUE
+#> SPOT0043 SPOT0043 137.5 47.63140 SPOT0001            3            TRUE
+#> SPOT0081 SPOT0081   0.0 95.26279 SPOT0001            3            TRUE
 ```

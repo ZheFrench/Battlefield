@@ -52,20 +52,14 @@ data("visiumHD_16um_simulated_spe", package = "Battlefield")
 spe <- visiumHD_16um_simulated_spe
 df <- data.frame(
   spot_id = colnames(spe),
-  x = spatialCoords(spe)[, 1],
-  y = spatialCoords(spe)[, 2],
-  cluster = colData(spe)$cluster
+  x = SpatialExperiment::spatialCoords(spe)[, 1],
+  y = SpatialExperiment::spatialCoords(spe)[, 2],
+  cluster = SummarizedExperiment::colData(spe)$cluster
 )
-#> Error in spatialCoords(spe): could not find function "spatialCoords"
 centroids <- compute_centroids(df)
-#> Error in model.frame.default(formula = cbind(x, y) ~ cluster, data = df): 'data' must be a data.frame, environment, or list
 A <- centroids[centroids$cluster == 1, c("x", "y")]
-#> Error: object 'centroids' not found
 B <- centroids[centroids$cluster == 3, c("x", "y")]
-#> Error: object 'centroids' not found
 trajs <- build_similar_trajectories(df, A, B, top_n = 10, n_extra = 1, side =
 "both")
-#> Error in estimate_spot_spacing(df): all(c("x", "y") %in% names(df)) is not TRUE
 spe <- add_trajectories_to_spe(spe, trajectory = trajs)
-#> Error: object 'trajs' not found
 ```

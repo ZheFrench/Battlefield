@@ -74,15 +74,20 @@ using \[directed_cluster_interface_pairs()\].
 # Example with synthetic data
 set.seed(1)
 df_ex <- data.frame(
+  spot_id = paste0("spot_", seq_len(200)),
   x = rnorm(200),
   y = rnorm(200),
   cluster = sample(c("A","B","C"), 200, replace = TRUE)
 )
 all_borders <- build_all_borders(df_ex, k = 6)
-#> Error in dplyr::select(dplyr::mutate(out, interface = i_val, directed_pair = paste0(c_val,     "-", i_val), undirected_pair = undirected_pair_val, is_border = TRUE,     is_border_multiple = touches_other[touches_to], other_adjacent_borders = other_clusters[touches_to],     mode = ""), spot_id, x, y, directed_pair, undirected_pair,     cluster, interface, is_border, is_border_multiple, other_adjacent_borders,     mode): Can't select columns that don't exist.
-#> ✖ Column `spot_id` doesn't exist.
 all_cores <- build_all_cores(df_ex, all_borders, mode = "both")
-#> Error: object 'all_borders' not found
+#> Not enough core spots for pair(cluster=A, interface=C, mode=both). Requested:124, Available:0. Returning all available.
+#> Not enough core spots for pair(cluster=C, interface=A, mode=both). Requested:104, Available:0. Returning all available.
+#> Not enough core spots for pair(cluster=B, interface=C, mode=both). Requested:132, Available:0. Returning all available.
+#> Not enough core spots for pair(cluster=C, interface=B, mode=both). Requested:102, Available:0. Returning all available.
+#> Not enough core spots for pair(cluster=B, interface=A, mode=both). Requested:142, Available:0. Returning all available.
+#> Not enough core spots for pair(cluster=A, interface=B, mode=both). Requested:130, Available:0. Returning all available.
 head(all_cores)
-#> Error: object 'all_cores' not found
+#> [1] spot_id   x         y         cluster   interface is_core   mode     
+#> <0 rows> (or 0-length row.names)
 ```

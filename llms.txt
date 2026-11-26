@@ -1,21 +1,21 @@
 # Battlefield
 
-  
-  
+\
+\
 
 ## Overview
 
 **Battlefield** is a Swiss-army toolkit designed to define and extract
 spatial spots from specific regions in spatial transcriptomics data. It
 provides low-level, modular utilities to delineate spatial regions of
-interest,  
+interest,\
 including **interfaces between clusters**, **intra-cluster layers**,
-and  
+and\
 **inter-cluster trajectories**. These utilities are intended to be
-reused and composed within higher-level  
+reused and composed within higher-level\
 analytical workflows and packages. `Battlefield` supports
-sequencing-based spatial transcriptomics platforms such as  
-**10x Genomics Visium**, across multiple resolutions, including  
+sequencing-based spatial transcriptomics platforms such as\
+**10x Genomics Visium**, across multiple resolutions, including\
 Visium HD (binned).
 
 ![](reference/figures/workflow.png)
@@ -46,25 +46,24 @@ interest on the top of previously defined clusters.
 
 ## Installation
 
-``` r
-
-# Battlefield directly from Bioconductor.
-if (!require("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-BiocManager::install("Battlefield")
-
-# or development version via GitHub:
-# install.packages("devtools")
-devtools::install_github("ZheFrench/Battlefield",build_vignettes = TRUE)
-
-# To read the vignette
-# browseVignettes("Battlefield")
-```
+\
+\
+`# Battlefield directly from Bioconductor.`\
+`if`` ``(``!`[`require`](https://rdrr.io/r/base/library.html)`(`[`"BiocManager"`](https://bioconductor.github.io/BiocManager/)`, quietly ``=`` ``TRUE``)``)`\
+`    `[`install.packages`](https://rdrr.io/r/utils/install.packages.html)`(``"BiocManager"``)`\
+`BiocManager``::`[`install`](https://bioconductor.github.io/BiocManager/reference/install.html)`(``"Battlefield"``)`\
+\
+`# or development version via GitHub:`\
+`# install.packages("devtools")`\
+`devtools``::``install_github``(``"ZheFrench/Battlefield"``,build_vignettes ``=`` ``TRUE``)`\
+\
+`# To read the vignette`\
+`# browseVignettes("Battlefield")`
 
 ## Changes
 
 Major changes are reported in the [NEWS
-file](https://github.com/ZheFrench/Battlefield/blob/master/NEWS), make
+file](https://github.com/ZheFrench/Battlefield/blob/devel/NEWS), make
 sure to check it out if you want to follow the latest developments.
 
 ## Issues and bug reports
@@ -76,7 +75,7 @@ issues, bug reports, and comments.
 Windows using R version 4.5.
 
 The code in this repository is published with the
-[CeCILL](https://github.com/ZheFrench/Battlefield/blob/master/LICENSE.md)
+[CeCILL](https://github.com/ZheFrench/Battlefield/blob/devel/LICENSE.md)
 License.
 
 # Package index
@@ -87,6 +86,8 @@ License.
   : Add border or core spot selections to SpatialExperiment colData
 - [`add_layers_to_spe()`](https://zhefrench.github.io/Battlefield/reference/add_layers_to_spe.md)
   : Add layer classifications to SpatialExperiment colData
+- [`add_split_to_spe()`](https://zhefrench.github.io/Battlefield/reference/add_split_to_spe.md)
+  : Add split cluster labels to SpatialExperiment colData
 - [`add_trajectories_to_spe()`](https://zhefrench.github.io/Battlefield/reference/add_trajectories_to_spe.md)
   : Add trajectory information to SpatialExperiment colData
 - [`adjacent_endpoint()`](https://zhefrench.github.io/Battlefield/reference/adjacent_endpoint.md)
@@ -104,8 +105,12 @@ License.
   : Select spots near a segment and order them along the segment
 - [`build_similar_trajectories()`](https://zhefrench.github.io/Battlefield/reference/build_similar_trajectories.md)
   : Build parallel spot lines around a central segment
+- [`clean_orphans()`](https://zhefrench.github.io/Battlefield/reference/clean_orphans.md)
+  : Remove the orphan spots of one cluster
 - [`closest_spot()`](https://zhefrench.github.io/Battlefield/reference/closest_spot.md)
   : Find the closest spot to a target point
+- [`compare_gene_trends()`](https://zhefrench.github.io/Battlefield/reference/compare_gene_trends.md)
+  : Compare gene trends along a fixed trajectory
 - [`compute_centroids()`](https://zhefrench.github.io/Battlefield/reference/compute_centroids.md)
   : Compute cluster centroids (mean x/y per cluster)
 - [`count_all_inlaids()`](https://zhefrench.github.io/Battlefield/reference/count_all_inlaids.md)
@@ -146,17 +151,23 @@ License.
   : Select core (non-interface) spots for a directed pair
 - [`shift_point()`](https://zhefrench.github.io/Battlefield/reference/shift_point.md)
   : Shift a point along a given direction vector
+- [`split_clusters()`](https://zhefrench.github.io/Battlefield/reference/split_clusters.md)
+  : Split one scattered cluster into contiguous pieces
 - [`unit_normal_left()`](https://zhefrench.github.io/Battlefield/reference/unit_normal_left.md)
   : Compute the left unit normal of the directed segment A-\>B
+- [`view_spots()`](https://zhefrench.github.io/Battlefield/reference/view_spots.md)
+  : Interactive viewer to pick spots on the tissue
 - [`visiumHD_16um_simulated_spe`](https://zhefrench.github.io/Battlefield/reference/visiumHD_16um_simulated_spe.md)
   : Simulated VisiumHD 16 µm binned SpatialExperiment dataset
-- [`visiumHD_simulated_spe`](https://zhefrench.github.io/Battlefield/reference/visiumHD_simulated_spe.md)
+- [`visiumHD_8um_simulated_spe`](https://zhefrench.github.io/Battlefield/reference/visiumHD_8um_simulated_spe.md)
   : Simulated VisiumHD 8 µm binned SpatialExperiment dataset
 - [`visium_simulated_spe`](https://zhefrench.github.io/Battlefield/reference/visium_simulated_spe.md)
   : Simulated Visium SpatialExperiment dataset
 
 # Articles
 
-### All vignettes
+### Articles
 
 - [Battlefield](https://zhefrench.github.io/Battlefield/articles/Battlefield-Main.md):
+- [What's new in Battlefield
+  1.3](https://zhefrench.github.io/Battlefield/articles/new-in-1-3.md):

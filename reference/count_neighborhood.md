@@ -38,8 +38,10 @@ count_neighborhood(
 
 - spot_id:
 
-  Character. The spot identifier to find neighbors for. Either
-  \`cluster\` or \`spot_id\` must be provided, but not both.
+  The spot to find neighbors for: its identifier, or a one-row
+  data.frame with its exact coordinates (e.g., \`A\` copied from
+  \[view_spots()\]). Coordinates must be those of an existing spot.
+  Either \`cluster\` or \`spot_id\` must be provided, but not both.
 
 - k:
 
@@ -104,22 +106,22 @@ data("visium_simulated_spe", package = "Battlefield")
 spe <- visium_simulated_spe
 df <- data.frame(
   spot_id = colnames(spe),
-  x = spatialCoords(spe)[, 1],
-  y = spatialCoords(spe)[, 2],
-  cluster = colData(spe)$cluster
+  x = SpatialExperiment::spatialCoords(spe)[, 1],
+  y = SpatialExperiment::spatialCoords(spe)[, 2],
+  cluster = SummarizedExperiment::colData(spe)$cluster
 )
-#> Error in spatialCoords(spe): could not find function "spatialCoords"
 # Count cluster types in neighborhood of cluster 1
 neighbor_counts <- count_neighborhood(df, cluster = 1, k = 50)
-#> Error in get_neighborhood_spots(df, cluster, spot_id, k, max_dist, inlaid_col,     coords, cluster_col): is.data.frame(df) is not TRUE
 neighbor_counts
-#> Error: object 'neighbor_counts' not found
+#>   cluster neighborhood count proportion
+#> 1       1            3    24       0.48
+#> 2       1            4    21       0.42
+#> 3       1            2     5       0.10
 
 # Count cluster types around a specific point
 first_spot <- df$spot_id[1]
-#> Error in df$spot_id: object of type 'closure' is not subsettable
 point_neighbors <- count_neighborhood(df, spot_id = first_spot, k = 10)
-#> Error in get_neighborhood_spots(df, cluster, spot_id, k, max_dist, inlaid_col,     coords, cluster_col): is.data.frame(df) is not TRUE
 point_neighbors
-#> Error: object 'point_neighbors' not found
+#>    cluster neighborhood count proportion
+#> 1 SPOT0001            3    10          1
 ```

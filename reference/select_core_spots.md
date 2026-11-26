@@ -109,10 +109,10 @@ cores_inner <- select_core_spots(
   interface = "B",
   mode = "inner"
 )
-#> Not enough core spots for pair(cluster=A, interface=B, mode=inner). Requested:85, Available:0. Returning all available.
-#> Error in `$<-.data.frame`(`*tmp*`, "interface", value = "B"): replacement has 1 row, data has 0
+#> Not enough core spots for pair(cluster=A, interface=B, mode=inner). Requested:84, Available:0. Returning all available.
 head(cores_inner)
-#> Error: object 'cores_inner' not found
+#> [1] spot_id   x         y         cluster   interface is_core   mode     
+#> <0 rows> (or 0-length row.names)
 
 # Step 3: Select core spots considering both directions (A→B AND B→A)
 cores_both <- select_core_spots(
@@ -122,8 +122,8 @@ cores_both <- select_core_spots(
   interface = "B",
   mode = "both"
 )
-#> Not enough core spots for pair(cluster=A, interface=B, mode=both). Requested:170, Available:0. Returning all available.
-#> Error in `$<-.data.frame`(`*tmp*`, "interface", value = "B"): replacement has 1 row, data has 0
+#> Not enough core spots for pair(cluster=A, interface=B, mode=both). Requested:168, Available:0. Returning all available.
 head(cores_both)
-#> Error: object 'cores_both' not found
+#> [1] spot_id   x         y         cluster   interface is_core   mode     
+#> <0 rows> (or 0-length row.names)
 ```

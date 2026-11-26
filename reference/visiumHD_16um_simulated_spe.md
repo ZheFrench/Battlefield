@@ -51,7 +51,7 @@ square grid.
 
 - [`compute_centroids`](https://zhefrench.github.io/Battlefield/reference/compute_centroids.md)
 
-"visiumHD_16um_simulated_spe"
+visiumHD_16um_simulated_spe
 
 ## Examples
 

@@ -83,15 +83,19 @@ data("visium_simulated_spe", package = "Battlefield")
 spe <- visium_simulated_spe
 df <- data.frame(
   spot_id = colnames(spe),
-  x = spatialCoords(spe)[, 1],
-  y = spatialCoords(spe)[, 2],
-  cluster = colData(spe)$cluster,
+  x = SpatialExperiment::spatialCoords(spe)[, 1],
+  y = SpatialExperiment::spatialCoords(spe)[, 2],
+  cluster = SummarizedExperiment::colData(spe)$cluster,
 inlaid = sample(paste0("type_", 1:3), length(colnames(spe)), replace = TRUE)
 )
-#> Error in spatialCoords(spe): could not find function "spatialCoords"
 # Get all inlaid spots within cluster 1
 inlaid_spots <- get_inlaid_spots(df, cluster = 1, inlaid_col = "inlaid")
-#> Error in get_inlaid_spots(df, cluster = 1, inlaid_col = "inlaid"): is.data.frame(df) is not TRUE
 head(inlaid_spots)
-#> Error: object 'inlaid_spots' not found
+#>           spot_id      x        y cluster inlaid is_inlaid
+#> SPOT0301 SPOT0301 1127.5 333.4198       1 type_1      TRUE
+#> SPOT0302 SPOT0302 1182.5 333.4198       1 type_1      TRUE
+#> SPOT0339 SPOT0339  990.0 381.0512       1 type_1      TRUE
+#> SPOT0340 SPOT0340 1045.0 381.0512       1 type_1      TRUE
+#> SPOT0341 SPOT0341 1100.0 381.0512       1 type_1      TRUE
+#> SPOT0381 SPOT0381 1127.5 428.6826       1 type_1      TRUE
 ```

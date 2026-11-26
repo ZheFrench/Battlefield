@@ -1,21 +1,21 @@
 # Battlefield
 
-  
-  
+\
+\
 
 ## Overview
 
 **Battlefield** is a Swiss-army toolkit designed to define and extract
 spatial spots from specific regions in spatial transcriptomics data. It
 provides low-level, modular utilities to delineate spatial regions of
-interest,  
+interest,\
 including **interfaces between clusters**, **intra-cluster layers**,
-and  
+and\
 **inter-cluster trajectories**. These utilities are intended to be
-reused and composed within higher-level  
+reused and composed within higher-level\
 analytical workflows and packages. `Battlefield` supports
-sequencing-based spatial transcriptomics platforms such as  
-**10x Genomics Visium**, across multiple resolutions, including  
+sequencing-based spatial transcriptomics platforms such as\
+**10x Genomics Visium**, across multiple resolutions, including\
 Visium HD (binned).
 
 ![](reference/figures/workflow.png)
@@ -46,25 +46,24 @@ interest on the top of previously defined clusters.
 
 ## Installation
 
-``` r
-
-# Battlefield directly from Bioconductor.
-if (!require("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-BiocManager::install("Battlefield")
-
-# or development version via GitHub:
-# install.packages("devtools")
-devtools::install_github("ZheFrench/Battlefield",build_vignettes = TRUE)
-
-# To read the vignette
-# browseVignettes("Battlefield")
-```
+\
+\
+`# Battlefield directly from Bioconductor.`\
+`if`` ``(``!`[`require`](https://rdrr.io/r/base/library.html)`(`[`"BiocManager"`](https://bioconductor.github.io/BiocManager/)`, quietly ``=`` ``TRUE``)``)`\
+`    `[`install.packages`](https://rdrr.io/r/utils/install.packages.html)`(``"BiocManager"``)`\
+`BiocManager``::`[`install`](https://bioconductor.github.io/BiocManager/reference/install.html)`(``"Battlefield"``)`\
+\
+`# or development version via GitHub:`\
+`# install.packages("devtools")`\
+`devtools``::``install_github``(``"ZheFrench/Battlefield"``,build_vignettes ``=`` ``TRUE``)`\
+\
+`# To read the vignette`\
+`# browseVignettes("Battlefield")`
 
 ## Changes
 
 Major changes are reported in the [NEWS
-file](https://github.com/ZheFrench/Battlefield/blob/master/NEWS), make
+file](https://github.com/ZheFrench/Battlefield/blob/devel/NEWS), make
 sure to check it out if you want to follow the latest developments.
 
 ## Issues and bug reports
@@ -76,5 +75,5 @@ issues, bug reports, and comments.
 Windows using R version 4.5.
 
 The code in this repository is published with the
-[CeCILL](https://github.com/ZheFrench/Battlefield/blob/master/LICENSE.md)
+[CeCILL](https://github.com/ZheFrench/Battlefield/blob/devel/LICENSE.md)
 License.

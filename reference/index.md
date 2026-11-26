@@ -6,6 +6,8 @@
   : Add border or core spot selections to SpatialExperiment colData
 - [`add_layers_to_spe()`](https://zhefrench.github.io/Battlefield/reference/add_layers_to_spe.md)
   : Add layer classifications to SpatialExperiment colData
+- [`add_split_to_spe()`](https://zhefrench.github.io/Battlefield/reference/add_split_to_spe.md)
+  : Add split cluster labels to SpatialExperiment colData
 - [`add_trajectories_to_spe()`](https://zhefrench.github.io/Battlefield/reference/add_trajectories_to_spe.md)
   : Add trajectory information to SpatialExperiment colData
 - [`adjacent_endpoint()`](https://zhefrench.github.io/Battlefield/reference/adjacent_endpoint.md)
@@ -23,8 +25,12 @@
   : Select spots near a segment and order them along the segment
 - [`build_similar_trajectories()`](https://zhefrench.github.io/Battlefield/reference/build_similar_trajectories.md)
   : Build parallel spot lines around a central segment
+- [`clean_orphans()`](https://zhefrench.github.io/Battlefield/reference/clean_orphans.md)
+  : Remove the orphan spots of one cluster
 - [`closest_spot()`](https://zhefrench.github.io/Battlefield/reference/closest_spot.md)
   : Find the closest spot to a target point
+- [`compare_gene_trends()`](https://zhefrench.github.io/Battlefield/reference/compare_gene_trends.md)
+  : Compare gene trends along a fixed trajectory
 - [`compute_centroids()`](https://zhefrench.github.io/Battlefield/reference/compute_centroids.md)
   : Compute cluster centroids (mean x/y per cluster)
 - [`count_all_inlaids()`](https://zhefrench.github.io/Battlefield/reference/count_all_inlaids.md)
@@ -65,11 +71,15 @@
   : Select core (non-interface) spots for a directed pair
 - [`shift_point()`](https://zhefrench.github.io/Battlefield/reference/shift_point.md)
   : Shift a point along a given direction vector
+- [`split_clusters()`](https://zhefrench.github.io/Battlefield/reference/split_clusters.md)
+  : Split one scattered cluster into contiguous pieces
 - [`unit_normal_left()`](https://zhefrench.github.io/Battlefield/reference/unit_normal_left.md)
   : Compute the left unit normal of the directed segment A-\>B
+- [`view_spots()`](https://zhefrench.github.io/Battlefield/reference/view_spots.md)
+  : Interactive viewer to pick spots on the tissue
 - [`visiumHD_16um_simulated_spe`](https://zhefrench.github.io/Battlefield/reference/visiumHD_16um_simulated_spe.md)
   : Simulated VisiumHD 16 µm binned SpatialExperiment dataset
-- [`visiumHD_simulated_spe`](https://zhefrench.github.io/Battlefield/reference/visiumHD_simulated_spe.md)
+- [`visiumHD_8um_simulated_spe`](https://zhefrench.github.io/Battlefield/reference/visiumHD_8um_simulated_spe.md)
   : Simulated VisiumHD 8 µm binned SpatialExperiment dataset
 - [`visium_simulated_spe`](https://zhefrench.github.io/Battlefield/reference/visium_simulated_spe.md)
   : Simulated Visium SpatialExperiment dataset

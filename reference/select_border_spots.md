@@ -155,8 +155,19 @@ df_ex <- data.frame(
   cluster = sample(c("A","B","C"), 200, replace = TRUE)
 )
 res <- select_border_spots(df_ex, cluster = "A", interface = "B", k = 7)
-#> Error in dplyr::select(dplyr::mutate(out, interface = i_val, directed_pair = paste0(c_val,     "-", i_val), undirected_pair = undirected_pair_val, is_border = TRUE,     is_border_multiple = touches_other[touches_to], other_adjacent_borders = other_clusters[touches_to],     mode = ""), spot_id, x, y, directed_pair, undirected_pair,     cluster, interface, is_border, is_border_multiple, other_adjacent_borders,     mode): Can't select columns that don't exist.
-#> ✖ Column `spot_id` doesn't exist.
 head(res)
-#> Error: object 'res' not found
+#>             x           y directed_pair undirected_pair cluster interface
+#> 2   0.1836433  1.68887329           A-B       A-B / B-A       A         B
+#> 3  -0.8356286  1.58658843           A-B       A-B / B-A       A         B
+#> 5   0.3295078 -2.28523554           A-B       A-B / B-A       A         B
+#> 9   0.5757814 -0.01339952           A-B       A-B / B-A       A         B
+#> 10 -0.3053884  0.51010842           A-B       A-B / B-A       A         B
+#> 11  1.5117812 -0.16437583           A-B       A-B / B-A       A         B
+#>    is_border is_border_multiple other_adjacent_borders  mode
+#> 2       TRUE               TRUE                      C inner
+#> 3       TRUE               TRUE                      C inner
+#> 5       TRUE               TRUE                      C inner
+#> 9       TRUE               TRUE                      C inner
+#> 10      TRUE               TRUE                      C inner
+#> 11      TRUE               TRUE                      C inner
 ```

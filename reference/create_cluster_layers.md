@@ -16,7 +16,9 @@ create_cluster_layers(
   max_dist = NULL,
   intermediate_quantile = 0.5,
   coord_cols = c("x", "y"),
-  cluster_col = "cluster"
+  cluster_col = "cluster",
+  center = NULL,
+  core_radius = NULL
 )
 ```
 
@@ -60,6 +62,20 @@ create_cluster_layers(
   Character. Name of the column containing cluster labels. Default is
   \`"cluster"\`.
 
+- center:
+
+  Optional spot used as the center of the core: its identifier, or a
+  one-row data.frame with its exact coordinates (e.g., \`A\` copied from
+  \[view_spots()\]). It must be an existing non-border spot of
+  \`target_cluster\` that does not touch the border layer either. If
+  \`NULL\` (default), layers are defined by the distance to the border.
+
+- core_radius:
+
+  Optional numeric, only used with \`center\`. Maximum distance to
+  \`center\` of core spots, in coordinate units. If \`NULL\` (default),
+  it is set from \`intermediate_quantile\`.
+
 ## Value
 
 A data.frame based on \`df\` filtered to contain only spots from
@@ -75,6 +91,15 @@ border spot is within the \`intermediate_quantile\` threshold of all
 non-border spots. - \*\*Core\*\*: All remaining non-border spots that
 are far from the border.
 
+Spots touching a border spot (kNN-based, in either direction) are always
+intermediate, so that core and border are never in contact. Narrow
+clusters may thus have no core.
+
+If \`center\` is provided, border spots are unchanged, but core spots
+are the non-border spots closest to \`center\`: those within
+\`core_radius\` or, by default, the closest \`1 -
+intermediate_quantile\` proportion.
+
 The \`intermediate_quantile\` parameter controls the depth of the
 intermediate layer: - 0.33: Narrow intermediate layer (only very close
 to border) - 0.50: Moderate intermediate layer (median distance
@@ -88,21 +113,33 @@ data("visiumHD_16um_simulated_spe", package = "Battlefield")
 spe <- visiumHD_16um_simulated_spe
 df <- data.frame(
   spot_id = colnames(spe),
-  x = spatialCoords(spe)[, 1],
-  y = spatialCoords(spe)[, 2],
-  cluster = colData(spe)$cluster
+  x = SpatialExperiment::spatialCoords(spe)[, 1],
+  y = SpatialExperiment::spatialCoords(spe)[, 2],
+  cluster = SummarizedExperiment::colData(spe)$cluster
 )
-#> Error in spatialCoords(spe): could not find function "spatialCoords"
 # Default: moderate depth
 layers <- create_cluster_layers(df, target_cluster = 1, k = 6)
-#> Error in create_cluster_layers(df, target_cluster = 1, k = 6): all(coord_cols %in% colnames(df)) is not TRUE
 table(layers$layer)
-#> Error: object 'layers' not found
+#> 
+#>       border         core intermediate 
+#>           34           20           27 
 
 # Narrow intermediate layer
 layers_narrow <- create_cluster_layers(df, target_cluster = 1, k = 6,
 intermediate_quantile = 0.33)
-#> Error in create_cluster_layers(df, target_cluster = 1, k = 6, intermediate_quantile = 0.33): all(coord_cols %in% colnames(df)) is not TRUE
 table(layers_narrow$layer)
-#> Error: object 'layers_narrow' not found
+#> 
+#>       border         core intermediate 
+#>           34           24           23 
+
+# Core centered on a chosen spot: here the core spot closest to the
+# cluster centroid
+inner <- layers[layers$layer == "core", ]
+center <- closest_spot(inner, mean(inner$x), mean(inner$y))$spot_id
+layers_center <- create_cluster_layers(df, target_cluster = 1, k = 6,
+center = center)
+table(layers_center$layer)
+#> 
+#>       border         core intermediate 
+#>           34           20           27 
 ```

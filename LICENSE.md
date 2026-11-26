@@ -16,7 +16,7 @@ the two main principles guiding its drafting:
   property law, and the protection that it offers to both authors and
   holders of the economic rights over software.
 
-The authors of the CeCILL[¹](#fn1) license are:
+The authors of the CeCILL[^1] license are:
 
 - Commissariat à l’énergie atomique et aux énergies alternatives - CEA,
   a public scientific, technical and industrial research establishment,
@@ -537,6 +537,4 @@ occurrence, and unless emergency proceedings are necessary, the
 disagreements or disputes shall be referred to the Paris Courts having
 jurisdiction, by the more diligent Party.
 
-------------------------------------------------------------------------
-
-1.  CeCILL stands for Ce(a) C(nrs) I(nria) L(ogiciel) L(ibre)
+[^1]: CeCILL stands for Ce(a) C(nrs) I(nria) L(ogiciel) L(ibre)

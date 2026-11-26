@@ -63,13 +63,18 @@ data("visiumHD_16um_simulated_spe", package = "Battlefield")
 spe <- visiumHD_16um_simulated_spe
 df <- data.frame(
   spot_id = colnames(spe),
-  x = spatialCoords(spe)[, 1],
-  y = spatialCoords(spe)[, 2],
-  cluster = colData(spe)$cluster
+  x = SpatialExperiment::spatialCoords(spe)[, 1],
+  y = SpatialExperiment::spatialCoords(spe)[, 2],
+  cluster = SummarizedExperiment::colData(spe)$cluster
 )
-#> Error in spatialCoords(spe): could not find function "spatialCoords"
 all_layers <- create_all_layers(df, k = 6, intermediate_quantile = 0.5)
-#> Error in create_all_layers(df, k = 6, intermediate_quantile = 0.5): all(coord_cols %in% colnames(df)) is not TRUE
+#> Cluster 2: No 'core' layer, all inner spots touch the border.
 head(all_layers)
-#> Error: object 'all_layers' not found
+#>     spot_id x    y cluster layer
+#> 1   bin16_1 0    0       3  core
+#> 2  bin16_41 0  400       3  core
+#> 3  bin16_81 0  800       3  core
+#> 4 bin16_121 0 1200       3  core
+#> 5 bin16_161 0 1600       3  core
+#> 6 bin16_201 0 2000       3  core
 ```

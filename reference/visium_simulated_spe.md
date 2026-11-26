@@ -47,7 +47,7 @@ simulated and have no biological meaning.
 
 - [`compute_centroids`](https://zhefrench.github.io/Battlefield/reference/compute_centroids.md)
 
-"visium_simulated_spe"
+visium_simulated_spe
 
 ## Examples
 
